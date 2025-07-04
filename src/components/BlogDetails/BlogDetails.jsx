@@ -1,31 +1,55 @@
 import Reviews from "../Reviews/Reviews";
-import "./BlogDetails.css";
 
 const BlogDetails = () => {
   return (
-    <section className="single-blog">
-      <div className="container">
-        <article>
-          <figure>
-            <a href="#">
-              <img src="/img/blogs/blog1.jpg" alt="" />
-            </a>
+    <section className="py-12 bg-white min-h-screen">
+      <div className="container mx-auto px-4 max-w-4xl">
+        {/* Blog Header */}
+        <article className="bg-white rounded-3xl shadow-lg overflow-hidden">
+          {/* Featured Image */}
+          <figure className="relative">
+            <img 
+              src="/img/blogs/blog1.jpg" 
+              alt="Blog Post" 
+              className="w-full h-64 md:h-96 object-cover"
+            />
+            <div className="absolute top-6 left-6">
+              <span className="bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                COLLECTION
+              </span>
+            </div>
           </figure>
-          <div className="blog-wrapper">
-            <div className="blog-meta">
-              <div className="blog-category">
-                <a href="#">COLLECTION</a>
+
+          {/* Blog Content */}
+          <div className="p-8">
+            {/* Meta Information */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6">
+              <div className="flex items-center gap-2">
+                <i className="bi bi-calendar3 text-gray-400"></i>
+                <span>April 25, 2022</span>
               </div>
-              <div className="blog-date">
-                <a href="#">April 25, 2022</a>
+              <div className="flex items-center gap-2">
+                <i className="bi bi-chat-dots text-gray-400"></i>
+                <span>0 Comments</span>
               </div>
-              <div className="blog-tags">
-                <a href="#">products</a>,<a href="#">coats</a>
+              <div className="flex items-center gap-2">
+                <i className="bi bi-tags text-gray-400"></i>
+                <div className="flex gap-2">
+                  <a href="#" className="hover:text-blue-600 transition-colors">products</a>
+                  <span>,</span>
+                  <a href="#" className="hover:text-blue-600 transition-colors">coats</a>
+                </div>
               </div>
             </div>
-            <h1 className="blog-title">The Best Products That Shape Fashion</h1>
-            <div className="blog-content">
-              <p>
+
+            {/* Blog Title */}
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 leading-tight">
+              The Best Products That Shape Fashion
+            </h1>
+
+            {/* Blog Content */}
+            <div className="prose prose-lg max-w-none">
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Donec rhoncus quis diam sit amet faucibus. Vivamus pellentesque,
                 sem sed convallis ultricies, ante eros laoreet libero, vitae
                 suscipit lorem turpis sit amet lectus. Quisque egestas lorem ut
@@ -36,7 +60,8 @@ const BlogDetails = () => {
                 lobortis mauris commodo efficitur. Nunc pulvinar pulvinar
                 cursus.
               </p>
-              <p>
+              
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Nulla id nibh ligula. Etiam finibus elit nec nisl faucibus, vel
                 auctor tortor iaculis. Vivamus aliquet ipsum purus, vel auctor
                 felis interdum at. Praesent quis fringilla justo. Ut non dui at
@@ -47,15 +72,16 @@ const BlogDetails = () => {
                 dapibus tempor.
               </p>
 
-              <blockquote>
-                <p>
-                  Aliquam purus enim, fringilla vel nunc imperdiet, consequat
+              {/* Quote Block */}
+              <blockquote className="border-l-4 border-blue-500 pl-6 py-4 my-8 bg-blue-50 rounded-r-lg">
+                <p className="text-lg italic text-gray-800 font-medium">
+                  "Aliquam purus enim, fringilla vel nunc imperdiet, consequat
                   ultricies massa. Praesent sed turpis sollicitudin, dignissim
-                  justo vel, fringilla mi.
+                  justo vel, fringilla mi."
                 </p>
               </blockquote>
 
-              <p>
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Vivamus libero leo, tincidunt eget lectus rhoncus, finibus
                 interdum neque. Curabitur aliquet dolor purus, id molestie purus
                 elementum vitae. Sed quis aliquet eros. Morbi condimentum ornare
@@ -65,7 +91,8 @@ const BlogDetails = () => {
                 amet turpis tincidunt, sit amet mollis turpis suscipit. Proin
                 arcu diam, pretium nec tempus eu, feugiat non ex.
               </p>
-              <p>
+              
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Nulla id nibh ligula. Etiam finibus elit nec nisl faucibus, vel
                 auctor tortor iaculis. Vivamus aliquet ipsum purus, vel auctor
                 felis interdum at. Praesent quis fringilla justo. Ut non dui at
@@ -75,7 +102,8 @@ const BlogDetails = () => {
                 in nibh quis, semper suscipit nunc. Phasellus ornare nibh vitae
                 dapibus tempor.
               </p>
-              <p>
+              
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Donec feugiat tincidunt eros, ac aliquam purus egestas
                 condimentum. Curabitur imperdiet at leo pellentesque mattis.
                 Fusce a dignissim est. In enim nisi, hendrerit placerat nunc
@@ -92,7 +120,8 @@ const BlogDetails = () => {
                 mi sed velit condimentum porta. Proin vestibulum congue
                 ullamcorper.
               </p>
-              <p>
+              
+              <p className="text-gray-700 leading-relaxed">
                 Nunc blandit ligula mi, quis commodo dolor fermentum sit amet.
                 Nam vehicula pharetra lacus a vulputate. Duis pulvinar
                 vestibulum dolor, vel commodo arcu laoreet ac. Vestibulum sed
@@ -104,9 +133,26 @@ const BlogDetails = () => {
                 ut viverra eros. Vestibulum ut ligula quam.
               </p>
             </div>
+
+            {/* Author Info */}
+            <div className="mt-12 pt-8 border-t border-gray-200">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                  <i className="bi bi-person text-2xl text-gray-500"></i>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">John Doe</h3>
+                  <p className="text-sm text-gray-600">Fashion Blogger & Designer</p>
+                </div>
+              </div>
+            </div>
           </div>
         </article>
-        <Reviews />
+
+        {/* Comments Section */}
+        <div className="mt-12">
+          <Reviews />
+        </div>
       </div>
     </section>
   );
