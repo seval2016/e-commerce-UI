@@ -44,37 +44,43 @@ const Login = () => {
   };
 
   return (
-    <div className="account-column">
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
+    <div className="flex-1">
+      <h2 className="text-xl font-medium">Login</h2>
+      <form onSubmit={handleLogin} className="flex flex-col gap-4 mt-2.5">
         <div>
-          <label>
+          <label className="flex flex-col text-sm gap-1">
             <span>
-              Username or email address <span className="required">*</span>
+              Username or email address <span className="text-red-600 font-bold">*</span>
             </span>
-            <input type="text" name="email" onChange={handleInputChange} />
+            <input 
+              type="text" 
+              name="email" 
+              onChange={handleInputChange}
+              className="px-4 py-2 border border-gray-300 rounded"
+            />
           </label>
         </div>
         <div>
-          <label>
+          <label className="flex flex-col text-sm gap-1">
             <span>
-              Password <span className="required">*</span>
+              Password <span className="text-red-600 font-bold">*</span>
             </span>
             <input
               type="password"
               name="password"
               onChange={handleInputChange}
+              className="px-4 py-2 border border-gray-300 rounded"
             />
           </label>
         </div>
-        <p className="remember">
-          <label>
+        <div className="flex flex-col items-start text-xs">
+          <label className="flex items-center gap-1">
             <input type="checkbox" />
             <span>Remember me</span>
           </label>
-          <button className="btn btn-sm">Login</button>
-        </p>
-        <a href="#" className="form-link">
+          <button className="btn btn-sm bg-red-600 text-white border-red-600 mt-2.5">Login</button>
+        </div>
+        <a href="#" className="text-red-600 text-sm">
           Lost your password?
         </a>
       </form>

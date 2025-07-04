@@ -2,7 +2,7 @@ import Blogs from "../components/Blogs/Blogs";
 
 const BlogPage = () => {
   return (
-      <div className="blog-page">
+      <div className="mt-10">
         <Blogs />
       </div>
   );

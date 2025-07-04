@@ -8,10 +8,6 @@ import AuthPage from "./pages/AuthPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import BlogDetailsPage from "./pages/BlogDetailsPage";
 
-import "./App.css";
-import UserPage from "./pages/Admin/UserPage";
-import CategoryPage from "./pages/Admin/Categories/CategoryPage";
-
 function App() {
   return (
     <Routes>
@@ -23,11 +19,6 @@ function App() {
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/product/:id" element={<ProductDetailsPage />} />
       <Route path="/blog/:id" element={<BlogDetailsPage />} />
-      <Route path="/admin/*">
-        <Route path="users" element={<UserPage />} />
-        <Route path="categories" element={<CategoryPage />} />
-        <Route path="" element={<UserPage />} />
-      </Route>
     </Routes>
   );
 }

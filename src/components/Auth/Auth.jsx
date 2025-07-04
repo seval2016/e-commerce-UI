@@ -1,12 +1,11 @@
 import Login from "./Login";
 import Register from "./Register";
-import './Auth.css';
 
 const Auth = () => {
   return (
-    <section className="account-page">
+    <section className="my-15">
       <div className="container">
-        <div className="account-wrapper">
+        <div className="flex justify-between gap-8 md:flex-col">
           <Login />
           <Register />
         </div>

@@ -43,44 +43,55 @@ const Register = () => {
   };
 
   return (
-    <div className="account-column">
-      <h2>Register</h2>
-      <form onSubmit={handleRegister}>
+    <div className="flex-1">
+      <h2 className="text-xl font-medium">Register</h2>
+      <form onSubmit={handleRegister} className="flex flex-col gap-4 mt-2.5">
         <div>
-          <label>
+          <label className="flex flex-col text-sm gap-1">
             <span>
-              Username <span className="required">*</span>
+              Username <span className="text-red-600 font-bold">*</span>
             </span>
-            <input type="text" onChange={handleInputChange} name="username" />
+            <input 
+              type="text" 
+              onChange={handleInputChange} 
+              name="username"
+              className="px-4 py-2 border border-gray-300 rounded"
+            />
           </label>
         </div>
         <div>
-          <label>
+          <label className="flex flex-col text-sm gap-1">
             <span>
-              Email address <span className="required">*</span>
+              Email address <span className="text-red-600 font-bold">*</span>
             </span>
-            <input type="email" onChange={handleInputChange} name="email" />
+            <input 
+              type="email" 
+              onChange={handleInputChange} 
+              name="email"
+              className="px-4 py-2 border border-gray-300 rounded"
+            />
           </label>
         </div>
         <div>
-          <label>
+          <label className="flex flex-col text-sm gap-1">
             <span>
-              Password <span className="required">*</span>
+              Password <span className="text-red-600 font-bold">*</span>
             </span>
             <input
               type="password"
               onChange={handleInputChange}
               name="password"
+              className="px-4 py-2 border border-gray-300 rounded"
             />
           </label>
         </div>
-        <div className="privacy-policy-text remember">
+        <div className="flex flex-col items-start text-xs">
           <p>
             Your personal data will be used to support your experience
             throughout this website, to manage access to your account, and for
-            other purposes described in our <a href="#">privacy policy.</a>
+            other purposes described in our <a href="#" className="text-red-600">privacy policy.</a>
           </p>
-          <button className="btn btn-sm">Register</button>
+          <button className="btn btn-sm bg-red-600 text-white border-red-600 mt-2.5">Register</button>
         </div>
       </form>
     </div>
