@@ -1,0 +1,50 @@
+/* Admin Layout Styles */
+.profile-dropdown:hover {
+  background-color: #f5f5f5;
+}
+
+/* Sider menu styling */
+.ant-layout-sider .ant-menu {
+  border-right: none;
+}
+
+.ant-layout-sider .ant-menu-item:hover {
+  background-color: #1890ff !important;
+}
+
+.ant-layout-sider .ant-menu-item-selected {
+  background-color: #1890ff !important;
+}
+
+/* Header styling */
+.ant-layout-header {
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+}
+
+/* Content area styling */
+.ant-layout-content {
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+}
+
+/* Footer styling */
+.ant-layout-footer {
+  color: #8c8c8c;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ant-layout-sider {
+    position: fixed;
+    height: 100vh;
+    z-index: 999;
+  }
+  
+  .ant-layout-header {
+    padding: 0 16px;
+  }
+  
+  .ant-layout-content {
+    margin: 16px 8px;
+    padding: 16px;
+  }
+} 
