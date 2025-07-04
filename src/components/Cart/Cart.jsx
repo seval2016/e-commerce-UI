@@ -1,28 +1,29 @@
 import CartCoupon from "./CartCoupon";
 import CartTable from "./CartTable";
-import "./Cart.css";
 import CartTotal from "./CartTotal";
 
 const Cart = () => {
   return (
-    <section className="cart-page">
+    <section className="py-12 bg-gray-50 min-h-screen">
       <div className="container">
-        <div className="cart-page-wrapper">
-          <form className="cart-form">
-            <div className="free-progress-bar">
-              <p className="progress-bar-title">
-                Add <strong>$161.00</strong> to cart and get free shipping!
-              </p>
-              <div className="progress-bar">
-                <span className="progress"></span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="mb-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <p className="text-blue-800 text-sm">
+                    <strong>$161.00</strong> daha ekleyin ve ücretsiz kargo kazanın!
+                  </p>
+                  <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
+                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: '45%' }}></div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="shop-table-wrapper">
               <CartTable />
               <CartCoupon />
             </div>
-          </form>
-          <div className="cart-collaterals">
+          </div>
+          <div className="lg:col-span-1">
             <CartTotal />
           </div>
         </div>

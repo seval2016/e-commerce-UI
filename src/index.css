@@ -1,159 +1,86 @@
-/*! base start  */
-@import url("https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,500&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Jost", sans-serif;
-}
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-body {
-  overflow-x: hidden;
-}
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.6;
+    color: #333;
+  }
 
-ul,
-ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-a {
-  text-decoration: none;
-  color: #000;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p {
-  margin: 0;
-}
-
-.container {
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.logo {
-  font-size: 24px;
-  font-weight: 500;
-  display: flex;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-}
-
-button:disabled {
-  opacity: 0.4 !important;
-  cursor: no-drop;
-}
-
-.btn {
-  display: inline-block;
-  padding: 0 25px;
-  line-height: 40px;
-  font-weight: 500;
-  border: 1px solid black;
-  transition: 0.2s ease all;
-}
-
-.btn-sm {
-  line-height: 33px;
-}
-
-.btn-lg {
-  line-height: 45px;
-}
-
-.btn-primary {
-  background-color: #1367ef;
-  color: #fff;
-  border-color: #1367ef;
-}
-
-.btn-primary:hover {
-  background-color: #fff;
-  color: #1367ef;
-}
-
-textarea {
-  overflow: auto;
-}
-
-input[type="text"],
-input[type="password"],
-input[type="email"],
-input[type="number"],
-textarea {
-  outline: none;
-  border: 1px solid #dee0ea;
-  padding: 8px 8px 8px 15px;
-}
-
-input[type="text"]:focus,
-input[type="password"]:focus,
-input[type="email"]:focus,
-input[type="number"]:focus,
-textarea:focus {
-  border-color: gray;
-}
-
-input[type="number"]::-webkit-inner-spin-button {
-  opacity: 1;
-}
-
-.img-fluid {
-  width: 100%;
-}
-
-/*! base end  */
-
-/* base responsive  */
-
-@media (max-width: 1200px) {
-  .container {
-    max-width: 992px;
+  html {
+    scroll-behavior: smooth;
   }
 }
 
-@media (max-width: 992px) {
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary-200 text-secondary-800 hover:bg-secondary-300 focus:ring-secondary-500;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-lg;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1 text-sm;
+  }
+
   .container {
-    max-width: 768px;
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200;
+  }
+
+  .input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-primary-100 text-primary-800;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 text-red-800;
   }
 }
 
-@media (max-width: 768px) {
-  .container {
-    max-width: 576px;
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
-}
 
-@media (max-width: 576px) {
-  .container {
-    max-width: 400px;
+  .backdrop-blur {
+    backdrop-filter: blur(8px);
   }
-}
-
-@media (max-width: 420px) {
-  .container {
-    max-width: 350px;
-  }
-}
-
-/* react-slick-css */
-
-.slick-slide > div {
-  margin: 0 10px;
-}
-
-.slick-list {
-  margin: 0 -10px;
 }
