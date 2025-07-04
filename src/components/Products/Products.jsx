@@ -2,7 +2,7 @@ import { useState } from "react";
 import ProductItem from "./ProductItem";
 import Slider from "react-slick";
 import PropTypes from "prop-types";
-import productsData from "../../data.json";
+import { products as productsData } from "../../data";
 
 function NextBtn({ onClick }) {
   return (

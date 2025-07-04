@@ -1,17 +1,15 @@
 import BrandItem from "./BrandItem";
 import "./Brands.css";
+import { brands } from "../../data";
 
 const Brands = () => {
   return (
     <section className="brands">
       <div className="container">
         <ul className="brand-list">
-          <BrandItem />
-          <BrandItem />
-          <BrandItem />
-          <BrandItem />
-          <BrandItem />
-          <BrandItem />
+          {brands.map((brand) => (
+            <BrandItem key={brand.id} brand={brand} />
+          ))}
         </ul>
       </div>
     </section>

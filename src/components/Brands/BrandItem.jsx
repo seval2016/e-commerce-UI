@@ -1,8 +1,8 @@
-const BrandItem = () => {
+const BrandItem = ({ brand }) => {
   return (
     <li className="brand-item">
       <a href="#">
-        <img src="/img/brands/brand1.png" alt="" />
+        <img src={brand.image} alt={brand.name} />
       </a>
     </li>
   );

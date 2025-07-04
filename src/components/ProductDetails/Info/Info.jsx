@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { CartContext } from "../../../context/CartContext";
 import { message } from "antd";
-import productsData from "../../../data.json";
+import { products as productsData } from "../../../data";
 
 const Info = () => {
   const { id } = useParams();

@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 import Proptypes from "prop-types";
 import { Link, useLocation } from "react-router-dom";
 import { CartContext } from "../../../context/CartContext";
+import MobileMenu from "./MobileMenu";
 
 const Header = ({ setIsSearchShow }) => {
   const { getCartCount } = useContext(CartContext);
@@ -254,60 +255,11 @@ const Header = ({ setIsSearchShow }) => {
         </div>
       </div>
 
-      {/* Mobile Menu - Soldan Gelen */}
-      <div className={`fixed top-0 left-0 h-full w-80 bg-white border-r border-gray-300 transform transition-transform duration-300 ease-in-out z-50 md:hidden ${
-        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-bold text-gray-900">Menu</h2>
-            <button 
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-2xl text-gray-600 hover:text-gray-900"
-            >
-              <i className="bi bi-x-circle"></i>
-            </button>
-          </div>
-          <nav className="flex flex-col space-y-6">
-            <Link 
-              to={"/"} 
-              className={`text-lg font-medium transition-colors ${pathname === "/" ? "text-blue-600" : "text-gray-700"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Home
-            </Link>
-            <Link 
-              to={"/shop"} 
-              className={`text-lg font-medium transition-colors ${pathname === "/shop" ? "text-blue-600" : "text-gray-700"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Shop
-            </Link>
-            <Link 
-              to={"/blog"} 
-              className={`text-lg font-medium transition-colors ${pathname === "/blog" ? "text-blue-600" : "text-gray-700"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Blog
-            </Link>
-            <Link 
-              to={"/contact"} 
-              className={`text-lg font-medium transition-colors ${pathname === "/contact" ? "text-blue-600" : "text-gray-700"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Contact
-            </Link>
-          </nav>
-        </div>
-      </div>
-
-      {/* Overlay - Mobil menü açıkken arka planı karart */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        ></div>
-      )}
+      {/* Mobile Menu Component */}
+      <MobileMenu 
+        isOpen={isMobileMenuOpen} 
+        onClose={() => setIsMobileMenuOpen(false)} 
+      />
     </header>
   );
 };

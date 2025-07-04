@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import Slider from "react-slick";
 import { useParams } from "react-router-dom";
-import productsData from "../../../data.json";
+import { products as productsData } from "../../../data";
 
 function PrevBtn({ onClick }) {
   return (

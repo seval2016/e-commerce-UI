@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "title": "Aliquam hendrerit mi metus",
+    "excerpt": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+    "image": "img/blogs/blog1.jpg",
+    "category": "FASHION",
+    "date": "25 Feb, 2021",
+    "comments": 0,
+    "slug": "aliquam-hendrerit-mi-metus"
+  },
+  {
+    "id": 2,
+    "title": "Nullam lobortis quam at cursus",
+    "excerpt": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+    "image": "img/blogs/blog2.jpg",
+    "category": "LIFESTYLE",
+    "date": "20 Feb, 2021",
+    "comments": 3,
+    "slug": "nullam-lobortis-quam-at-cursus"
+  },
+  {
+    "id": 3,
+    "title": "Sed ut perspiciatis unde omnis",
+    "excerpt": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+    "image": "img/blogs/blog3.jpg",
+    "category": "TECHNOLOGY",
+    "date": "15 Feb, 2021",
+    "comments": 1,
+    "slug": "sed-ut-perspiciatis-unde-omnis"
+  },
+  {
+    "id": 4,
+    "title": "At vero eos et accusamus et iusto",
+    "excerpt": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+    "image": "img/blogs/blog4.jpg",
+    "category": "FASHION",
+    "date": "10 Feb, 2021",
+    "comments": 5,
+    "slug": "at-vero-eos-et-accusamus-et-iusto"
+  },
+  {
+    "id": 5,
+    "title": "Temporibus autem quibusdam et aut",
+    "excerpt": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+    "image": "img/blogs/blog5.jpg",
+    "category": "LIFESTYLE",
+    "date": "05 Feb, 2021",
+    "comments": 2,
+    "slug": "temporibus-autem-quibusdam-et-aut"
+  },
+  {
+    "id": 6,
+    "title": "Itaque earum rerum hic tenetur",
+    "excerpt": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+    "image": "img/blogs/blog6.jpg",
+    "category": "TECHNOLOGY",
+    "date": "01 Feb, 2021",
+    "comments": 0,
+    "slug": "itaque-earum-rerum-hic-tenetur"
+  }
+] 

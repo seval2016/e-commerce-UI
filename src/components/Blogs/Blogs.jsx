@@ -1,4 +1,5 @@
 import BlogItem from "./BlogItem";
+import { blogs } from "../../data";
 
 const Blogs = () => {
   return (
@@ -10,9 +11,9 @@ const Blogs = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <BlogItem />
-          <BlogItem />
-          <BlogItem />
+          {blogs.slice(0, 3).map((blog) => (
+            <BlogItem key={blog.id} blog={blog} />
+          ))}
         </div>
       </div>
     </section>

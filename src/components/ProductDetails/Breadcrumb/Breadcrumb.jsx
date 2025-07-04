@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import productsData from "../../../data.json";
+import { products as productsData } from "../../../data";
 
 const Breadcrumb = () => {
   const { id } = useParams();

@@ -1,0 +1,121 @@
+{
+  "mainMenu": [
+    {
+      "id": 1,
+      "name": "Home",
+      "path": "/",
+      "hasDropdown": true,
+      "dropdownItems": [
+        {
+          "id": 1,
+          "name": "Home Clean",
+          "path": "/"
+        },
+        {
+          "id": 2,
+          "name": "Home Collection",
+          "path": "/"
+        },
+        {
+          "id": 3,
+          "name": "Home Minimal",
+          "path": "/"
+        },
+        {
+          "id": 4,
+          "name": "Home Modern",
+          "path": "/"
+        },
+        {
+          "id": 5,
+          "name": "Home Parallax",
+          "path": "/"
+        },
+        {
+          "id": 6,
+          "name": "Home Strong",
+          "path": "/"
+        },
+        {
+          "id": 7,
+          "name": "Home Style",
+          "path": "/"
+        },
+        {
+          "id": 8,
+          "name": "Home Unique",
+          "path": "/"
+        },
+        {
+          "id": 9,
+          "name": "Home RTL",
+          "path": "/"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Shop",
+      "path": "/shop",
+      "hasDropdown": true,
+      "hasMegaMenu": true,
+      "megaMenu": {
+        "sections": [
+          {
+            "title": "Shop Style",
+            "items": [
+              { "name": "Shop Standard", "path": "/shop" },
+              { "name": "Shop Full", "path": "/shop" },
+              { "name": "Shop Only Categories", "path": "/shop" },
+              { "name": "Shop Image Categories", "path": "/shop" },
+              { "name": "Shop Sub Categories", "path": "/shop" },
+              { "name": "Shop List", "path": "/shop" },
+              { "name": "Hover Style 1", "path": "/shop" },
+              { "name": "Hover Style 2", "path": "/shop" },
+              { "name": "Hover Style 3", "path": "/shop" }
+            ]
+          },
+          {
+            "title": "Filter Layout",
+            "items": [
+              { "name": "Sidebar", "path": "/shop" },
+              { "name": "Filter Side Out", "path": "/shop" },
+              { "name": "Filter Dropdown", "path": "/shop" },
+              { "name": "Filter Drawer", "path": "/shop" }
+            ]
+          },
+          {
+            "title": "Shop Loader",
+            "items": [
+              { "name": "Shop Pagination", "path": "/shop" },
+              { "name": "Shop Infinity", "path": "/shop" },
+              { "name": "Shop Load More", "path": "/shop" },
+              { "name": "Cart Modal", "path": "/shop" },
+              { "name": "Cart Drawer", "path": "/shop" },
+              { "name": "Cart Page", "path": "/cart" }
+            ]
+          }
+        ],
+        "promo": {
+          "image": "img/mega-menu.jpg",
+          "title": "JOIN THE LAYERING GANG",
+          "subtitle": "Suspendisse faucibus nunc et pellentesque",
+          "buttonText": "Shop Now",
+          "buttonPath": "/shop"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "name": "Blog",
+      "path": "/blog",
+      "hasDropdown": false
+    },
+    {
+      "id": 4,
+      "name": "Contact",
+      "path": "/contact",
+      "hasDropdown": false
+    }
+  ]
+} 
