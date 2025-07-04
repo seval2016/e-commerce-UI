@@ -1,184 +1,188 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import Proptypes from "prop-types";
 import { Link, useLocation } from "react-router-dom";
 import { CartContext } from "../../../context/CartContext";
-import "./Header.css";
 
 const Header = ({ setIsSearchShow }) => {
   const { getCartCount } = useContext(CartContext);
   const user = localStorage.getItem("user");
   const { pathname } = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header>
-      <div className="global-notification">
-        <div className="container">
+    <header className="border-b border-gray-300 sticky w-full top-0 bg-white z-10">
+      <div className="bg-blue-600 py-3.5 text-center text-xs text-white">
+        <div className="container mx-auto px-4">
           <p>
             SUMMER SALE FOR ALL SWIM SUITS AND FREE EXPRESS INTERNATIONAL
             DELIVERY - OFF 50%!
-            <a href="shop.html"> SHOP NOW</a>
+            <a href="shop.html" className="text-white font-semibold"> SHOP NOW</a>
           </p>
         </div>
       </div>
-      <div className="header-row">
-        <div className="container">
-          <div className="header-wrapper">
-            <div className="header-mobile">
-              <i className="bi bi-list" id="btn-menu"></i>
+      <div className="h-20 flex items-center">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center">
+            <div className="text-2xl cursor-pointer md:hidden">
+              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                <i className="bi bi-list" id="btn-menu"></i>
+              </button>
             </div>
-            <div className="header-left">
-              <Link to={"/"} className="logo">
+            <div className="flex-shrink-0">
+              <Link to={"/"} className="text-2xl font-bold text-gray-900">
                 LOGO
               </Link>
             </div>
-            <div className="header-center" id="sidebar">
+            <div className="hidden md:block" id="sidebar">
               <nav className="navigation">
-                <ul className="menu-list">
-                  <li className="menu-list-item">
+                <ul className="flex gap-8 items-center">
+                  <li className="flex items-center relative h-20 group">
                     <Link
                       to={"/"}
-                      className={`menu-link ${pathname === "/" && "active"}`}
+                      className={`text-sm font-medium uppercase tracking-wider relative ${
+                        pathname === "/" ? "text-blue-600" : "text-gray-700"
+                      } group-hover:text-blue-600 transition-colors duration-200`}
                     >
                       Home
-                      <i className="bi bi-chevron-down"></i>
+                      <i className="bi bi-chevron-down text-xs ml-1"></i>
                     </Link>
-                    <div className="menu-dropdown-wrapper">
-                      <ul className="menu-dropdown-content">
+                    <div className="absolute top-full left-0 opacity-0 invisible transition-all duration-200 z-10 group-hover:opacity-100 group-hover:visible">
+                      <ul className="w-56 bg-white border border-gray-300 flex flex-col py-4">
                         <li>
-                          <a href="#">Home Clean</a>
+                          <a href="#" className="flex px-8 py-1 text-sm transition-colors duration-200 hover:text-blue-600">Home Clean</a>
                         </li>
                         <li>
-                          <a href="#">Home Collection</a>
+                          <a href="#" className="flex px-8 py-1 text-sm transition-colors duration-200 hover:text-blue-600">Home Collection</a>
                         </li>
                         <li>
-                          <a href="#">Home Minimal</a>
+                          <a href="#" className="flex px-8 py-1 text-sm transition-colors duration-200 hover:text-blue-600">Home Minimal</a>
                         </li>
                         <li>
-                          <a href="#">Home Modern</a>
+                          <a href="#" className="flex px-8 py-1 text-sm transition-colors duration-200 hover:text-blue-600">Home Modern</a>
                         </li>
                         <li>
-                          <a href="#">Home Parallax</a>
+                          <a href="#" className="flex px-8 py-1 text-sm transition-colors duration-200 hover:text-blue-600">Home Parallax</a>
                         </li>
                         <li>
-                          <a href="#">Home Strong</a>
+                          <a href="#" className="flex px-8 py-1 text-sm transition-colors duration-200 hover:text-blue-600">Home Strong</a>
                         </li>
                         <li>
-                          <a href="#">Home Style</a>
+                          <a href="#" className="flex px-8 py-1 text-sm transition-colors duration-200 hover:text-blue-600">Home Style</a>
                         </li>
                         <li>
-                          <a href="#">Home Unique</a>
+                          <a href="#" className="flex px-8 py-1 text-sm transition-colors duration-200 hover:text-blue-600">Home Unique</a>
                         </li>
                         <li>
-                          <a href="#">Home RTL</a>
+                          <a href="#" className="flex px-8 py-1 text-sm transition-colors duration-200 hover:text-blue-600">Home RTL</a>
                         </li>
                       </ul>
                     </div>
                   </li>
-                  <li className="menu-list-item megamenu-wrapper">
+                  <li className="flex items-center relative h-20 group">
                     <Link
                       to={"/shop"}
-                      className={`menu-link ${
-                        pathname === "/shop" && "active"
-                      }`}
+                      className={`text-sm font-medium uppercase tracking-wider relative ${
+                        pathname === "/shop" ? "text-blue-600" : "text-gray-700"
+                      } group-hover:text-blue-600 transition-colors duration-200`}
                     >
                       Shop
-                      <i className="bi bi-chevron-down"></i>
+                      <i className="bi bi-chevron-down text-xs ml-1"></i>
                     </Link>
-                    <div className="menu-dropdown-wrapper">
-                      <div className="menu-dropdown-megamenu">
-                        <div className="megamenu-links">
-                          <div className="megamenu-products">
-                            <h3 className="megamenu-products-title">
+                    <div className="absolute top-full left-0 opacity-0 invisible transition-all duration-200 z-10 group-hover:opacity-100 group-hover:visible w-full flex justify-center whitespace-nowrap">
+                      <div className="bg-white border border-gray-300 p-6 flex gap-12">
+                        <div className="flex gap-12">
+                          <div>
+                            <h3 className="text-base font-medium mb-2">
                               Shop Style
                             </h3>
-                            <ul className="megamenu-menu-list">
+                            <ul className="flex flex-col gap-1">
                               <li>
-                                <a href="#">Shop Standard</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Shop Standard</a>
                               </li>
                               <li>
-                                <a href="#">Shop Full</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Shop Full</a>
                               </li>
                               <li>
-                                <a href="#">Shop Only Categories</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Shop Only Categories</a>
                               </li>
                               <li>
-                                <a href="#">Shop Image Categories</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Shop Image Categories</a>
                               </li>
                               <li>
-                                <a href="#">Shop Sub Categories</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Shop Sub Categories</a>
                               </li>
                               <li>
-                                <a href="#">Shop List</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Shop List</a>
                               </li>
                               <li>
-                                <a href="#">Hover Style 1</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Hover Style 1</a>
                               </li>
                               <li>
-                                <a href="#">Hover Style 2</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Hover Style 2</a>
                               </li>
                               <li>
-                                <a href="#">Hover Style 3</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Hover Style 3</a>
                               </li>
                             </ul>
                           </div>
-                          <div className="megamenu-products">
-                            <h3 className="megamenu-products-title">
+                          <div>
+                            <h3 className="text-base font-medium mb-2">
                               Filter Layout
                             </h3>
-                            <ul className="megamenu-menu-list">
+                            <ul className="flex flex-col gap-1">
                               <li>
-                                <a href="#">Sidebar</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Sidebar</a>
                               </li>
                               <li>
-                                <a href="#">Filter Side Out</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Filter Side Out</a>
                               </li>
                               <li>
-                                <a href="#">Filter Dropdown</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Filter Dropdown</a>
                               </li>
                               <li>
-                                <a href="#">Filter Drawer</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Filter Drawer</a>
                               </li>
                             </ul>
                           </div>
-                          <div className="megamenu-products">
-                            <h3 className="megamenu-products-title">
+                          <div>
+                            <h3 className="text-base font-medium mb-2">
                               Shop Loader
                             </h3>
-                            <ul className="megamenu-menu-list">
+                            <ul className="flex flex-col gap-1">
                               <li>
-                                <a href="#">Shop Pagination</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Shop Pagination</a>
                               </li>
                               <li>
-                                <a href="#">Shop Infinity</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Shop Infinity</a>
                               </li>
                               <li>
-                                <a href="#">Shop Load More</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Shop Load More</a>
                               </li>
                               <li>
-                                <a href="#">Cart Modal</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Cart Modal</a>
                               </li>
                               <li>
-                                <a href="#">Cart Drawer</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Cart Drawer</a>
                               </li>
                               <li>
-                                <a href="#">Cart Page</a>
+                                <a href="#" className="text-sm transition-colors duration-200 hover:text-blue-600">Cart Page</a>
                               </li>
                             </ul>
                           </div>
                         </div>
-                        <div className="megamenu-single">
+                        <div>
                           <a href="#">
-                            <img src="/img/mega-menu.jpg" alt="" />
+                            <img src="/img/mega-menu.jpg" alt="" className="w-96 h-64 object-cover rounded-lg" />
                           </a>
-                          <h3 className="megamenu-single-title">
+                          <h3 className="text-lg font-medium mt-2">
                             JOIN THE LAYERING GANG
                           </h3>
-                          <h4 className="megamenu-single-subtitle">
+                          <h4 className="text-sm mb-2 font-normal">
                             Suspendisse faucibus nunc et pellentesque
                           </h4>
                           <a
                             href="#"
-                            className="megamenu-single-button btn btn-sm"
+                            className="inline-block bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700 transition-colors"
                           >
                             Shop Now
                           </a>
@@ -186,76 +190,124 @@ const Header = ({ setIsSearchShow }) => {
                       </div>
                     </div>
                   </li>
-                  <li className="menu-list-item">
+                  <li className="flex items-center relative h-20">
                     <Link
                       to={"/blog"}
-                      className={`menu-link ${
-                        pathname === "/blog" && "active"
-                      }`}
+                      className={`text-sm font-medium uppercase tracking-wider relative ${
+                        pathname === "/blog" ? "text-blue-600" : "text-gray-700"
+                      } hover:text-blue-600 transition-colors duration-200`}
                     >
                       Blog
                     </Link>
                   </li>
-                  <li className="menu-list-item">
+                  <li className="flex items-center relative h-20">
                     <Link
                       to={"/contact"}
-                      className={`menu-link ${
-                        pathname === "/contact" && "active"
-                      }`}
+                      className={`text-sm font-medium uppercase tracking-wider relative ${
+                        pathname === "/contact" ? "text-blue-600" : "text-gray-700"
+                      } hover:text-blue-600 transition-colors duration-200`}
                     >
                       Contact
                     </Link>
                   </li>
                 </ul>
               </nav>
-              <i className="bi-x-circle" id="close-sidebar"></i>
+              <i className="bi-x-circle hidden absolute top-4 right-4 text-xl cursor-pointer" id="close-sidebar"></i>
             </div>
-            <div className="header-right">
-              <div className="header-right-links">
-                <Link to={"/auth"} className="header-account">
-                  <i className="bi bi-person"></i>
+            <div className="flex items-center gap-4">
+              <Link to={"/auth"} className="text-2xl text-gray-700 hover:text-blue-600 transition-colors">
+                <i className="bi bi-person"></i>
+              </Link>
+              <button
+                className="border-none bg-transparent text-lg text-gray-700 hover:text-blue-600 transition-colors"
+                onClick={() => setIsSearchShow(true)}
+              >
+                <i className="bi bi-search"></i>
+              </button>
+              <div className="relative">
+                <Link to={"/cart"} className="text-lg text-gray-700 hover:text-blue-600 transition-colors">
+                  <i className="bi bi-bag"></i>
+                  <span className="w-4 h-4 bg-blue-600 text-white text-xs rounded-full absolute -top-2 -right-2 flex items-center justify-center font-medium">
+                    {getCartCount()}
+                  </span>
                 </Link>
-                <button
-                  className="search-button"
-                  onClick={() => setIsSearchShow(true)}
-                >
-                  <i className="bi bi-search"></i>
-                </button>
-                {/* <a href="#">
-                  <i className="bi bi-heart"></i>
-                </a> */}
-                <div className="header-cart">
-                  <Link to={"/cart"} className="header-cart-link">
-                    <i className="bi bi-bag"></i>
-                    <span className="header-cart-count">
-                      {getCartCount()}
-                    </span>
-                  </Link>
-                </div>
-                {user && (
-                  <button
-                    className="search-button"
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          "Çıkış yapmak istediğinize emin misiniz?"
-                        )
-                      ) {
-                        {
-                          localStorage.removeItem("user");
-                          window.location.href = "/";
-                        }
-                      }
-                    }}
-                  >
-                    <i className="bi bi-box-arrow-right"></i>
-                  </button>
-                )}
               </div>
+              {user && (
+                <button
+                  className="border-none bg-transparent text-lg text-gray-700 hover:text-red-600 transition-colors"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "Çıkış yapmak istediğinize emin misiniz?"
+                      )
+                    ) {
+                      localStorage.removeItem("user");
+                      window.location.href = "/";
+                    }
+                  }}
+                >
+                  <i className="bi bi-box-arrow-right"></i>
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu - Soldan Gelen */}
+      <div className={`fixed top-0 left-0 h-full w-80 bg-white border-r border-gray-300 transform transition-transform duration-300 ease-in-out z-50 md:hidden ${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-xl font-bold text-gray-900">Menu</h2>
+            <button 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-2xl text-gray-600 hover:text-gray-900"
+            >
+              <i className="bi bi-x-circle"></i>
+            </button>
+          </div>
+          <nav className="flex flex-col space-y-6">
+            <Link 
+              to={"/"} 
+              className={`text-lg font-medium transition-colors ${pathname === "/" ? "text-blue-600" : "text-gray-700"}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link 
+              to={"/shop"} 
+              className={`text-lg font-medium transition-colors ${pathname === "/shop" ? "text-blue-600" : "text-gray-700"}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Shop
+            </Link>
+            <Link 
+              to={"/blog"} 
+              className={`text-lg font-medium transition-colors ${pathname === "/blog" ? "text-blue-600" : "text-gray-700"}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Blog
+            </Link>
+            <Link 
+              to={"/contact"} 
+              className={`text-lg font-medium transition-colors ${pathname === "/contact" ? "text-blue-600" : "text-gray-700"}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Contact
+            </Link>
+          </nav>
+        </div>
+      </div>
+
+      {/* Overlay - Mobil menü açıkken arka planı karart */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
+      )}
     </header>
   );
 };

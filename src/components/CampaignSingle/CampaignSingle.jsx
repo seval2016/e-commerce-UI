@@ -1,5 +1,3 @@
-import "./CampaignSingle.css"
-
 const CampaignSingle = () => {
   return (
     <section className="relative bg-cover bg-center bg-fixed py-32 md:py-40 mb-8" 
