@@ -13,6 +13,12 @@ import AdminLayout from "./layouts/AdminLayout";
 import DashboardPage from "./pages/admin/DashboardPage";
 import ProductsPage from "./pages/admin/ProductsPage";
 import CategoriesPage from "./pages/admin/CategoriesPage";
+import OrdersPage from "./pages/admin/OrdersPage";
+import CustomersPage from "./pages/admin/CustomersPage";
+import BlogsPage from "./pages/admin/BlogsPage";
+import AnalyticsPage from "./pages/admin/AnalyticsPage";
+import SupportPage from "./pages/admin/SupportPage";
+import SettingsPage from "./pages/admin/SettingsPage";
 import Layout from "./layouts/Layout";
 
 function App() {
@@ -34,6 +40,12 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="categories" element={<CategoriesPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="customers" element={<CustomersPage />} />
+          <Route path="blogs" element={<BlogsPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="support" element={<SupportPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
         
         <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
