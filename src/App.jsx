@@ -7,19 +7,38 @@ import CartPage from "./pages/CartPage";
 import AuthPage from "./pages/AuthPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import BlogDetailsPage from "./pages/BlogDetailsPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import ErrorBoundary from "./components/common/ErrorBoundary";
+import AdminLayout from "./layouts/AdminLayout";
+import DashboardPage from "./pages/admin/DashboardPage";
+import ProductsPage from "./pages/admin/ProductsPage";
+import CategoriesPage from "./pages/admin/CategoriesPage";
+import Layout from "./layouts/Layout";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/shop" element={<ShopPage />} />
-      <Route path="/blog" element={<BlogPage />} />
-      <Route path="/contact" element={<ContactPage />} />
-      <Route path="/cart" element={<CartPage />} />
-      <Route path="/auth" element={<AuthPage />} />
-      <Route path="/product/:id" element={<ProductDetailsPage />} />
-      <Route path="/blog/:id" element={<BlogDetailsPage />} />
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        {/* Public Routes with Layout */}
+        <Route path="/" element={<Layout><HomePage /></Layout>} />
+        <Route path="/shop" element={<Layout><ShopPage /></Layout>} />
+        <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
+        <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+        <Route path="/cart" element={<Layout><CartPage /></Layout>} />
+        <Route path="/auth" element={<Layout><AuthPage /></Layout>} />
+        <Route path="/product/:id" element={<Layout><ProductDetailsPage /></Layout>} />
+        <Route path="/blog/:id" element={<Layout><BlogDetailsPage /></Layout>} />
+        
+        {/* Admin Routes without Layout */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="categories" element={<CategoriesPage />} />
+        </Route>
+        
+        <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
+      </Routes>
+    </ErrorBoundary>
   );
 }
 
