@@ -1,4 +1,51 @@
+import { useState } from "react";
+import Button from "../common/Button";
+import Input from "../common/Input";
+import Alert from "../common/Alert";
+
 const Contact = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [alert, setAlert] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setLoading(false);
+      setAlert({
+        type: 'success',
+        title: 'Mesaj gönderildi!',
+        message: 'Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.',
+        autoClose: true,
+        autoCloseDelay: 5000
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
+    }, 2000);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   return (
     <section>
       <div>
@@ -29,45 +76,64 @@ const Contact = () => {
             </p>
           </div>
           <div className="flex justify-between mt-12 gap-24 md:flex-col md:gap-12">
-            <form className="flex flex-wrap gap-5 md:flex-col">
-              <div className="flex flex-col flex-[calc(50%-10px)] text-sm gap-1 md:flex-none">
-                <label>
-                  Your Name
-                  <span className="text-red-600">*</span>
-                </label>
-                <input type="text" required className="px-4 py-2 border border-gray-300 rounded" />
-              </div>
-              <div className="flex flex-col flex-[calc(50%-10px)] text-sm gap-1 md:flex-none">
-                <label>
-                  Your email
-                  <span className="text-red-600">*</span>
-                </label>
-                <input type="text" required className="px-4 py-2 border border-gray-300 rounded" />
-              </div>
-              <div className="flex flex-col flex-[100%] text-sm gap-1">
-                <label>
-                  Subject
-                  <span className="text-red-600">*</span>
-                </label>
-                <input type="text" required className="px-4 py-2 border border-gray-300 rounded" />
-              </div>
-              <div className="flex flex-col flex-[100%] text-sm gap-1">
-                <label>
-                  Your message
-                  <span className="text-red-600">*</span>
-                </label>
-                <textarea
-                  id="author"
-                  name="author"
+            <form onSubmit={handleSubmit} className="flex flex-wrap gap-5 md:flex-col">
+              {alert && (
+                <div className="w-full mb-4">
+                  <Alert {...alert} onClose={() => setAlert(null)} />
+                </div>
+              )}
+              <div className="flex-[calc(50%-10px)] md:flex-none">
+                <Input
                   type="text"
-                  defaultValue=""
-                  size="30"
-                  required=""
-                  className="px-4 py-2 border border-gray-300 rounded resize-none"
-                  rows="5"
-                ></textarea>
+                  label="Your Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  size="md"
+                  fullWidth
+                />
               </div>
-              <button className="btn btn-sm bg-black text-white">Send Message</button>
+              <div className="flex-[calc(50%-10px)] md:flex-none">
+                <Input
+                  type="email"
+                  label="Your email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  size="md"
+                  fullWidth
+                />
+              </div>
+              <div className="flex-[100%]">
+                <Input
+                  type="text"
+                  label="Subject"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleInputChange}
+                  required
+                  size="md"
+                  fullWidth
+                />
+              </div>
+              <div className="flex-[100%]">
+                <Input
+                  type="textarea"
+                  label="Your message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  required
+                  size="md"
+                  fullWidth
+                  rows={5}
+                />
+              </div>
+              <Button variant="primary" size="sm" loading={loading} type="submit">
+                {loading ? 'Gönderiliyor...' : 'Send Message'}
+              </Button>
             </form>
             <div className="flex-[50%] flex flex-col gap-5">
               <div className="text-sm">

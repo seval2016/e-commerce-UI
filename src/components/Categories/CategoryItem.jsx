@@ -1,7 +1,9 @@
+import Card from "../common/Card";
+
 const CategoryItem = ({ category }) => {
   return (
-    <div className="group cursor-pointer h-full">
-      <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 overflow-hidden border border-gray-100 h-full">
+    <Card className="group cursor-pointer h-full" padding="p-0">
+      <div className="bg-white rounded-2xl shadow-none hover:shadow-none transition-all duration-500 transform hover:-translate-y-3 overflow-hidden border-none h-full">
         {/* Image Container with Background */}
         <div className="relative w-full h-48 bg-[#f7f7f7] flex items-center justify-center">
           <img
@@ -49,7 +51,7 @@ const CategoryItem = ({ category }) => {
         {/* Bottom Border Animation */}
         <div className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-blue-600 to-purple-600 group-hover:w-full transition-all duration-500"></div>
       </div>
-    </div>
+    </Card>
   );
 };
 

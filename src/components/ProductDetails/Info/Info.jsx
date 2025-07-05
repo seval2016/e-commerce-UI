@@ -3,6 +3,9 @@ import { useParams } from "react-router-dom";
 import { CartContext } from "../../../context/CartContext";
 import { message } from "antd";
 import { products as productsData } from "../../../data";
+import Button from "../../common/Button";
+import Badge from "../../common/Badge";
+import Input from "../../common/Input";
 
 const Info = () => {
   const { id } = useParams();
@@ -54,9 +57,9 @@ const Info = () => {
       <div className="flex items-center gap-4 mb-2">
         <span className="text-lg text-gray-400 line-through">${product.price.oldPrice.toFixed(2)}</span>
         <span className="text-2xl font-bold text-primary-600">${product.price.newPrice.toFixed(2)}</span>
-        <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
+        <Badge variant="danger" size="sm">
           -{product.discount}%
-        </span>
+        </Badge>
       </div>
       <p className="text-gray-600 mb-2 leading-relaxed text-sm md:text-base">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
@@ -103,20 +106,24 @@ const Info = () => {
         </div>
         {/* Add to Cart */}
         <div className="flex gap-2 items-center">
-          <input 
+          <Input 
             type="number" 
             value={quantity}
             onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
             min="1" 
-            className="w-16 input text-center text-base"
+            size="md"
+            fullWidth={false}
+            className="w-16 text-center"
           />
-          <button
+          <Button
             onClick={handleAddToCart}
             disabled={isInCart}
-            className="flex-1 btn btn-primary btn-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            variant="primary"
+            size="lg"
+            fullWidth
           >
             {isInCart ? "Sepette Mevcut" : "Sepete Ekle"}
-          </button>
+          </Button>
         </div>
         {/* Extra Buttons */}
         <div className="flex gap-4 text-xs md:text-sm mt-2">

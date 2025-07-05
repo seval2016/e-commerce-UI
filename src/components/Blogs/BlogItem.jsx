@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
+import Badge from "../common/Badge";
+import Card from "../common/Card";
 
 const BlogItem = ({ blog }) => {
   return (
-    <article className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
+    <Card className="overflow-hidden group" padding="p-0">
       {/* Blog Image */}
       <Link to={`/blog/${blog.slug}`} className="block relative overflow-hidden">
         <img 
@@ -11,9 +13,9 @@ const BlogItem = ({ blog }) => {
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-4 left-4">
-          <span className="bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+          <Badge variant="primary" size="lg">
             {blog.category}
-          </span>
+          </Badge>
         </div>
       </Link>
 
@@ -52,7 +54,7 @@ const BlogItem = ({ blog }) => {
           <i className="bi bi-arrow-right text-sm"></i>
         </Link>
       </div>
-    </article>
+    </Card>
   );
 };
 

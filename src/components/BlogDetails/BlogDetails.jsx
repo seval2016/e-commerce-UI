@@ -1,4 +1,5 @@
 import Reviews from "../Reviews/Reviews";
+import Badge from "../common/Badge";
 
 const BlogDetails = () => {
   return (
@@ -14,9 +15,9 @@ const BlogDetails = () => {
               className="w-full h-64 md:h-96 object-cover"
             />
             <div className="absolute top-6 left-6">
-              <span className="bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+              <Badge variant="primary" size="lg">
                 COLLECTION
-              </span>
+              </Badge>
             </div>
           </figure>
 

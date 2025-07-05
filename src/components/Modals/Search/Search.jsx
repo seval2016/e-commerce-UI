@@ -1,17 +1,22 @@
 import PropTypes from "prop-types";
+import Modal from "../../common/Modal";
+import Input from "../../common/Input";
 
 const Search = ({ isSearchShow, setIsSearchShow }) => {
   return (
-    <div className={`absolute top-0 left-0 w-full h-full flex justify-center items-center z-[999] transition-all duration-300 ease-in-out ${
-      isSearchShow ? "visible opacity-100" : "invisible opacity-0"
-    }`}>
-      <div className="max-w-[800px] w-full bg-white fixed z-10 p-8 lg:max-w-[370px]">
+    <Modal 
+      isOpen={isSearchShow} 
+      onClose={() => setIsSearchShow(false)}
+      size="4xl"
+      className="p-8"
+    >
+      <div className="w-full">
         <h3 className="text-3xl font-semibold">Search for products</h3>
         <p className="text-sm text-gray-500 pb-4 border-b border-gray-300">
           Start typing to see products you are looking for.
         </p>
         <form className="mt-4 flex relative after:content-[''] after:w-full after:h-px after:bg-gray-300 after:absolute after:-bottom-4">
-          <input 
+          <Input 
             type="text" 
             placeholder="Search a product" 
             className="w-full max-h-[42px] border-gray-300"
@@ -51,16 +56,8 @@ const Search = ({ isSearchShow, setIsSearchShow }) => {
             </a>
           </div>
         </div>
-        <i
-          className="bi bi-x-circle absolute top-1 right-2.5 text-xl cursor-pointer"
-          onClick={() => setIsSearchShow(false)}
-        ></i>
       </div>
-      <div
-        className="absolute inset-0 bg-black bg-opacity-50"
-        onClick={() => setIsSearchShow(false)}
-      ></div>
-    </div>
+    </Modal>
   );
 };
 

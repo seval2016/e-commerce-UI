@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import Slider from "react-slick";
 import { useParams } from "react-router-dom";
 import { products as productsData } from "../../../data";
+import Loading from "../../common/Loading";
 
 function PrevBtn({ onClick }) {
   return (
@@ -82,11 +83,11 @@ const Gallery = () => {
 
   if (!product) {
     return (
-      <div className="animate-pulse">
-        <div className="bg-gray-200 rounded-lg h-80 mb-4"></div>
+      <div className="space-y-4">
+        <Loading type="skeleton" className="h-80 w-full" />
         <div className="grid grid-cols-3 gap-2">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-gray-200 rounded h-16"></div>
+            <Loading key={i} type="skeleton" className="h-16 w-full" />
           ))}
         </div>
       </div>

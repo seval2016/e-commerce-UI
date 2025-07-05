@@ -2,6 +2,9 @@ import PropTypes from "prop-types";
 import { useContext, useState } from "react";
 import { CartContext } from "../../context/CartContext";
 import { Link } from "react-router-dom";
+import Badge from "../common/Badge";
+import Card from "../common/Card";
+import Tooltip from "../common/Tooltip";
 
 const ProductItem = ({ productItem }) => {
   const { cartItems, addToCart } = useContext(CartContext);
@@ -12,16 +15,16 @@ const ProductItem = ({ productItem }) => {
   );
 
   return (
-    <div 
-      className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden"
+    <Card
+      className="group relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Discount Badge */}
       <div className="absolute top-4 right-4 z-10">
-        <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+        <Badge variant="danger" size="md">
           -{productItem.discount}%
-        </span>
+        </Badge>
       </div>
 
       {/* Product Image */}
@@ -47,29 +50,34 @@ const ProductItem = ({ productItem }) => {
         <div className={`absolute left-4 top-4 flex flex-col gap-2 transition-all duration-300 ${
           isHovered ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'
         }`}>
-          <button
-            onClick={() => addToCart(productItem)}
-            disabled={filteredCart}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
-              filteredCart 
-                ? 'bg-green-500 text-white' 
-                : 'bg-white text-gray-700 hover:bg-gray-100 shadow-lg'
-            }`}
-            title={filteredCart ? 'Sepete Eklendi' : 'Sepete Ekle'}
-          >
-            <i className={`bi ${filteredCart ? 'bi-check-lg' : 'bi-basket-fill'} text-sm`}></i>
-          </button>
+          <Tooltip content={filteredCart ? 'Sepete Eklendi' : 'Sepete Ekle'} position="right">
+            <button
+              onClick={() => addToCart(productItem)}
+              disabled={filteredCart}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+                filteredCart 
+                  ? 'bg-green-500 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-100 shadow-lg'
+              }`}
+            >
+              <i className={`bi ${filteredCart ? 'bi-check-lg' : 'bi-basket-fill'} text-sm`}></i>
+            </button>
+          </Tooltip>
           
-          <button className="w-10 h-10 rounded-full bg-white text-gray-700 hover:bg-gray-100 shadow-lg flex items-center justify-center transition-all duration-200">
-            <i className="bi bi-heart-fill text-sm"></i>
-          </button>
+          <Tooltip content="Favorilere Ekle" position="right">
+            <button className="w-10 h-10 rounded-full bg-white text-gray-700 hover:bg-gray-100 shadow-lg flex items-center justify-center transition-all duration-200">
+              <i className="bi bi-heart-fill text-sm"></i>
+            </button>
+          </Tooltip>
           
-          <Link 
-            to={`product/${productItem.id}`}
-            className="w-10 h-10 rounded-full bg-white text-gray-700 hover:bg-gray-100 shadow-lg flex items-center justify-center transition-all duration-200"
-          >
-            <i className="bi bi-eye-fill text-sm"></i>
-          </Link>
+          <Tooltip content="Ürün Detayı" position="right">
+            <Link 
+              to={`product/${productItem.id}`}
+              className="w-10 h-10 rounded-full bg-white text-gray-700 hover:bg-gray-100 shadow-lg flex items-center justify-center transition-all duration-200"
+            >
+              <i className="bi bi-eye-fill text-sm"></i>
+            </Link>
+          </Tooltip>
         </div>
       </div>
 
@@ -105,7 +113,7 @@ const ProductItem = ({ productItem }) => {
           </span>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
 

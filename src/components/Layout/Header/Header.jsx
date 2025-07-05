@@ -3,6 +3,7 @@ import Proptypes from "prop-types";
 import { Link, useLocation } from "react-router-dom";
 import { CartContext } from "../../../context/CartContext";
 import MobileMenu from "./MobileMenu";
+import Dropdown from "../../common/Dropdown";
 
 const Header = ({ setIsSearchShow }) => {
   const { getCartCount } = useContext(CartContext);
@@ -216,9 +217,48 @@ const Header = ({ setIsSearchShow }) => {
               <i className="bi-x-circle hidden absolute top-4 right-4 text-xl cursor-pointer" id="close-sidebar"></i>
             </div>
             <div className="flex items-center gap-4">
-              <Link to={"/auth"} className="text-2xl text-gray-700 hover:text-blue-600 transition-colors">
-                <i className="bi bi-person"></i>
-              </Link>
+              {user ? (
+                <Dropdown
+                  trigger={
+                    <div className="text-2xl text-gray-700 hover:text-blue-600 transition-colors cursor-pointer">
+                      <i className="bi bi-person-circle"></i>
+                    </div>
+                  }
+                  items={[
+                    {
+                      label: "Profilim",
+                      icon: <i className="bi bi-person"></i>,
+                      onClick: () => console.log("Profil")
+                    },
+                    {
+                      label: "Siparişlerim",
+                      icon: <i className="bi bi-box"></i>,
+                      onClick: () => console.log("Siparişler")
+                    },
+                    {
+                      label: "Favorilerim",
+                      icon: <i className="bi bi-heart"></i>,
+                      onClick: () => console.log("Favoriler")
+                    },
+                    { divider: true },
+                    {
+                      label: "Çıkış Yap",
+                      icon: <i className="bi bi-box-arrow-right"></i>,
+                      onClick: () => {
+                        if (window.confirm("Çıkış yapmak istediğinize emin misiniz?")) {
+                          localStorage.removeItem("user");
+                          window.location.href = "/";
+                        }
+                      }
+                    }
+                  ]}
+                  position="bottom"
+                />
+              ) : (
+                <Link to={"/auth"} className="text-2xl text-gray-700 hover:text-blue-600 transition-colors">
+                  <i className="bi bi-person"></i>
+                </Link>
+              )}
               <button
                 className="border-none bg-transparent text-lg text-gray-700 hover:text-blue-600 transition-colors"
                 onClick={() => setIsSearchShow(true)}
@@ -233,23 +273,6 @@ const Header = ({ setIsSearchShow }) => {
                   </span>
                 </Link>
               </div>
-              {user && (
-                <button
-                  className="border-none bg-transparent text-lg text-gray-700 hover:text-red-600 transition-colors"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "Çıkış yapmak istediğinize emin misiniz?"
-                      )
-                    ) {
-                      localStorage.removeItem("user");
-                      window.location.href = "/";
-                    }
-                  }}
-                >
-                  <i className="bi bi-box-arrow-right"></i>
-                </button>
-              )}
             </div>
           </div>
         </div>

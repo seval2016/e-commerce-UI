@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { CartContext } from "../../context/CartContext";
 import { message } from "antd";
+import Button from "../common/Button";
 
 const CartTotals = () => {
   const [fastCargoChecked, setFastCargoChecked] = useState(false);
@@ -66,20 +67,24 @@ const CartTotals = () => {
       </div>
       
       <div className="mt-6 space-y-3">
-        <button 
+        <Button 
           onClick={handleCheckout}
           disabled={cartItems.length === 0}
-          className="w-full btn btn-primary btn-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          variant="primary"
+          size="lg"
+          fullWidth
         >
           Siparişi Tamamla
-        </button>
-        <button 
+        </Button>
+        <Button 
           onClick={handleClearCart}
           disabled={cartItems.length === 0}
-          className="w-full btn btn-secondary btn-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          variant="secondary"
+          size="lg"
+          fullWidth
         >
           Sepeti Temizle
-        </button>
+        </Button>
       </div>
     </div>
   );

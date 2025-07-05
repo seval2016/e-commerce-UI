@@ -1,9 +1,10 @@
 import { useParams } from "react-router-dom";
-import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { products as productsData } from "../../../data";
+import Loading from "../../common/Loading";
+import Breadcrumb from "../../common/Breadcrumb";
 
-const Breadcrumb = () => {
+const ProductBreadcrumb = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
 
@@ -15,54 +16,29 @@ const Breadcrumb = () => {
   }, [id]);
 
   if (!product) {
-    return <div className="animate-pulse">Loading...</div>;
+    return <Loading type="dots" text="Ürün yükleniyor..." />;
   }
 
-  return (
-    <nav className="flex" aria-label="Breadcrumb">
-      <ol className="inline-flex items-center space-x-1 md:space-x-3">
-        <li className="inline-flex items-center">
-          <Link 
-            to="/" 
-            className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-600"
-          >
-            <i className="bi bi-house-door mr-2"></i>
-            Ana Sayfa
-          </Link>
-        </li>
-        <li>
-          <div className="flex items-center">
-            <i className="bi bi-chevron-right text-gray-400 mx-2"></i>
-            <Link 
-              to="/shop" 
-              className="text-sm font-medium text-gray-700 hover:text-primary-600"
-            >
-              Mağaza
-            </Link>
-          </div>
-        </li>
-        <li>
-          <div className="flex items-center">
-            <i className="bi bi-chevron-right text-gray-400 mx-2"></i>
-            <Link 
-              to="/shop" 
-              className="text-sm font-medium text-gray-700 hover:text-primary-600"
-            >
-              Ürünler
-            </Link>
-          </div>
-        </li>
-        <li aria-current="page">
-          <div className="flex items-center">
-            <i className="bi bi-chevron-right text-gray-400 mx-2"></i>
-            <span className="text-sm font-medium text-gray-500 truncate max-w-xs">
-              {product.name}
-            </span>
-          </div>
-        </li>
-      </ol>
-    </nav>
-  );
+  const breadcrumbItems = [
+    {
+      label: "Ana Sayfa",
+      href: "/",
+      icon: <i className="bi bi-house-door"></i>
+    },
+    {
+      label: "Mağaza",
+      href: "/shop"
+    },
+    {
+      label: "Ürünler",
+      href: "/shop"
+    },
+    {
+      label: product.name
+    }
+  ];
+
+  return <Breadcrumb items={breadcrumbItems} />;
 };
 
-export default Breadcrumb;
+export default ProductBreadcrumb;

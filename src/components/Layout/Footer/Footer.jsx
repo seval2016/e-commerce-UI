@@ -1,5 +1,7 @@
 import React from "react";
 import Policy from "../Policy/Policy";
+import Button from "../../common/Button";
+import Input from "../../common/Input";
 
 const Footer = () => {
   return (
@@ -22,14 +24,16 @@ const Footer = () => {
                 </div>
                 <div className="space-y-3">
                   <form className="flex gap-3 max-w-md">
-                    <input
+                    <Input
                       type="email"
                       placeholder="Enter your email address."
-                      className="flex-1 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 text-sm"
+                      size="sm"
+                      fullWidth={false}
+                      className="flex-1"
                     />
-                    <button className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors duration-200 text-sm whitespace-nowrap">
+                    <Button variant="primary" size="sm">
                       Subscribe
-                    </button>
+                    </Button>
                   </form>
                   <p className="text-xs text-gray-400">
                     By subscribing you agree to our{" "}

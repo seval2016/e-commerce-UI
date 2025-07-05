@@ -3,6 +3,7 @@ import CategoryItem from "./CategoryItem";
 import Slider from "react-slick";
 import PropTypes from "prop-types";
 import { categories } from "../../data";
+import SectionTitle from "../common/SectionTitle";
 
 function NextBtn({ onClick }) {
   return (
@@ -69,10 +70,10 @@ const Categories = () => {
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4 max-w-7xl">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">All Categories</h2>
-          <p className="text-lg text-gray-600">Summer Collection New Modern Design</p>
-        </div>
+        <SectionTitle 
+          title="All Categories"
+          subtitle="Summer Collection New Modern Design"
+        />
         <div className="relative">
           <Slider {...sliderSettings}>
             {categoriesData.map((category) => (

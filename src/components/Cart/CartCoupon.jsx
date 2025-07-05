@@ -1,21 +1,25 @@
+import Button from "../common/Button";
+import Input from "../common/Input";
+
 const CartCoupon = () => {
   return (
     <div className="mt-6 pt-6 border-t border-gray-200">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex space-x-2">
-          <input 
+          <Input 
             type="text" 
-            className="flex-1 input" 
-            placeholder="Kupon kodu" 
+            placeholder="Kupon kodu"
+            fullWidth={false}
+            className="flex-1"
           />
-          <button className="btn btn-primary whitespace-nowrap">
+          <Button variant="primary" size="md">
             Kupon Uygula
-          </button>
+          </Button>
         </div>
         <div>
-          <button className="w-full btn btn-secondary">
+          <Button variant="secondary" size="md" fullWidth>
             Sepeti Güncelle
-          </button>
+          </Button>
         </div>
       </div>
     </div>
