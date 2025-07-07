@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Button, Avatar, Dropdown, Space, Badge } from 'antd';
+import { Layout, Menu, Button, Avatar, Dropdown, Space, Badge, message } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -16,6 +16,7 @@ import {
   CustomerServiceOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useAdminAuth } from '../context/AdminAuthContext.jsx';
 
 const { Header, Sider, Content } = Layout;
 
@@ -23,6 +24,7 @@ const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { adminUser, logout } = useAdminAuth();
 
   const menuItems = [
     {
@@ -99,8 +101,9 @@ const AdminLayout = () => {
 
   const handleUserMenuClick = ({ key }) => {
     if (key === 'logout') {
-      // Logout logic here
-      navigate('/');
+      logout();
+      message.success('Başarıyla çıkış yapıldı');
+      navigate('/admin/login');
     }
   };
 
@@ -177,7 +180,7 @@ const AdminLayout = () => {
                   icon={<UserOutlined />}
                   style={{ backgroundColor: '#1890ff' }}
                 />
-                <span style={{ color: '#333' }}>Admin</span>
+                <span style={{ color: '#333' }}>{adminUser?.name || 'Admin'}</span>
               </Space>
             </Dropdown>
           </Space>

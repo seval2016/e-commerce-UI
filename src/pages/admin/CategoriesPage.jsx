@@ -10,11 +10,12 @@ import {
   Form, 
   Switch,
   Popconfirm,
-  message,
   Row,
   Col,
   Statistic,
-  Image
+  Image,
+  Upload,
+  message
 } from 'antd';
 import {
   PlusOutlined,
@@ -22,8 +23,10 @@ import {
   EditOutlined,
   DeleteOutlined,
   TagsOutlined,
-  ShoppingOutlined
+  ShoppingOutlined,
+  UploadOutlined
 } from '@ant-design/icons';
+import { useData } from '../../context/DataContext.jsx';
 
 const { Search } = Input;
 
@@ -32,60 +35,22 @@ const CategoriesPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [form] = Form.useForm();
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  
+  const { categories, addCategory, updateCategory, deleteCategory } = useData();
 
-  // Mock data
-  const categories = [
-    {
-      key: '1',
-      id: 1,
-      name: 'Telefon',
-      description: 'Akıllı telefonlar ve mobil cihazlar',
-      image: '/img/categories/categories1.png',
-      productCount: 25,
-      status: 'active',
-      slug: 'telefon'
-    },
-    {
-      key: '2',
-      id: 2,
-      name: 'Bilgisayar',
-      description: 'Dizüstü ve masaüstü bilgisayarlar',
-      image: '/img/categories/categories2.png',
-      productCount: 18,
-      status: 'active',
-      slug: 'bilgisayar'
-    },
-    {
-      key: '3',
-      id: 3,
-      name: 'Tablet',
-      description: 'Tablet bilgisayarlar ve iPad\'ler',
-      image: '/img/categories/categories3.png',
-      productCount: 12,
-      status: 'active',
-      slug: 'tablet'
-    },
-    {
-      key: '4',
-      id: 4,
-      name: 'Aksesuar',
-      description: 'Telefon ve bilgisayar aksesuarları',
-      image: '/img/categories/categories4.png',
-      productCount: 45,
-      status: 'active',
-      slug: 'aksesuar'
-    },
-    {
-      key: '5',
-      id: 5,
-      name: 'Kulaklık',
-      description: 'Kablolu ve kablosuz kulaklıklar',
-      image: '/img/categories/categories5.png',
-      productCount: 32,
-      status: 'inactive',
-      slug: 'kulaklik'
-    }
-  ];
+  // Filter categories based on search
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchText.toLowerCase()) ||
+    category.description.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  // Transform categories for table
+  const tableCategories = filteredCategories.map(category => ({
+    ...category,
+    key: category.id
+  }));
 
   const columns = [
     {
@@ -169,37 +134,92 @@ const CategoriesPage = () => {
 
   const handleAdd = () => {
     setEditingCategory(null);
+    setImageFile(null);
+    setImagePreview('');
     form.resetFields();
     setIsModalVisible(true);
   };
 
   const handleEdit = (category) => {
     setEditingCategory(category);
-    form.setFieldsValue(category);
+    setImagePreview(category.image || '');
+    form.setFieldsValue({
+      ...category,
+      status: category.status === 'active',
+      image: category.image || ''
+    });
     setIsModalVisible(true);
   };
 
   const handleDelete = (id) => {
-    message.success('Kategori başarıyla silindi');
-    // API call would go here
+    deleteCategory(id);
   };
 
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
-      if (editingCategory) {
-        message.success('Kategori başarıyla güncellendi');
-      } else {
-        message.success('Kategori başarıyla eklendi');
+  const handleImageUpload = (file) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      message.error('Sadece resim dosyaları yükleyebilirsiniz!');
+      return false;
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      message.error('Resim dosyası 2MB\'dan küçük olmalıdır!');
+      return false;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+    setImageFile(file);
+    return false;
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    form.setFieldsValue({ image: '' });
+  };
+
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      
+      let imageBase64 = imagePreview;
+      if (imageFile) {
+        imageBase64 = await fileToBase64(imageFile);
       }
+      
+      const categoryData = {
+        ...values,
+        status: values.status ? 'active' : 'inactive',
+        productCount: 0,
+        image: imageBase64
+      };
+      
+      if (editingCategory) {
+        updateCategory(editingCategory.id, categoryData);
+      } else {
+        addCategory(categoryData);
+      }
+      
       setIsModalVisible(false);
+      setImageFile(null);
+      setImagePreview('');
       form.resetFields();
+    } catch (error) {
+      console.error('Error in handleModalOk:', error);
+    }
+  };
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
     });
   };
-
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    category.description.toLowerCase().includes(searchText.toLowerCase())
-  );
 
   return (
     <div>
@@ -282,9 +302,9 @@ const CategoriesPage = () => {
       <Card>
         <Table
           columns={columns}
-          dataSource={filteredCategories}
+          dataSource={tableCategories}
           pagination={{
-            total: filteredCategories.length,
+            total: tableCategories.length,
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
@@ -296,22 +316,66 @@ const CategoriesPage = () => {
 
       {/* Add/Edit Modal */}
       <Modal
-        title={editingCategory ? 'Kategori Düzenle' : 'Yeni Kategori Ekle'}
+        title={editingCategory ? (
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>
+              Kategori Düzenle
+            </h2>
+            <div style={{ color: '#888', fontSize: 14 }}>
+              Kategori bilgilerini güncelleyin
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>
+              Yeni Kategori Ekle
+            </h2>
+            <div style={{ color: '#888', fontSize: 14 }}>
+              Mağazanız için yeni bir kategori oluşturun
+            </div>
+          </div>
+        )}
         open={isModalVisible}
-        onOk={handleModalOk}
         onCancel={() => setIsModalVisible(false)}
-        width={500}
+        width={480}
+        footer={null}
+        style={{ borderRadius: 16 }}
       >
         <Form
           form={form}
           layout="vertical"
+          style={{ marginTop: 8 }}
+          onFinish={handleModalOk}
         >
+          <Form.Item label="Kategori Görseli">
+            <Upload
+              listType="picture-card"
+              maxCount={1}
+              beforeUpload={handleImageUpload}
+              onRemove={handleRemoveImage}
+              showUploadList={false}
+            >
+              {imagePreview ? (
+                <img src={imagePreview} alt="Kategori" style={{ width: '100%', borderRadius: 12, objectFit: 'cover', boxShadow: '0 2px 8px #eee' }} />
+              ) : (
+                <div style={{ color: '#888' }}>
+                  <UploadOutlined style={{ fontSize: 24 }} />
+                  <div style={{ marginTop: 8, fontSize: 13 }}>Görsel Yükle</div>
+                </div>
+              )}
+            </Upload>
+          </Form.Item>
+          
+          <div style={{ color: '#888', fontSize: 12, marginTop: -8, marginBottom: 16 }}>
+            2MB'dan küçük, kare oranlı bir görsel seçin.
+          </div>
+
           <Form.Item
             name="name"
             label="Kategori Adı"
             rules={[{ required: true, message: 'Lütfen kategori adını girin!' }]}
           >
-            <Input />
+            <Input size="large" placeholder="Örn: Laptop, Akıllı Saat, Telefon" />
           </Form.Item>
 
           <Form.Item
@@ -319,27 +383,60 @@ const CategoriesPage = () => {
             label="Açıklama"
             rules={[{ required: true, message: 'Lütfen açıklama girin!' }]}
           >
-            <Input.TextArea rows={3} />
+            <Input.TextArea rows={3} size="large" placeholder="Bu kategoriye ait ürünler hakkında kısa bir açıklama yazın..." />
           </Form.Item>
 
           <Form.Item
             name="slug"
-            label="Slug"
-            rules={[{ required: true, message: 'Lütfen slug girin!' }]}
+            label="Slug (URL Kısa Adı)"
+            rules={[
+              { required: true, message: 'Lütfen slug girin!' },
+              { min: 2, message: 'En az 2 karakter olmalı.' },
+              { pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/, message: 'Sadece küçük harf, rakam ve tire (-) kullanın. Boşluk, Türkçe karakter veya özel karakter olmamalı.' }
+            ]}
           >
-            <Input placeholder="ornek-kategori" />
+            <Input size="large" placeholder="örn: akilli-saat, laptop, cocuk-oyuncaklari" />
           </Form.Item>
+          
+          <div style={{ color: '#888', fontSize: 12, marginTop: -8, marginBottom: 16 }}>
+            Sadece küçük harf, rakam ve tire (-) kullanın. Boşluk, Türkçe karakter veya özel karakter olmamalı.
+          </div>
 
           <Form.Item
             name="status"
             label="Durum"
             valuePropName="checked"
+            style={{ marginBottom: 16 }}
           >
             <Switch 
               checkedChildren="Aktif" 
               unCheckedChildren="Pasif"
+              style={{ background: '#1890ff' }}
             />
           </Form.Item>
+
+          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              style={{ flex: 1, fontWeight: 600, borderRadius: 8 }}
+            >
+              {editingCategory ? 'Kaydet' : 'Ekle'}
+            </Button>
+            <Button
+              onClick={() => {
+                setIsModalVisible(false);
+                setImageFile(null);
+                setImagePreview('');
+                form.resetFields();
+              }}
+              size="large"
+              style={{ flex: 1, borderRadius: 8 }}
+            >
+              Vazgeç
+            </Button>
+          </div>
         </Form>
       </Modal>
     </div>

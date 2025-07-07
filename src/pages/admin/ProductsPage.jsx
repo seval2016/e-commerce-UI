@@ -13,21 +13,24 @@ import {
   InputNumber, 
   Switch,
   Popconfirm,
-  message,
   Row,
   Col,
-  Statistic
+  Statistic,
+  Upload,
+  message
 } from 'antd';
 import {
   PlusOutlined,
   SearchOutlined,
   EditOutlined,
   DeleteOutlined,
-  EyeOutlined,
   ShoppingOutlined,
   DollarOutlined,
-  TagsOutlined
+  TagsOutlined,
+  UploadOutlined,
+  DeleteOutlined as DeleteIcon
 } from '@ant-design/icons';
+import { useData } from '../../context/DataContext.jsx';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -37,73 +40,68 @@ const ProductsPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [form] = Form.useForm();
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  
+  const { products, categories, addProduct, updateProduct, deleteProduct } = useData();
 
-  // Mock data
-  const products = [
-    {
-      key: '1',
-      id: 1,
-      name: 'iPhone 15 Pro',
-      category: 'Telefon',
-      price: 45000,
-      stock: 25,
-      status: 'active',
-      image: '/img/products/product1/1.png',
-      description: 'Apple iPhone 15 Pro 128GB'
-    },
-    {
-      key: '2',
-      id: 2,
-      name: 'Samsung Galaxy S24',
-      category: 'Telefon',
-      price: 35000,
-      stock: 18,
-      status: 'active',
-      image: '/img/products/product2/1.png',
-      description: 'Samsung Galaxy S24 256GB'
-    },
-    {
-      key: '3',
-      id: 3,
-      name: 'MacBook Air M2',
-      category: 'Bilgisayar',
-      price: 45000,
-      stock: 12,
-      status: 'active',
-      image: '/img/products/product3/1.png',
-      description: 'Apple MacBook Air M2 13 inch'
-    },
-    {
-      key: '4',
-      id: 4,
-      name: 'AirPods Pro',
-      category: 'Aksesuar',
-      price: 6000,
-      stock: 0,
-      status: 'inactive',
-      image: '/img/products/product4/1.png',
-      description: 'Apple AirPods Pro 2. Nesil'
-    },
-    {
-      key: '5',
-      id: 5,
-      name: 'iPad Air',
-      category: 'Tablet',
-      price: 15000,
-      stock: 8,
-      status: 'active',
-      image: '/img/products/product5/1.png',
-      description: 'Apple iPad Air 10.9 inch'
+  // Filter products based on search
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchText.toLowerCase()) ||
+    product.description.toLowerCase().includes(searchText.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  // Transform products for table
+  const tableProducts = filteredProducts.map(product => ({
+    ...product,
+    key: product.id
+  }));
+
+  // Handle image upload
+  const handleImageUpload = (file) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      message.error('Sadece resim dosyaları yükleyebilirsiniz!');
+      return false;
     }
-  ];
 
-  const categories = [
-    { value: 'telefon', label: 'Telefon' },
-    { value: 'bilgisayar', label: 'Bilgisayar' },
-    { value: 'tablet', label: 'Tablet' },
-    { value: 'aksesuar', label: 'Aksesuar' },
-    { value: 'kulaklik', label: 'Kulaklık' }
-  ];
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      message.error('Resim dosyası 2MB\'dan küçük olmalıdır!');
+      return false;
+    }
+
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreviews(prev => [...prev, e.target.result]);
+    };
+    reader.readAsDataURL(file);
+
+    setImageFiles(prev => [...prev, file]);
+    return false; // Prevent default upload behavior
+  };
+
+  // Remove uploaded image
+  const handleRemoveImage = (index) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Convert files to base64 for storage
+  const filesToBase64 = (files) => {
+    return Promise.all(
+      files.map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+        });
+      })
+    );
+  };
 
   const columns = [
     {
@@ -115,13 +113,18 @@ const ProductsPage = () => {
           <Image
             width={50}
             height={50}
-            src={record.image}
+            src={record.image || record.images?.[0]}
             fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
             style={{ borderRadius: 8, marginRight: 12 }}
           />
           <div>
             <div style={{ fontWeight: 500 }}>{text}</div>
             <div style={{ fontSize: 12, color: '#666' }}>{record.description}</div>
+            {record.images && record.images.length > 1 && (
+              <div style={{ fontSize: 10, color: '#999' }}>
+                {record.images.length} resim
+              </div>
+            )}
           </div>
         </div>
       ),
@@ -167,12 +170,6 @@ const ProductsPage = () => {
         <Space>
           <Button 
             type="text" 
-            icon={<EyeOutlined />} 
-            size="small"
-            onClick={() => handleView(record)}
-          />
-          <Button 
-            type="text" 
             icon={<EditOutlined />} 
             size="small"
             onClick={() => handleEdit(record)}
@@ -201,52 +198,71 @@ const ProductsPage = () => {
 
   const handleAdd = () => {
     setEditingProduct(null);
+    setImageFiles([]);
+    setImagePreviews([]);
     form.resetFields();
     setIsModalVisible(true);
   };
 
   const handleEdit = (product) => {
     setEditingProduct(product);
-    form.setFieldsValue(product);
+    setImageFiles([]);
+    setImagePreviews(product.images || [product.image] || []);
+    form.setFieldsValue({
+      ...product,
+      images: product.images || [product.image] || []
+    });
     setIsModalVisible(true);
   };
 
-  const handleView = (product) => {
-    Modal.info({
-      title: product.name,
-      content: (
-        <div>
-          <p><strong>Açıklama:</strong> {product.description}</p>
-          <p><strong>Kategori:</strong> {product.category}</p>
-          <p><strong>Fiyat:</strong> {product.price.toLocaleString()} ₺</p>
-          <p><strong>Stok:</strong> {product.stock} adet</p>
-          <p><strong>Durum:</strong> {product.status === 'active' ? 'Aktif' : 'Pasif'}</p>
-        </div>
-      ),
-    });
-  };
-
   const handleDelete = (id) => {
-    message.success('Ürün başarıyla silindi');
-    // API call would go here
+    deleteProduct(id);
   };
 
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
-      if (editingProduct) {
-        message.success('Ürün başarıyla güncellendi');
-      } else {
-        message.success('Ürün başarıyla eklendi');
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      
+      // Handle image upload
+      let imageUrls = values.images || [];
+      if (imageFiles.length > 0) {
+        try {
+          const base64Images = await filesToBase64(imageFiles);
+          imageUrls = base64Images;
+        } catch {
+          message.error('Resim yüklenirken hata oluştu');
+          return;
+        }
       }
+
+      const productData = {
+        ...values,
+        image: imageUrls[0] || '', // Ana resim
+        images: imageUrls, // Tüm resimler
+        status: values.status ? 'active' : 'inactive'
+      };
+
+      if (editingProduct) {
+        updateProduct(editingProduct.id, productData);
+      } else {
+        addProduct(productData);
+      }
+      
       setIsModalVisible(false);
       form.resetFields();
-    });
+      setImageFiles([]);
+      setImagePreviews([]);
+    } catch {
+      console.error('Form validation failed');
+    }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+    setImageFiles([]);
+    setImagePreviews([]);
+  };
 
   return (
     <div>
@@ -330,9 +346,9 @@ const ProductsPage = () => {
       <Card>
         <Table
           columns={columns}
-          dataSource={filteredProducts}
+          dataSource={tableProducts}
           pagination={{
-            total: filteredProducts.length,
+            total: tableProducts.length,
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
@@ -347,8 +363,8 @@ const ProductsPage = () => {
         title={editingProduct ? 'Ürün Düzenle' : 'Yeni Ürün Ekle'}
         open={isModalVisible}
         onOk={handleModalOk}
-        onCancel={() => setIsModalVisible(false)}
-        width={600}
+        onCancel={handleModalCancel}
+        width={700}
       >
         <Form
           form={form}
@@ -372,13 +388,94 @@ const ProductsPage = () => {
               >
                 <Select placeholder="Kategori seçin">
                   {categories.map(cat => (
-                    <Option key={cat.value} value={cat.value}>{cat.label}</Option>
+                    <Option key={cat.id || cat.value} value={cat.name || cat.value}>
+                      {cat.name || cat.label}
+                    </Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
           </Row>
           
+          {/* Image Upload Section */}
+          <Form.Item
+            name="images"
+            label="Ürün Resimleri"
+            rules={[{ required: true, message: 'Lütfen en az bir ürün resmi yükleyin!' }]}
+          >
+            <div>
+              {/* Image Previews */}
+              {imagePreviews.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} style={{ position: 'relative' }}>
+                        <Image
+                          width={120}
+                          height={120}
+                          src={preview}
+                          style={{ borderRadius: 8, objectFit: 'cover' }}
+                          fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+                        />
+                        <Button 
+                          type="text" 
+                          danger 
+                          icon={<DeleteIcon />}
+                          onClick={() => handleRemoveImage(index)}
+                          size="small"
+                          style={{ 
+                            position: 'absolute', 
+                            top: 4, 
+                            right: 4,
+                            background: 'rgba(255,255,255,0.9)',
+                            border: 'none'
+                          }}
+                        />
+                        {index === 0 && (
+                          <div style={{ 
+                            position: 'absolute', 
+                            bottom: 4, 
+                            left: 4,
+                            background: '#1890ff',
+                            color: 'white',
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            fontSize: 10
+                          }}>
+                            Ana Resim
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Upload Button */}
+              <Upload
+                beforeUpload={handleImageUpload}
+                showUploadList={false}
+                accept="image/*"
+                multiple
+              >
+                <Button 
+                  icon={<UploadOutlined />} 
+                  style={{ width: '100%', height: 100 }}
+                  type="dashed"
+                >
+                  {imagePreviews.length > 0 ? 'Daha Fazla Resim Ekle' : 'Resim Yükle'}
+                </Button>
+              </Upload>
+              
+              <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+                <p>• Maksimum dosya boyutu: 2MB</p>
+                <p>• Desteklenen formatlar: JPG, PNG, GIF</p>
+                <p>• İlk yüklenen resim ana resim olarak kullanılır</p>
+                <p>• En az 1, en fazla 6 resim yükleyebilirsiniz</p>
+              </div>
+            </div>
+          </Form.Item>
+
           <Form.Item
             name="description"
             label="Açıklama"
@@ -420,6 +517,7 @@ const ProductsPage = () => {
             name="status"
             label="Durum"
             valuePropName="checked"
+            initialValue={true}
           >
             <Switch 
               checkedChildren="Aktif" 

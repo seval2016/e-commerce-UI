@@ -19,16 +19,25 @@ import {
   Badge
 } from 'antd';
 import {
+  PlusOutlined,
   SearchOutlined,
-  EyeOutlined,
   EditOutlined,
   DeleteOutlined,
   ShoppingCartOutlined,
   DollarOutlined,
-  ClockCircleOutlined,
+  UserOutlined,
+  CalendarOutlined,
+  FilterOutlined,
+  ExportOutlined,
+  ImportOutlined,
+  ReloadOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  TruckOutlined
+  ClockCircleOutlined,
+  CarOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  SyncOutlined
 } from '@ant-design/icons';
 
 const { Search } = Input;
@@ -117,7 +126,7 @@ const OrdersPage = () => {
 
   const statusConfig = {
     pending: { color: 'orange', text: 'Beklemede', icon: <ClockCircleOutlined /> },
-    processing: { color: 'blue', text: 'İşleniyor', icon: <TruckOutlined /> },
+    processing: { color: 'blue', text: 'İşleniyor', icon: <CarOutlined /> },
     completed: { color: 'green', text: 'Tamamlandı', icon: <CheckCircleOutlined /> },
     cancelled: { color: 'red', text: 'İptal Edildi', icon: <CloseCircleOutlined /> }
   };
@@ -211,12 +220,6 @@ const OrdersPage = () => {
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Button 
-            type="text" 
-            icon={<EyeOutlined />} 
-            size="small"
-            onClick={() => handleView(record)}
-          />
           <Button 
             type="text" 
             icon={<EditOutlined />} 

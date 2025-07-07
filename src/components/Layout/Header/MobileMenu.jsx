@@ -1,7 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
+import { useAdminAuth } from "../../../context/AdminAuthContext.jsx";
 
 const MobileMenu = ({ isOpen, onClose }) => {
   const { pathname } = useLocation();
+  const { isAdmin } = useAdminAuth();
 
   return (
     <>
@@ -48,6 +50,16 @@ const MobileMenu = ({ isOpen, onClose }) => {
             >
               Contact
             </Link>
+            {isAdmin() && (
+              <Link 
+                to={"/admin"} 
+                className={`text-lg font-medium transition-colors ${pathname.startsWith("/admin") ? "text-blue-600" : "text-gray-700"} flex items-center gap-2`}
+                onClick={onClose}
+              >
+                <i className="bi bi-gear-fill"></i>
+                Admin
+              </Link>
+            )}
           </nav>
         </div>
       </div>

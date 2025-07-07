@@ -1,8 +1,7 @@
-import { useState } from "react";
 import CategoryItem from "./CategoryItem";
 import Slider from "react-slick";
 import PropTypes from "prop-types";
-import { categories } from "../../data";
+import { useData } from "../../context/DataContext.jsx";
 import SectionTitle from "../common/SectionTitle";
 
 function NextBtn({ onClick }) {
@@ -40,7 +39,7 @@ PrevBtn.propTypes = {
 };
 
 const Categories = () => {
-  const [categoriesData] = useState(categories);
+  const { categories } = useData();
 
   const sliderSettings = {
     dots: false,
@@ -74,9 +73,10 @@ const Categories = () => {
           title="All Categories"
           subtitle="Summer Collection New Modern Design"
         />
+        
         <div className="relative">
           <Slider {...sliderSettings}>
-            {categoriesData.map((category) => (
+            {categories.map((category) => (
               <div key={category.id} className="px-2">
                 <CategoryItem category={category} />
               </div>

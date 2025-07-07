@@ -13,7 +13,6 @@ const HomePage = () => {
       <Categories />
       <Products />
       <Campaigns />
-      <Products />
       <Blogs />
       <Brands />
       <CampaignSingle />

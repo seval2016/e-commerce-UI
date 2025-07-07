@@ -1,88 +1,92 @@
 [
   {
-    "id": 1,
+    "id": "1",
     "name": "Analogue Resin Strap",
-    "price": {
-      "oldPrice": 165.00,
-      "newPrice": 108.00
-    },
+    "description": "Modern tasarım saat kayışı",
+    "category": "Watch",
+    "price": 108.00,
+    "stock": 25,
+    "status": "active",
+    "image": "img/products/product1/1.png",
+    "images": [
+      "img/products/product1/1.png",
+      "img/products/product1/2.png",
+      "img/products/product1/3.png"
+    ],
     "discount": 22,
-    "img": {
-      "singleImage": "img/products/product1/1.png",
-      "thumbs": [
-        "img/products/product1/1.png",
-        "img/products/product1/2.png",
-        "img/products/product1/3.png",
-        "img/products/product1/2.png"
-      ]
-    }
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   {
-    "id": 2,
+    "id": "2",
     "name": "Ridley High Waist",
-    "price": {
-      "oldPrice": 208.00,
-      "newPrice": 100
-    },
+    "description": "Yüksek bel pantolon",
+    "category": "Smartphone",
+    "price": 100.00,
+    "stock": 15,
+    "status": "active",
+    "image": "img/products/product2/1.png",
+    "images": [
+      "img/products/product2/1.png",
+      "img/products/product2/2.png",
+      "img/products/product2/3.png"
+    ],
     "discount": 33,
-    "img": {
-      "singleImage": "img/products/product2/1.png",
-      "thumbs": [
-        "img/products/product2/1.png",
-        "img/products/product2/2.png",
-        "img/products/product2/3.png"
-      ]
-    }
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   {
-    "id": 3,
+    "id": "3",
     "name": "Blush Beanie",
-    "price": {
-      "oldPrice": 165.00,
-      "newPrice": 38.00
-    },
+    "description": "Pembe bere",
+    "category": "Headphones",
+    "price": 38.00,
+    "stock": 30,
+    "status": "active",
+    "image": "img/products/product3/1.png",
+    "images": [
+      "img/products/product3/1.png",
+      "img/products/product3/2.png",
+      "img/products/product3/3.png"
+    ],
     "discount": 90,
-    "img": {
-      "singleImage": "img/products/product3/1.png",
-      "thumbs": [
-        "img/products/product3/1.png",
-        "img/products/product3/2.png",
-        "img/products/product3/3.png"
-      ]
-    }
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   {
-    "id": 4,
+    "id": "4",
     "name": "Mercury Tee",
-    "price": {
-      "oldPrice": 165.00,
-      "newPrice": 48.00
-    },
+    "description": "Mercury tişört",
+    "category": "Laptop",
+    "price": 48.00,
+    "stock": 20,
+    "status": "active",
+    "image": "img/products/product4/1.png",
+    "images": [
+      "img/products/product4/1.png",
+      "img/products/product4/2.png",
+      "img/products/product4/3.png"
+    ],
     "discount": 40,
-    "img": {
-      "singleImage": "img/products/product4/1.png",
-      "thumbs": [
-        "img/products/product4/1.png",
-        "img/products/product4/2.png",
-        "img/products/product4/3.png"
-      ]
-    }
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   {
-    "id": 5,
+    "id": "5",
     "name": "La Bohème Rose Gold",
-    "price": {
-      "oldPrice": 165.00,
-      "newPrice": 48.00
-    },
+    "description": "Rose gold saat",
+    "category": "Watch",
+    "price": 48.00,
+    "stock": 12,
+    "status": "active",
+    "image": "img/products/product5/1.png",
+    "images": [
+      "img/products/product5/1.png",
+      "img/products/product5/2.png",
+      "img/products/product5/3.png"
+    ],
     "discount": 40,
-    "img": {
-      "singleImage": "img/products/product5/1.png",
-      "thumbs": [
-        "img/products/product5/1.png",
-        "img/products/product5/2.png",
-        "img/products/product5/3.png"
-      ]
-    }
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   }
 ] 

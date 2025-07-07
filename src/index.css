@@ -84,3 +84,70 @@
     backdrop-filter: blur(8px);
   }
 }
+
+/* Ant Design Override Styles */
+.ant-btn-primary {
+  background-color: #1890ff !important;
+  border-color: #1890ff !important;
+  color: #fff !important;
+}
+
+.ant-btn-primary:hover {
+  background-color: #40a9ff !important;
+  border-color: #40a9ff !important;
+}
+
+.ant-btn-primary:focus {
+  background-color: #1890ff !important;
+  border-color: #1890ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+.ant-btn-primary:active {
+  background-color: #096dd9 !important;
+  border-color: #096dd9 !important;
+}
+
+/* Search Button Styles */
+.ant-input-search .ant-input-search-button {
+  background-color: #1890ff !important;
+  border-color: #1890ff !important;
+  color: #fff !important;
+}
+
+.ant-input-search .ant-input-search-button:hover {
+  background-color: #40a9ff !important;
+  border-color: #40a9ff !important;
+}
+
+.ant-input-search .ant-input-search-button:focus {
+  background-color: #1890ff !important;
+  border-color: #1890ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+.ant-input-search .ant-input-search-button:active {
+  background-color: #096dd9 !important;
+  border-color: #096dd9 !important;
+}
+
+/* Search Icon Styles */
+.ant-input-search .ant-input-search-button .anticon {
+  color: #fff !important;
+}
+
+/* Ensure Ant Design components are not affected by Tailwind */
+.ant-btn,
+.ant-input,
+.ant-select,
+.ant-table,
+.ant-card,
+.ant-modal,
+.ant-form,
+.ant-tabs,
+.ant-menu,
+.ant-dropdown,
+.ant-message,
+.ant-notification {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif !important;
+}

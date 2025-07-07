@@ -199,12 +199,6 @@ const CustomersPage = () => {
         <Space>
           <Button 
             type="text" 
-            icon={<EyeOutlined />} 
-            size="small"
-            onClick={() => handleView(record)}
-          />
-          <Button 
-            type="text" 
             icon={<EditOutlined />} 
             size="small"
             onClick={() => handleEdit(record)}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import ProductItem from "./ProductItem";
 import Slider from "react-slick";
 import PropTypes from "prop-types";
-import { products as productsData } from "../../data";
+import { useData } from "../../context/DataContext.jsx";
 import SectionTitle from "../common/SectionTitle";
 
 function NextBtn({ onClick }) {
@@ -40,7 +40,8 @@ PrevBtn.propTypes = {
 };
 
 const Products = () => {
-  const [products] = useState(productsData);
+  const { products } = useData();
+  const [activeProducts] = useState(products.filter(p => p.status === 'active'));
 
   const sliderSettings = {
     dots: false,
@@ -76,7 +77,7 @@ const Products = () => {
         />
         <div className="relative">
           <Slider {...sliderSettings}>
-            {products.map((product) => (
+            {activeProducts.map((product) => (
               <div key={product.id} className="px-2">
                 <ProductItem productItem={product} />
               </div>

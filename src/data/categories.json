@@ -1,37 +1,79 @@
 [
   {
-    "id": 1,
+    "id": "1",
     "name": "Smartphone",
-    "image": "img/categories/categories1.png"
+    "description": "En yeni akıllı telefon modelleri ve aksesuarları",
+    "slug": "smartphone",
+    "image": "img/categories/categories1.png",
+    "status": "active",
+    "productCount": 25,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   {
-    "id": 2,
+    "id": "2",
     "name": "Laptop",
-    "image": "img/categories/categories2.png"
+    "description": "Güçlü performanslı dizüstü bilgisayarlar",
+    "slug": "laptop",
+    "image": "img/categories/categories2.png",
+    "status": "active",
+    "productCount": 18,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   {
-    "id": 3,
+    "id": "3",
     "name": "Headphones",
-    "image": "img/categories/categories3.png"
+    "description": "Kaliteli ses deneyimi için kulaklıklar",
+    "slug": "headphones",
+    "image": "img/categories/categories3.png",
+    "status": "active",
+    "productCount": 32,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   {
-    "id": 4,
+    "id": "4",
     "name": "Watch",
-    "image": "img/categories/categories4.png"
+    "description": "Akıllı saatler ve geleneksel saatler",
+    "slug": "watch",
+    "image": "img/categories/categories4.png",
+    "status": "active",
+    "productCount": 15,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   {
-    "id": 5,
+    "id": "5",
     "name": "Camera",
-    "image": "img/categories/categories5.png"
+    "description": "Profesyonel ve amatör fotoğraf makineleri",
+    "slug": "camera",
+    "image": "img/categories/categories5.png",
+    "status": "active",
+    "productCount": 12,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   {
-    "id": 6,
+    "id": "6",
     "name": "Gaming",
-    "image": "img/categories/categories6.png"
+    "description": "Oyun konsolları ve gaming aksesuarları",
+    "slug": "gaming",
+    "image": "img/categories/categories6.png",
+    "status": "active",
+    "productCount": 28,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   {
-    "id": 7,
+    "id": "7",
     "name": "Tablet",
-    "image": "img/categories/categories7.png"
+    "description": "Tablet bilgisayarlar ve aksesuarları",
+    "slug": "tablet",
+    "image": "img/categories/categories7.png",
+    "status": "active",
+    "productCount": 20,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   }
 ] 

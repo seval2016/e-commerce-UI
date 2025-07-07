@@ -14,6 +14,13 @@ const ProductItem = ({ productItem }) => {
     (cartItem) => cartItem.id === productItem.id
   );
 
+  // Admin panelinden eklenen ürünler için veri yapısını uyarla
+  const productImage = productItem.image || productItem.images?.[0] || productItem.img?.singleImage || '/img/products/product1/1.png';
+  const productName = productItem.name || 'Ürün Adı';
+  const productPrice = productItem.price || productItem.price?.newPrice || 0;
+  const productOldPrice = productItem.price?.oldPrice || productPrice * 1.2;
+  const productDiscount = productItem.discount || Math.round(((productOldPrice - productPrice) / productOldPrice) * 100);
+
   return (
     <Card
       className="group relative"
@@ -23,7 +30,7 @@ const ProductItem = ({ productItem }) => {
       {/* Discount Badge */}
       <div className="absolute top-4 right-4 z-10">
         <Badge variant="danger" size="md">
-          -{productItem.discount}%
+          -{productDiscount}%
         </Badge>
       </div>
 
@@ -31,17 +38,10 @@ const ProductItem = ({ productItem }) => {
       <div className="relative aspect-square overflow-hidden">
         <Link to={`product/${productItem.id}`}>
           <img 
-            src={productItem.img.singleImage} 
-            alt={productItem.name}
+            src={productImage} 
+            alt={productName}
             className={`w-full h-full object-cover transition-all duration-300 ${
               isHovered ? 'scale-110' : 'scale-100'
-            }`}
-          />
-          <img 
-            src={productItem.img.thumbs[1]} 
-            alt={productItem.name}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
-              isHovered ? 'opacity-100' : 'opacity-0'
             }`}
           />
         </Link>
@@ -87,7 +87,7 @@ const ProductItem = ({ productItem }) => {
           to={`product/${productItem.id}`}
           className="block text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 mb-2 line-clamp-2"
         >
-          {productItem.name}
+          {productName}
         </Link>
         
         {/* Rating */}
@@ -106,10 +106,10 @@ const ProductItem = ({ productItem }) => {
         {/* Price */}
         <div className="flex justify-center items-center gap-2">
           <span className="text-lg font-bold text-red-500">
-            ${productItem.price.newPrice.toFixed(2)}
+            ₺{productPrice.toLocaleString()}
           </span>
           <span className="text-sm text-gray-500 line-through">
-            ${productItem.price.oldPrice.toFixed(2)}
+            ₺{productOldPrice.toLocaleString()}
           </span>
         </div>
       </div>

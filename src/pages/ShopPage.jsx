@@ -19,8 +19,6 @@ const ShopPage = () => {
       <Categories />
       <Products />
       <CampaignSingle />
-      <Products />
-      
       {/* Pagination */}
       <div className="py-8 bg-gray-50">
         <div className="container mx-auto px-4">

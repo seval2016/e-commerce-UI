@@ -7,18 +7,23 @@ import {
   ShoppingOutlined,
   RiseOutlined,
   FallOutlined,
-  EyeOutlined,
   EditOutlined,
   DeleteOutlined,
   FileTextOutlined
 } from '@ant-design/icons';
+import { useData } from '../../context/DataContext.jsx';
+import PageHeader from '../../components/common/PageHeader';
+import StatusBadge from '../../components/common/StatusBadge';
 
 const DashboardPage = () => {
-  // Mock data for statistics
+  const { getAnalytics } = useData();
+  const analytics = getAnalytics();
+
+  // Real data for statistics
   const stats = [
     {
       title: 'Toplam Satış',
-      value: 11280,
+      value: analytics.totalRevenue,
       prefix: <DollarOutlined />,
       suffix: '₺',
       color: '#52c41a',
@@ -27,7 +32,7 @@ const DashboardPage = () => {
     },
     {
       title: 'Toplam Sipariş',
-      value: 1024,
+      value: analytics.totalOrders,
       prefix: <ShoppingCartOutlined />,
       color: '#1890ff',
       change: '+8%',
@@ -35,7 +40,7 @@ const DashboardPage = () => {
     },
     {
       title: 'Toplam Müşteri',
-      value: 812,
+      value: analytics.totalCustomers,
       prefix: <UserOutlined />,
       color: '#722ed1',
       change: '+15%',
@@ -43,7 +48,7 @@ const DashboardPage = () => {
     },
     {
       title: 'Toplam Ürün',
-      value: 156,
+      value: analytics.totalProducts,
       prefix: <ShoppingOutlined />,
       color: '#fa8c16',
       change: '-2%',
@@ -51,41 +56,15 @@ const DashboardPage = () => {
     }
   ];
 
-  // Mock data for recent orders
-  const recentOrders = [
-    {
-      key: '1',
-      orderId: '#ORD-001',
-      customer: 'Ahmet Yılmaz',
-      amount: 1250,
-      status: 'completed',
-      date: '2024-01-15'
-    },
-    {
-      key: '2',
-      orderId: '#ORD-002',
-      customer: 'Fatma Demir',
-      amount: 890,
-      status: 'pending',
-      date: '2024-01-15'
-    },
-    {
-      key: '3',
-      orderId: '#ORD-003',
-      customer: 'Mehmet Kaya',
-      amount: 2100,
-      status: 'processing',
-      date: '2024-01-14'
-    },
-    {
-      key: '4',
-      orderId: '#ORD-004',
-      customer: 'Ayşe Özkan',
-      amount: 750,
-      status: 'cancelled',
-      date: '2024-01-14'
-    }
-  ];
+  // Real data for recent orders
+  const recentOrders = analytics.recentOrders.map((order, index) => ({
+    key: index,
+    orderId: order.id,
+    customer: order.customerName || 'Bilinmeyen Müşteri',
+    amount: order.total || 0,
+    status: order.status || 'pending',
+    date: new Date(order.createdAt).toLocaleDateString('tr-TR')
+  }));
 
   const orderColumns = [
     {
@@ -108,16 +87,7 @@ const DashboardPage = () => {
       title: 'Durum',
       dataIndex: 'status',
       key: 'status',
-      render: (status) => {
-        const statusConfig = {
-          completed: { color: 'green', text: 'Tamamlandı' },
-          pending: { color: 'orange', text: 'Beklemede' },
-          processing: { color: 'blue', text: 'İşleniyor' },
-          cancelled: { color: 'red', text: 'İptal Edildi' }
-        };
-        const config = statusConfig[status];
-        return <Tag color={config.color}>{config.text}</Tag>;
-      },
+      render: (status) => <StatusBadge status={status} />,
     },
     {
       title: 'Tarih',
@@ -129,7 +99,6 @@ const DashboardPage = () => {
       key: 'actions',
       render: () => (
         <Space>
-          <Button type="text" icon={<EyeOutlined />} size="small" />
           <Button type="text" icon={<EditOutlined />} size="small" />
           <Button type="text" icon={<DeleteOutlined />} size="small" danger />
         </Space>
@@ -137,24 +106,19 @@ const DashboardPage = () => {
     },
   ];
 
-  // Mock data for top products
-  const topProducts = [
-    { name: 'iPhone 15 Pro', sales: 45, revenue: 67500 },
-    { name: 'Samsung Galaxy S24', sales: 38, revenue: 45600 },
-    { name: 'MacBook Air M2', sales: 32, revenue: 128000 },
-    { name: 'AirPods Pro', sales: 28, revenue: 16800 },
-    { name: 'iPad Air', sales: 25, revenue: 37500 },
-  ];
+  // Real data for top products
+  const topProducts = analytics.topProducts.map(product => ({
+    name: product.name,
+    sales: product.sales || 0,
+    revenue: (product.sales || 0) * (product.price || 0)
+  }));
 
   return (
     <div>
-      {/* Page Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, margin: 0 }}>Dashboard</h1>
-        <p style={{ color: '#666', margin: '8px 0 0 0' }}>
-          Mağazanızın genel durumunu takip edin
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        description="Mağazanızın genel durumunu takip edin"
+      />
 
       {/* Statistics Cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
