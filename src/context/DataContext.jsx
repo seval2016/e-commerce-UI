@@ -83,7 +83,7 @@ export const DataProvider = ({ children }) => {
     saveToStorage('categories', updatedCategories);
   };
 
-  // Initialize data from localStorage or default data
+  // Load data from localStorage on mount
   useEffect(() => {
     const loadData = () => {
       try {
@@ -92,32 +92,94 @@ export const DataProvider = ({ children }) => {
         
         if (savedCategories) {
           const parsedCategories = JSON.parse(savedCategories);
-          setCategories(parsedCategories);
+          // Duplicate kontrolü
+          const uniqueCategories = parsedCategories.filter((category, index, self) => 
+            index === self.findIndex(c => c.id === category.id)
+          );
+          setCategories(uniqueCategories);
         } else {
           setCategories(initialCategories);
         }
         
-        // Diğer verileri yükle
+        // Ürünleri yükle
         const savedProducts = localStorage.getItem('products');
-        setProducts(savedProducts ? JSON.parse(savedProducts) : initialProducts);
+        if (savedProducts) {
+          const parsedProducts = JSON.parse(savedProducts);
+          // Duplicate kontrolü
+          const uniqueProducts = parsedProducts.filter((product, index, self) => 
+            index === self.findIndex(p => p.id === product.id)
+          );
+          setProducts(uniqueProducts);
+        } else {
+          setProducts(initialProducts);
+        }
         
+        // Diğer verileri yükle
         const savedBlogs = localStorage.getItem('blogs');
-        setBlogs(savedBlogs ? JSON.parse(savedBlogs) : initialBlogs);
+        if (savedBlogs) {
+          const parsedBlogs = JSON.parse(savedBlogs);
+          const uniqueBlogs = parsedBlogs.filter((blog, index, self) => 
+            index === self.findIndex(b => b.id === blog.id)
+          );
+          setBlogs(uniqueBlogs);
+        } else {
+          setBlogs(initialBlogs);
+        }
         
         const savedSliders = localStorage.getItem('sliders');
-        setSliders(savedSliders ? JSON.parse(savedSliders) : initialSliders);
+        if (savedSliders) {
+          const parsedSliders = JSON.parse(savedSliders);
+          const uniqueSliders = parsedSliders.filter((slider, index, self) => 
+            index === self.findIndex(s => s.id === slider.id)
+          );
+          setSliders(uniqueSliders);
+        } else {
+          setSliders(initialSliders);
+        }
         
         const savedCampaigns = localStorage.getItem('campaigns');
-        setCampaigns(savedCampaigns ? JSON.parse(savedCampaigns) : initialCampaigns);
+        if (savedCampaigns) {
+          const parsedCampaigns = JSON.parse(savedCampaigns);
+          const uniqueCampaigns = parsedCampaigns.filter((campaign, index, self) => 
+            index === self.findIndex(c => c.id === campaign.id)
+          );
+          setCampaigns(uniqueCampaigns);
+        } else {
+          setCampaigns(initialCampaigns);
+        }
         
         const savedBrands = localStorage.getItem('brands');
-        setBrands(savedBrands ? JSON.parse(savedBrands) : initialBrands);
+        if (savedBrands) {
+          const parsedBrands = JSON.parse(savedBrands);
+          const uniqueBrands = parsedBrands.filter((brand, index, self) => 
+            index === self.findIndex(b => b.id === brand.id)
+          );
+          setBrands(uniqueBrands);
+        } else {
+          setBrands(initialBrands);
+        }
         
         const savedOrders = localStorage.getItem('orders');
-        setOrders(savedOrders ? JSON.parse(savedOrders) : []);
+        if (savedOrders) {
+          const parsedOrders = JSON.parse(savedOrders);
+          const uniqueOrders = parsedOrders.filter((order, index, self) => 
+            index === self.findIndex(o => o.id === order.id)
+          );
+          setOrders(uniqueOrders);
+        } else {
+          setOrders([]);
+        }
         
         const savedCustomers = localStorage.getItem('customers');
-        setCustomers(savedCustomers ? JSON.parse(savedCustomers) : []);
+        if (savedCustomers) {
+          const parsedCustomers = JSON.parse(savedCustomers);
+          const uniqueCustomers = parsedCustomers.filter((customer, index, self) => 
+            index === self.findIndex(c => c.id === customer.id)
+          );
+          setCustomers(uniqueCustomers);
+        } else {
+          setCustomers([]);
+        }
         
       } catch (error) {
         console.error('DataContext: Error loading data:', error);
@@ -153,8 +215,6 @@ export const DataProvider = ({ children }) => {
 
   // Products CRUD
   const addProduct = (product) => {
-    console.log('DataContext addProduct called with:', product);
-    
     const newProduct = {
       ...product,
       id: Date.now().toString(),
@@ -162,12 +222,8 @@ export const DataProvider = ({ children }) => {
       updatedAt: new Date().toISOString()
     };
     
-    console.log('DataContext newProduct created:', newProduct);
-    
     // Ürünü ekle
     const updatedProducts = [...products, newProduct];
-    console.log('DataContext updatedProducts:', updatedProducts);
-    
     setProducts(updatedProducts);
     saveToStorage('products', updatedProducts);
     

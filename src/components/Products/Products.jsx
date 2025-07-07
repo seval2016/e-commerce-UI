@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import ProductItem from "./ProductItem";
 import Slider from "react-slick";
 import PropTypes from "prop-types";
@@ -40,8 +40,34 @@ PrevBtn.propTypes = {
 };
 
 const Products = () => {
-  const { products } = useData();
-  const [activeProducts] = useState(products.filter(p => p.status === 'active'));
+  const { products, updateProduct } = useData();
+  
+  // useMemo ile aktif ürünleri hesapla - DataContext güncellendiğinde otomatik yeniden hesaplanır
+  const activeProducts = useMemo(() => {
+    return products.filter(p => p.status === 'active');
+  }, [products]);
+
+  // Debug log'ları
+  console.log('Products component - Tüm ürünler:', products);
+  console.log('Products component - Aktif ürünler:', activeProducts);
+  console.log('Products component - Ürün sayısı:', products.length);
+  console.log('Products component - Aktif ürün sayısı:', activeProducts.length);
+
+  const clearLocalStorage = () => {
+    // Sadece products ve categories'i temizle, diğer verileri koru
+    localStorage.removeItem('products');
+    localStorage.removeItem('categories');
+    window.location.reload();
+  };
+
+  const activateAllProducts = () => {
+    products.forEach(product => {
+      if (product.status !== 'active') {
+        updateProduct(product.id, { ...product, status: 'active' });
+      }
+    });
+    window.location.reload();
+  };
 
   const sliderSettings = {
     dots: false,
@@ -76,13 +102,36 @@ const Products = () => {
           subtitle="Summer Collection New Modern Design"
         />
         <div className="relative">
-          <Slider {...sliderSettings}>
-            {activeProducts.map((product) => (
-              <div key={product.id} className="px-2">
-                <ProductItem productItem={product} />
+          {activeProducts.length > 0 ? (
+            <Slider {...sliderSettings}>
+              {activeProducts.map((product) => (
+                <div key={product.id} className="px-2">
+                  <ProductItem productItem={product} />
+                </div>
+              ))}
+            </Slider>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Henüz ürün bulunmuyor.</p>
+              <p className="text-sm text-gray-400 mt-2">Admin panelinden ürün ekleyebilirsiniz.</p>
+              <div className="mt-4 space-x-4">
+                <button 
+                  onClick={clearLocalStorage}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  localStorage Temizle (Debug)
+                </button>
+                {products.length > 0 && (
+                  <button 
+                    onClick={activateAllProducts}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                  >
+                    Tüm Ürünleri Aktif Yap (Debug)
+                  </button>
+                )}
               </div>
-            ))}
-          </Slider>
+            </div>
+          )}
         </div>
       </div>
     </section>

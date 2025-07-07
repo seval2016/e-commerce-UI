@@ -310,7 +310,7 @@ const ProductsPage = () => {
           <Card>
             <Statistic
               title="Toplam Değer"
-              value={products.reduce((sum, p) => sum + (p.price * p.stock), 0)}
+              value={products.reduce((sum, p) => sum + ((p.price || 0) * (p.stock || 0)), 0)}
               prefix={<DollarOutlined />}
               suffix="₺"
               valueStyle={{ color: '#fa8c16' }}
@@ -512,6 +512,114 @@ const ProductsPage = () => {
               </Form.Item>
             </Col>
           </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="discount"
+                label="İndirim Oranı (%)"
+                initialValue={0}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={0}
+                  max={100}
+                  formatter={value => `${value}%`}
+                  parser={value => value.replace('%', '')}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="sku"
+                label="SKU"
+                rules={[{ required: true, message: 'Lütfen SKU girin!' }]}
+              >
+                <Input placeholder="Örn: BE45VGRT" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="colors"
+                label="Renk Seçenekleri"
+                rules={[{ required: true, message: 'Lütfen en az bir renk seçin!' }]}
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Renk seçin"
+                  style={{ width: '100%' }}
+                >
+                  <Option value="red">Kırmızı</Option>
+                  <Option value="blue">Mavi</Option>
+                  <Option value="green">Yeşil</Option>
+                  <Option value="yellow">Sarı</Option>
+                  <Option value="purple">Mor</Option>
+                  <Option value="pink">Pembe</Option>
+                  <Option value="orange">Turuncu</Option>
+                  <Option value="black">Siyah</Option>
+                  <Option value="white">Beyaz</Option>
+                  <Option value="gray">Gri</Option>
+                  <Option value="brown">Kahverengi</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="sizes"
+                label="Beden Seçenekleri"
+                rules={[{ required: true, message: 'Lütfen en az bir beden seçin!' }]}
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Beden seçin"
+                  style={{ width: '100%' }}
+                >
+                  <Option value="XXS">XXS</Option>
+                  <Option value="XS">XS</Option>
+                  <Option value="S">S</Option>
+                  <Option value="M">M</Option>
+                  <Option value="L">L</Option>
+                  <Option value="XL">XL</Option>
+                  <Option value="XXL">XXL</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="material"
+                label="Malzeme"
+                rules={[{ required: true, message: 'Lütfen malzeme bilgisi girin!' }]}
+              >
+                <Input placeholder="Örn: %100 Pamuk" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="care"
+                label="Bakım Talimatları"
+                rules={[{ required: true, message: 'Lütfen bakım talimatları girin!' }]}
+              >
+                <Input placeholder="Örn: 30°C'de yıkayın, ütülemeyin" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item
+            name="tags"
+            label="Etiketler"
+          >
+            <Select
+              mode="tags"
+              placeholder="Etiket ekleyin"
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
 
           <Form.Item
             name="status"

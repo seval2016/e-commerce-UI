@@ -1,19 +1,20 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { products as productsData } from "../../../data";
+import { useData } from "../../../context/DataContext.jsx";
 import Loading from "../../common/Loading";
 import Breadcrumb from "../../common/Breadcrumb";
 
 const ProductBreadcrumb = () => {
   const { id } = useParams();
+  const { products } = useData();
   const [product, setProduct] = useState(null);
 
   useEffect(() => {
-    const foundProduct = productsData.find(p => p.id === parseInt(id));
+    const foundProduct = products.find(p => p.id === id);
     if (foundProduct) {
       setProduct(foundProduct);
     }
-  }, [id]);
+  }, [id, products]);
 
   if (!product) {
     return <Loading type="dots" text="Ürün yükleniyor..." />;

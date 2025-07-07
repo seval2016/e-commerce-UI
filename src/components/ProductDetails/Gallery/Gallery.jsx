@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import Slider from "react-slick";
 import { useParams } from "react-router-dom";
-import { products as productsData } from "../../../data";
+import { useData } from "../../../context/DataContext.jsx";
 import Loading from "../../common/Loading";
 
 function PrevBtn({ onClick }) {
@@ -41,6 +41,7 @@ PrevBtn.propTypes = {
 
 const Gallery = () => {
   const { id } = useParams();
+  const { products } = useData();
   const [product, setProduct] = useState(null);
   const [activeImg, setActiveImg] = useState({
     img: "",
@@ -48,15 +49,15 @@ const Gallery = () => {
   });
 
   useEffect(() => {
-    const foundProduct = productsData.find((p) => p.id === parseInt(id));
+    const foundProduct = products.find((p) => p.id === id);
     if (foundProduct) {
       setProduct(foundProduct);
       setActiveImg({
-        img: foundProduct.img.singleImage,
+        img: foundProduct.image || foundProduct.images?.[0] || '',
         imgIndex: 0,
       });
     }
-  }, [id]);
+  }, [id, products]);
 
   const sliderSettings = {
     dots: false,
@@ -94,46 +95,51 @@ const Gallery = () => {
     );
   }
 
+  // Resimleri al (yeni yapı için)
+  const productImages = product.images || [product.image] || [];
+
   return (
     <div className="flex flex-col gap-4">
       {/* Ana görsel */}
       <div className="relative w-full aspect-square rounded-xl overflow-hidden flex items-center justify-center">
         <img
-          src={`/${activeImg.img}`}
+          src={activeImg.img}
           alt={product.name}
           className="w-full h-full object-contain transition-all duration-200"
         />
       </div>
       {/* Küçük görseller */}
-      <div className="relative">
-        <Slider {...sliderSettings}>
-          {product.img.thumbs.map((itemImg, index) => (
-            <div key={index} className="px-1">
-              <button
-                onClick={() =>
-                  setActiveImg({
-                    img: product.img.thumbs[index],
-                    imgIndex: index,
-                  })
-                }
-                className={`w-full aspect-square rounded-lg overflow-hidden transition-all duration-150 focus:outline-none ${
-                  activeImg.imgIndex === index
-                    ? "ring-2 ring-primary-200 shadow"
-                    : "hover:ring-2 hover:ring-primary-100"
-                }`}
-                aria-label={`Ürün görseli ${index + 1}`}
-                type="button"
-              >
-                <img
-                  src={`/${itemImg}`}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            </div>
-          ))}
-        </Slider>
-      </div>
+      {productImages.length > 1 && (
+        <div className="relative">
+          <Slider {...sliderSettings}>
+            {productImages.map((itemImg, index) => (
+              <div key={index} className="px-1">
+                <button
+                  onClick={() =>
+                    setActiveImg({
+                      img: itemImg,
+                      imgIndex: index,
+                    })
+                  }
+                  className={`w-full aspect-square rounded-lg overflow-hidden transition-all duration-150 focus:outline-none ${
+                    activeImg.imgIndex === index
+                      ? "ring-2 ring-primary-200 shadow"
+                      : "hover:ring-2 hover:ring-primary-100"
+                  }`}
+                  aria-label={`Ürün görseli ${index + 1}`}
+                  type="button"
+                >
+                  <img
+                    src={itemImg}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              </div>
+            ))}
+          </Slider>
+        </div>
+      )}
     </div>
   );
 };
