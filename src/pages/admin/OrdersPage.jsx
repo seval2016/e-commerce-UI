@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import jsPDF from 'jspdf';
 import { 
   Table, 
   Card, 
@@ -37,7 +38,9 @@ import {
   CarOutlined,
   CheckOutlined,
   CloseOutlined,
-  SyncOutlined
+  SyncOutlined,
+  PrinterOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 import { useData } from '../../context/DataContext.jsx';
 
@@ -49,7 +52,6 @@ const OrdersPage = () => {
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [form] = Form.useForm();
 
   const statusConfig = {
     pending: { color: 'orange', text: 'Beklemede', icon: <ClockCircleOutlined /> },
@@ -58,7 +60,8 @@ const OrdersPage = () => {
     cancelled: { color: 'red', text: 'İptal Edildi', icon: <CloseCircleOutlined /> }
   };
 
-  const paymentStatusConfig = {
+  // Ödeme durumu konfigürasyonu (gelecekte kullanım için)
+  const _paymentStatusConfig = {
     pending: { color: 'orange', text: 'Beklemede' },
     paid: { color: 'green', text: 'Ödendi' },
     failed: { color: 'red', text: 'Başarısız' },
@@ -68,15 +71,16 @@ const OrdersPage = () => {
   // Siparişleri tablo formatına çevir
   const tableData = orders.map(order => ({
     key: order.id,
-    ...order,
+    ...order, // Tüm orijinal veriyi koru
+    orderNumber: order.orderNumber || order.id || `ORD-${order.id}`, // Sipariş numarası
     customer: {
-      name: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`,
-      email: order.customerInfo.email,
-      phone: order.customerInfo.phone
+      name: `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`,
+      email: order.customerInfo?.email || '',
+      phone: order.customerInfo?.phone || ''
     },
-    products: order.items,
-    total: order.total,
-    orderDate: new Date(order.orderDate).toLocaleString('tr-TR')
+    products: order.products || order.items || [], // Hem yeni hem eski format desteği
+    total: order.total || 0,
+    orderDate: new Date(order.createdAt || order.orderDate).toLocaleString('tr-TR')
   }));
 
   const columns = [
@@ -103,13 +107,17 @@ const OrdersPage = () => {
       key: 'products',
       render: (products) => (
         <div>
-          {products.map((product, index) => (
-            <div key={index} style={{ fontSize: 12 }}>
-              {product.name} x{product.quantity}
-              {product.selectedSize && ` (${product.selectedSize})`}
-              {product.selectedColor && ` - ${product.selectedColor}`}
-            </div>
-          ))}
+          {products && products.length > 0 ? (
+            products.map((product, index) => (
+              <div key={index} style={{ fontSize: 12 }}>
+                {product.name} x{product.quantity}
+                {product.selectedSize && ` (${product.selectedSize})`}
+                {product.selectedColor && ` - ${product.selectedColor}`}
+              </div>
+            ))
+          ) : (
+            <span style={{ color: '#999', fontSize: 12 }}>Ürün bilgisi yok</span>
+          )}
         </div>
       ),
     },
@@ -156,10 +164,10 @@ const OrdersPage = () => {
       key: 'orderDate',
       render: (orderDate) => (
         <div style={{ fontSize: 12 }}>
-          {new Date(orderDate).toLocaleDateString('tr-TR')}
+          {orderDate ? new Date(orderDate).toLocaleDateString('tr-TR') : '-'}
         </div>
       ),
-      sorter: (a, b) => new Date(a.orderDate) - new Date(b.orderDate),
+      sorter: (a, b) => new Date(a.orderDate || 0) - new Date(b.orderDate || 0),
     },
     {
       title: 'İşlemler',
@@ -218,17 +226,97 @@ const OrdersPage = () => {
     message.success('Sipariş durumu güncellendi!');
   };
 
+  // PDF indirme fonksiyonu
+  const generatePDF = async (order) => {
+    try {
+      console.log('PDF oluşturma başladı:', order);
+      message.loading('PDF oluşturuluyor...', 0);
+      
+      // Basit PDF oluştur (text tabanlı)
+      const pdf = new jsPDF();
+      
+      // Başlık
+      pdf.setFontSize(20);
+      pdf.text('FATURA', 105, 20, { align: 'center' });
+      
+      // Sipariş bilgileri
+      pdf.setFontSize(12);
+      pdf.text(`Sipariş No: ${order.orderNumber}`, 20, 40);
+      pdf.text(`Tarih: ${new Date(order.createdAt).toLocaleDateString('tr-TR')}`, 20, 50);
+      
+      // Müşteri bilgileri
+      pdf.setFontSize(14);
+      pdf.text('Müşteri Bilgileri', 20, 70);
+      pdf.setFontSize(10);
+      pdf.text(`Ad Soyad: ${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`, 20, 80);
+      pdf.text(`E-posta: ${order.customerInfo?.email || '-'}`, 20, 90);
+      pdf.text(`Telefon: ${order.customerInfo?.phone || '-'}`, 20, 100);
+      pdf.text(`Adres: ${order.customerInfo?.address || '-'}`, 20, 110);
+      pdf.text(`Şehir: ${order.customerInfo?.city || '-'}`, 20, 120);
+      pdf.text(`Posta Kodu: ${order.customerInfo?.postalCode || '-'}`, 20, 130);
+      
+      // Ürünler
+      pdf.setFontSize(14);
+      pdf.text('Ürünler', 20, 150);
+      pdf.setFontSize(10);
+      
+      let yPosition = 160;
+      order.products?.forEach((product, index) => {
+        if (yPosition > 250) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        pdf.text(`${index + 1}. ${product.name}`, 20, yPosition);
+        pdf.text(`   Beden: ${product.selectedSize || '-'} | Renk: ${product.selectedColor || '-'}`, 25, yPosition + 5);
+        pdf.text(`   Adet: ${product.quantity} | Fiyat: ₺${product.price?.toLocaleString()} | Toplam: ₺${(product.price * product.quantity)?.toLocaleString()}`, 25, yPosition + 10);
+        yPosition += 20;
+      });
+      
+      // Toplam
+      pdf.setFontSize(14);
+      pdf.text(`Toplam: ₺${order.total?.toLocaleString() || '0'}`, 20, yPosition + 10);
+      
+      // Ödeme bilgileri
+      pdf.setFontSize(12);
+      pdf.text(`Ödeme Yöntemi: ${
+        order.paymentMethod === 'creditCard' ? 'Kredi Kartı' : 
+        order.paymentMethod === 'bankTransfer' ? 'Banka Havalesi' : 
+        order.paymentMethod === 'cashOnDelivery' ? 'Kapıda Ödeme' : 
+        order.paymentMethod
+      }`, 20, yPosition + 25);
+      
+      // PDF'i indir
+      const fileName = `Fatura-${order.orderNumber}-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      message.destroy();
+      message.success('PDF başarıyla indirildi!');
+      console.log('PDF başarıyla oluşturuldu:', fileName);
+      
+    } catch (error) {
+      message.destroy();
+      console.error('PDF oluşturma hatası:', error);
+      message.error('PDF oluşturulurken bir hata oluştu!');
+    }
+  };
+
   // İstatistikler
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
   const completedOrders = orders.filter(order => order.status === 'completed').length;
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
 
-  const filteredData = tableData.filter(order =>
-    order.orderNumber.toLowerCase().includes(searchText.toLowerCase()) ||
-    order.customer.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    order.customer.email.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const filteredData = tableData.filter(order => {
+    const searchLower = (searchText || '').toLowerCase();
+    const orderNumber = String(order.orderNumber || '').toLowerCase();
+    const customerName = String(order.customer?.name || '').toLowerCase();
+    const customerEmail = String(order.customer?.email || '').toLowerCase();
+    
+    return orderNumber.includes(searchLower) ||
+           customerName.includes(searchLower) ||
+           customerEmail.includes(searchLower);
+  });
 
   return (
     <div className="p-6">
@@ -336,22 +424,25 @@ const OrdersPage = () => {
           <div>
             <Descriptions title="Müşteri Bilgileri" bordered column={2}>
               <Descriptions.Item label="Ad Soyad">
-                {selectedOrder.customer.name}
+                {`${selectedOrder.customerInfo?.firstName || ''} ${selectedOrder.customerInfo?.lastName || ''}`.trim() || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="E-posta">
-                {selectedOrder.customer.email}
+                {selectedOrder.customerInfo?.email || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="Telefon">
-                {selectedOrder.customer.phone}
+                {selectedOrder.customerInfo?.phone || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="Adres">
-                {selectedOrder.customerInfo?.address}
+                {selectedOrder.customerInfo?.address || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="Şehir">
-                {selectedOrder.customerInfo?.city}
+                {selectedOrder.customerInfo?.city || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="Posta Kodu">
-                {selectedOrder.customerInfo?.postalCode}
+                {selectedOrder.customerInfo?.postalCode || '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Ülke">
+                {selectedOrder.customerInfo?.country || 'Türkiye'}
               </Descriptions.Item>
             </Descriptions>
 
@@ -442,12 +533,50 @@ const OrdersPage = () => {
               </div>
             )}
 
+            {/* Sipariş Özeti */}
+            <div className="mt-6">
+              <h4>Sipariş Özeti</h4>
+              <Descriptions bordered column={2} size="small">
+                <Descriptions.Item label="Sipariş Numarası">
+                  {selectedOrder.orderNumber}
+                </Descriptions.Item>
+                <Descriptions.Item label="Sipariş Tarihi">
+                  {new Date(selectedOrder.createdAt).toLocaleString('tr-TR')}
+                </Descriptions.Item>
+                <Descriptions.Item label="Toplam Tutar">
+                  <strong className="text-lg text-green-600">
+                    ₺{selectedOrder.total?.toLocaleString() || '0'}
+                  </strong>
+                </Descriptions.Item>
+                <Descriptions.Item label="Ürün Sayısı">
+                  {selectedOrder.products?.length || 0} adet
+                </Descriptions.Item>
+              </Descriptions>
+            </div>
+
             {selectedOrder.notes && (
               <div className="mt-6">
                 <h4>Sipariş Notları</h4>
                 <p className="text-gray-600">{selectedOrder.notes}</p>
               </div>
             )}
+
+            {/* Fatura Yazdırma Butonu */}
+            <div className="mt-6 flex gap-2">
+              <Button 
+                type="primary" 
+                icon={<PrinterOutlined />}
+                onClick={() => window.print()}
+              >
+                Fatura Yazdır
+              </Button>
+              <Button 
+                icon={<DownloadOutlined />}
+                onClick={() => generatePDF(selectedOrder)}
+              >
+                PDF İndir
+              </Button>
+            </div>
           </div>
         )}
       </Modal>

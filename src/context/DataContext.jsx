@@ -207,9 +207,61 @@ export const DataProvider = ({ children }) => {
   // Save data to localStorage whenever it changes
   const saveToStorage = (key, data) => {
     try {
-      localStorage.setItem(key, JSON.stringify(data));
+      // Siparişler için özel işlem
+      if (key === 'orders') {
+        // Sipariş verilerini sıkıştır (tüm customerInfo alanlarını koru)
+        const compressedData = data.map(order => ({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          customerInfo: {
+            firstName: order.customerInfo?.firstName,
+            lastName: order.customerInfo?.lastName,
+            email: order.customerInfo?.email,
+            phone: order.customerInfo?.phone,
+            address: order.customerInfo?.address,
+            city: order.customerInfo?.city,
+            postalCode: order.customerInfo?.postalCode,
+            country: order.customerInfo?.country
+          },
+          products: order.products?.map(product => ({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: product.quantity,
+            selectedSize: product.selectedSize,
+            selectedColor: product.selectedColor
+          })),
+          total: order.total,
+          status: order.status,
+          paymentMethod: order.paymentMethod,
+          paymentInfo: order.paymentInfo,
+          notes: order.notes,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt
+        }));
+
+        // Eski siparişleri temizle (son 100 siparişi tut)
+        const limitedData = compressedData.slice(-100);
+        
+        localStorage.setItem(key, JSON.stringify(limitedData));
+      } else {
+        localStorage.setItem(key, JSON.stringify(data));
+      }
     } catch (error) {
       console.error(`Error saving ${key} to localStorage:`, error);
+      
+      // Siparişler için özel hata yönetimi
+      if (key === 'orders') {
+        try {
+          // Sadece son 50 siparişi tut
+          const limitedData = data.slice(-50);
+          localStorage.setItem(key, JSON.stringify(limitedData));
+          message.warning('Eski siparişler temizlendi. Son 50 sipariş korundu.');
+        } catch (secondError) {
+          console.error('Critical error saving orders:', secondError);
+          message.error('Sipariş kaydedilemedi. Lütfen daha sonra tekrar deneyin.');
+        }
+      }
     }
   };
 
@@ -455,6 +507,26 @@ export const DataProvider = ({ children }) => {
     message.success('Müşteri başarıyla silindi');
   };
 
+  // Storage management
+  const clearOldData = () => {
+    try {
+      // Sadece son 50 siparişi tut
+      const limitedOrders = orders.slice(-50);
+      setOrders(limitedOrders);
+      saveToStorage('orders', limitedOrders);
+      
+      // Sadece son 100 ürünü tut
+      const limitedProducts = products.slice(-100);
+      setProducts(limitedProducts);
+      saveToStorage('products', limitedProducts);
+      
+      message.success('Eski veriler temizlendi');
+    } catch (error) {
+      console.error('Error clearing old data:', error);
+      message.error('Veri temizleme başarısız');
+    }
+  };
+
   // Analytics functions
   const getAnalytics = () => {
     const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
@@ -524,6 +596,9 @@ export const DataProvider = ({ children }) => {
     addCustomer,
     updateCustomer,
     deleteCustomer,
+    
+    // Storage management
+    clearOldData,
     
     // Analytics
     getAnalytics

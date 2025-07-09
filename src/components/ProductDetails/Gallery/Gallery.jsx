@@ -52,8 +52,17 @@ const Gallery = () => {
     const foundProduct = products.find((p) => p.id === id);
     if (foundProduct) {
       setProduct(foundProduct);
+      
+      // Resim yolunu düzelt - başına / ekle
+      const firstImage = foundProduct.image || foundProduct.images?.[0] || '';
+      const correctedImage = firstImage.startsWith('/') ? firstImage : `/${firstImage}`;
+      
+      console.log('Ürün bulundu:', foundProduct.name);
+      console.log('Orijinal resim yolu:', firstImage);
+      console.log('Düzeltilmiş resim yolu:', correctedImage);
+      
       setActiveImg({
-        img: foundProduct.image || foundProduct.images?.[0] || '',
+        img: correctedImage,
         imgIndex: 0,
       });
     }
@@ -95,8 +104,10 @@ const Gallery = () => {
     );
   }
 
-  // Resimleri al (yeni yapı için)
-  const productImages = product.images || [product.image] || [];
+  // Resimleri al ve yollarını düzelt
+  const productImages = (product.images || [product.image] || []).map(img => 
+    img.startsWith('/') ? img : `/${img}`
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -106,7 +117,18 @@ const Gallery = () => {
           src={activeImg.img}
           alt={product.name}
           className="w-full h-full object-contain transition-all duration-200"
+          onError={(e) => {
+            console.error('Resim yüklenemedi:', activeImg.img);
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'flex';
+          }}
         />
+        <div className="absolute inset-0 hidden items-center justify-center text-gray-500">
+          <div className="text-center">
+            <i className="bi bi-image text-4xl mb-2"></i>
+            <p className="text-sm">Resim yüklenemedi</p>
+          </div>
+        </div>
       </div>
       {/* Küçük görseller */}
       {productImages.length > 1 && (
@@ -133,7 +155,15 @@ const Gallery = () => {
                     src={itemImg}
                     alt=""
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error('Küçük resim yüklenemedi:', itemImg);
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
                   />
+                  <div className="absolute inset-0 hidden items-center justify-center text-gray-400">
+                    <i className="bi bi-image text-lg"></i>
+                  </div>
                 </button>
               </div>
             ))}

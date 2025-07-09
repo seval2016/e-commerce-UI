@@ -90,7 +90,11 @@ const CartTotals = () => {
 
       {/* Checkout Form Modal */}
       {showCheckoutForm && (
-        <CheckoutForm onClose={() => setShowCheckoutForm(false)} />
+        <CheckoutForm 
+          onClose={() => setShowCheckoutForm(false)} 
+          shippingFee={cargoFee}
+          hasFastShipping={fastCargoChecked}
+        />
       )}
     </>
   );

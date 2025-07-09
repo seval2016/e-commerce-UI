@@ -5,7 +5,7 @@ import { message } from "antd";
 import Button from "../common/Button";
 import Input from "../common/Input";
 
-const CheckoutForm = ({ onClose }) => {
+const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => {
   const { cartItems, getCartTotal, clearCart } = useCart();
   const { addOrder } = useData();
   
@@ -18,7 +18,7 @@ const CheckoutForm = ({ onClose }) => {
     city: "",
     postalCode: "",
     country: "Türkiye",
-    paymentMethod: "creditCard",
+    paymentMethod: "cashOnDelivery", // Varsayılan olarak kapıda ödeme
     notes: ""
   });
 
@@ -38,6 +38,11 @@ const CheckoutForm = ({ onClose }) => {
       ...prev,
       [name]: value
     }));
+    
+    // Ödeme yöntemi değiştiğinde konsola log
+    if (name === 'paymentMethod') {
+      console.log('Ödeme yöntemi değişti:', value);
+    }
   };
 
   const handleCardInputChange = (e) => {
@@ -71,35 +76,65 @@ const CheckoutForm = ({ onClose }) => {
     }));
   };
 
-  const validateCardData = () => {
+  // Kredi kartı validasyonu (geçici olarak devre dışı)
+  const _validateCardData = () => {
+    console.log('Kredi kartı validasyonu başladı');
+    console.log('Ödeme yöntemi:', formData.paymentMethod);
+    console.log('Kart verileri:', cardData);
+    
     if (formData.paymentMethod === 'creditCard') {
-      if (!cardData.cardNumber.replace(/\s/g, '').match(/^\d{16}$/)) {
+      // Kart numarası kontrolü
+      const cardNumber = cardData.cardNumber.replace(/\s/g, '');
+      console.log('Kart numarası (temizlenmiş):', cardNumber);
+      if (!cardNumber.match(/^\d{16}$/)) {
+        console.log('Kart numarası geçersiz');
         message.error("Geçerli bir kart numarası girin!");
         return false;
       }
+      
+      // Kart sahibi kontrolü
+      console.log('Kart sahibi:', cardData.cardHolder);
       if (!cardData.cardHolder.trim()) {
+        console.log('Kart sahibi boş');
         message.error("Kart sahibi adını girin!");
         return false;
       }
+      
+      // Son kullanma tarihi kontrolü
+      console.log('Son kullanma ay/yıl:', cardData.expiryMonth, cardData.expiryYear);
       if (!cardData.expiryMonth || !cardData.expiryYear) {
+        console.log('Son kullanma tarihi eksik');
         message.error("Son kullanma tarihini girin!");
         return false;
       }
+      
+      // CVV kontrolü
+      console.log('CVV:', cardData.cvv);
       if (!cardData.cvv.match(/^\d{3,4}$/)) {
+        console.log('CVV geçersiz');
         message.error("Geçerli bir CVV girin!");
         return false;
       }
 
-      // Son kullanma tarihi kontrolü
+      // Son kullanma tarihi geçerlilik kontrolü
       const currentYear = new Date().getFullYear() % 100;
       const currentMonth = new Date().getMonth() + 1;
       const expiryYear = parseInt(cardData.expiryYear);
-      const expiryMonth = parseInt(cardData.expiryMonth);
+      const expiryMonth = parseInt(cardData.expiryYear);
+      
+      console.log('Mevcut tarih:', currentMonth, currentYear);
+      console.log('Kart tarihi:', expiryMonth, expiryYear);
 
-      if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
-        message.error("Kartınızın son kullanma tarihi geçmiş!");
+      // Test için geçici olarak tarih kontrolünü gevşet (sadece geliştirme aşamasında)
+      if (expiryYear < 24 || (expiryYear === 24 && expiryMonth < currentMonth)) {
+        console.log('Kart tarihi geçmiş');
+        message.error("Kartınızın son kullanma tarihi geçmiş! Lütfen geçerli bir tarih girin.");
         return false;
       }
+      
+      console.log('Kredi kartı validasyonu başarılı');
+    } else {
+      console.log('Kredi kartı seçilmemiş, validasyon atlanıyor');
     }
     return true;
   };
@@ -107,43 +142,118 @@ const CheckoutForm = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log('Form submit başladı');
+    console.log('Cart items:', cartItems);
+    console.log('Form data:', formData);
+    
     if (cartItems.length === 0) {
       message.warning("Sepetiniz boş!");
       return;
     }
 
-    // Form validasyonu
-    const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'postalCode'];
-    const missingFields = requiredFields.filter(field => !formData[field]);
+    // Form validasyonu - Zorunlu alanlar
+    const requiredFields = [
+      { field: 'firstName', label: 'Ad' },
+      { field: 'lastName', label: 'Soyad' },
+      { field: 'phone', label: 'Telefon' },
+      { field: 'address', label: 'Adres' },
+      { field: 'city', label: 'Şehir' },
+      { field: 'postalCode', label: 'Posta Kodu' }
+    ];
+    
+    const missingFields = requiredFields.filter(({ field }) => !formData[field] || formData[field].trim() === '');
+    
+    console.log('Missing fields:', missingFields);
     
     if (missingFields.length > 0) {
-      message.error("Lütfen tüm zorunlu alanları doldurun!");
+      const missingLabels = missingFields.map(({ label }) => label).join(', ');
+      message.error(`Lütfen şu zorunlu alanları doldurun: ${missingLabels}`);
       return;
     }
 
-    // Kredi kartı validasyonu
-    if (!validateCardData()) {
+    // Telefon numarası validasyonu
+    const phoneRegex = /^[0-9\s\-+()]{10,}$/;
+    if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
+      message.error("Lütfen geçerli bir telefon numarası girin!");
       return;
     }
 
+    // Posta kodu validasyonu
+    if (!/^\d{5}$/.test(formData.postalCode.replace(/\s/g, ''))) {
+      message.error("Lütfen 5 haneli geçerli bir posta kodu girin!");
+      return;
+    }
+
+    // Email validasyonu (eğer email girilmişse)
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      message.error("Lütfen geçerli bir email adresi girin!");
+      return;
+    }
+
+    // Kredi kartı validasyonu (sadece kredi kartı seçilmişse)
+    if (formData.paymentMethod === 'creditCard') {
+      const cardRequiredFields = [
+        { field: 'cardNumber', label: 'Kart Numarası' },
+        { field: 'cardHolder', label: 'Kart Sahibi' },
+        { field: 'expiryMonth', label: 'Son Kullanma Ay' },
+        { field: 'expiryYear', label: 'Son Kullanma Yıl' },
+        { field: 'cvv', label: 'CVV' }
+      ];
+      
+      const missingCardFields = cardRequiredFields.filter(({ field }) => !cardData[field] || cardData[field].trim() === '');
+      
+      if (missingCardFields.length > 0) {
+        const missingLabels = missingCardFields.map(({ label }) => label).join(', ');
+        message.error(`Lütfen şu kredi kartı alanlarını doldurun: ${missingLabels}`);
+        return;
+      }
+
+      // Kart numarası kontrolü (16 haneli)
+      const cardNumber = cardData.cardNumber.replace(/\s/g, '');
+      if (!cardNumber.match(/^\d{16}$/)) {
+        message.error("Lütfen 16 haneli geçerli bir kart numarası girin!");
+        return;
+      }
+
+      // CVV kontrolü (3-4 haneli)
+      if (!cardData.cvv.match(/^\d{3,4}$/)) {
+        message.error("Lütfen geçerli bir CVV girin!");
+        return;
+      }
+
+      // Son kullanma tarihi kontrolü
+      const currentYear = new Date().getFullYear() % 100;
+      const currentMonth = new Date().getMonth() + 1;
+      const expiryYear = parseInt(cardData.expiryYear);
+      const expiryMonth = parseInt(cardData.expiryMonth);
+      
+      if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
+        message.error("Kartınızın son kullanma tarihi geçmiş! Lütfen geçerli bir tarih girin.");
+        return;
+      }
+    }
+
+    console.log('Validasyonlar geçti, sipariş oluşturuluyor...');
     setIsSubmitting(true);
 
     try {
       // Sipariş objesi oluştur
+      const orderId = Date.now().toString();
       const order = {
-        id: Date.now().toString(),
+        id: orderId,
+        orderNumber: `ORD-${orderId}`, // Sipariş numarası eklendi
         customerInfo: {
           firstName: formData.firstName,
           lastName: formData.lastName,
-          email: formData.email,
+          email: formData.email || '',
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
           postalCode: formData.postalCode,
-          country: formData.country
+          country: formData.country || 'Türkiye'
         },
-        items: cartItems,
-        total: getCartTotal(),
+        products: cartItems, // items yerine products kullan
+        total: total, // getCartTotal() yerine total kullan
         status: "pending",
         paymentMethod: formData.paymentMethod,
         paymentInfo: formData.paymentMethod === 'creditCard' ? {
@@ -151,10 +261,12 @@ const CheckoutForm = ({ onClose }) => {
           cardHolder: cardData.cardHolder,
           expiryDate: `${cardData.expiryMonth}/${cardData.expiryYear}`
         } : null,
-        notes: formData.notes,
-        orderDate: new Date().toISOString(),
-        orderNumber: `ORD-${Date.now()}`
+        notes: formData.notes || '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
+
+      console.log('Oluşturulan sipariş:', order);
 
       // Admin paneline sipariş ekle
       addOrder(order);
@@ -162,7 +274,29 @@ const CheckoutForm = ({ onClose }) => {
       // Sepeti temizle
       clearCart();
       
-      message.success("Siparişiniz başarıyla oluşturuldu! Sipariş numaranız: " + order.orderNumber);
+      // Başarı mesajı - sipariş numarası ile birlikte
+      message.success({
+        content: (
+          <div>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+              ✅ Siparişiniz başarıyla oluşturuldu!
+            </div>
+            <div style={{ fontSize: '12px', color: '#666' }}>
+              Sipariş Numarası: <strong>{order.orderNumber}</strong>
+            </div>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+              Toplam Tutar: <strong>₺{total.toLocaleString()}</strong>
+            </div>
+            <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>
+              Siparişiniz admin panelinde görüntülenebilir.
+            </div>
+          </div>
+        ),
+        duration: 5, // 5 saniye göster
+        style: {
+          marginTop: '20px',
+        }
+      });
       
       // Formu kapat
       onClose();
@@ -176,7 +310,7 @@ const CheckoutForm = ({ onClose }) => {
   };
 
   const subTotal = getCartTotal();
-  const shipping = 15; // Sabit kargo ücreti
+  const shipping = shippingFee; // CartTotal'den gelen kargo ücreti
   const total = subTotal + shipping;
 
   return (
@@ -231,14 +365,14 @@ const CheckoutForm = ({ onClose }) => {
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  E-posta * <span className="text-red-500">*</span>
+                  E-posta
                 </label>
                 <Input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  required
+                  placeholder="İsteğe bağlı"
                   size="md"
                 />
               </div>
@@ -461,7 +595,9 @@ const CheckoutForm = ({ onClose }) => {
                   <span className="font-medium">₺{subTotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Kargo</span>
+                  <span className="text-gray-600">
+                    Kargo {hasFastShipping && <span className="text-green-600">(Hızlı)</span>}
+                  </span>
                   <span className="font-medium">₺{shipping.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-2">

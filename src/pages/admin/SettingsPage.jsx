@@ -17,8 +17,10 @@ import {
   Table,
   Tag,
   Modal,
-  Popconfirm
+  Popconfirm,
+  Alert
 } from 'antd';
+import { useData } from '../../context/DataContext.jsx';
 import {
   SaveOutlined,
   UserOutlined,
@@ -42,6 +44,7 @@ const SettingsPage = () => {
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const { orders, products, clearOldData } = useData();
 
   // Mock data
   const users = [
@@ -544,6 +547,130 @@ const SettingsPage = () => {
                 </Button>
               </Form.Item>
             </Form>
+          </Card>
+        </TabPane>
+
+        {/* Storage Management */}
+        <TabPane 
+          tab={
+            <span>
+              <SettingOutlined />
+              Depolama Yönetimi
+            </span>
+          } 
+          key="storage"
+        >
+          <Card>
+            <Alert
+              message="Depolama Uyarısı"
+              description="localStorage kapasitesi sınırlıdır. Eski verileri temizleyerek yeni veriler için yer açabilirsiniz."
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+            
+            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+              <Col span={8}>
+                <Card size="small">
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1890ff' }}>
+                      {orders.length}
+                    </div>
+                    <div style={{ color: '#666' }}>Toplam Sipariş</div>
+                  </div>
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card size="small">
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 24, fontWeight: 'bold', color: '#52c41a' }}>
+                      {products.length}
+                    </div>
+                    <div style={{ color: '#666' }}>Toplam Ürün</div>
+                  </div>
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card size="small">
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 24, fontWeight: 'bold', color: '#faad14' }}>
+                      {Math.round((JSON.stringify(orders).length + JSON.stringify(products).length) / 1024)} KB
+                    </div>
+                    <div style={{ color: '#666' }}>Tahmini Boyut</div>
+                  </div>
+                </Card>
+              </Col>
+            </Row>
+
+            <div style={{ marginBottom: 16 }}>
+              <h4>Veri Temizleme</h4>
+              <p style={{ color: '#666', marginBottom: 16 }}>
+                Eski verileri temizleyerek localStorage kapasitesini artırabilirsiniz. 
+                Bu işlem geri alınamaz, dikkatli olun.
+              </p>
+              
+              <Space>
+                <Popconfirm
+                  title="Eski verileri temizlemek istediğinizden emin misiniz?"
+                  description="Son 50 sipariş ve 100 ürün korunacak, diğerleri silinecek."
+                  onConfirm={clearOldData}
+                  okText="Evet, Temizle"
+                  cancelText="İptal"
+                >
+                  <Button type="primary" danger>
+                    Eski Verileri Temizle
+                  </Button>
+                </Popconfirm>
+                
+                <Popconfirm
+                  title="Tüm localStorage verilerini silmek istediğinizden emin misiniz?"
+                  description="Bu işlem tüm verileri silecek ve sayfayı yeniden yükleyecek."
+                  onConfirm={() => {
+                    localStorage.clear();
+                    window.location.reload();
+                  }}
+                  okText="Evet, Tümünü Sil"
+                  cancelText="İptal"
+                >
+                  <Button danger>
+                    Tüm Verileri Sil
+                  </Button>
+                </Popconfirm>
+              </Space>
+            </div>
+
+            <Divider />
+
+            <div>
+              <h4>Otomatik Temizleme</h4>
+              <p style={{ color: '#666', marginBottom: 16 }}>
+                Otomatik temizleme ayarlarını yapılandırın.
+              </p>
+              
+              <Row gutter={[16, 16]}>
+                <Col span={12}>
+                  <Form.Item
+                    name="autoCleanup"
+                    label="Otomatik Temizleme"
+                    valuePropName="checked"
+                  >
+                    <Switch />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="cleanupThreshold"
+                    label="Temizleme Eşiği"
+                  >
+                    <Select defaultValue="100">
+                      <Option value="50">50 sipariş</Option>
+                      <Option value="100">100 sipariş</Option>
+                      <Option value="200">200 sipariş</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
           </Card>
         </TabPane>
       </Tabs>
