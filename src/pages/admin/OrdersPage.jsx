@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
+import 'jspdf-font';
 import { 
   Table, 
   Card, 
@@ -232,8 +233,11 @@ const OrdersPage = () => {
       console.log('PDF oluşturma başladı:', order);
       message.loading('PDF oluşturuluyor...', 0);
       
-      // Basit PDF oluştur (text tabanlı)
+      // PDF oluştur ve Türkçe font yükle
       const pdf = new jsPDF();
+      
+      // Türkçe karakterleri destekleyen font ayarları
+      pdf.setFont('helvetica');
       
       // Başlık
       pdf.setFontSize(20);
@@ -248,16 +252,35 @@ const OrdersPage = () => {
       pdf.setFontSize(14);
       pdf.text('Müşteri Bilgileri', 20, 70);
       pdf.setFontSize(10);
-      pdf.text(`Ad Soyad: ${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`, 20, 80);
+      
+      // Türkçe karakterleri güvenli hale getir
+      const safeText = (text) => {
+        if (!text) return '-';
+        return text
+          .replace(/ğ/g, 'g')
+          .replace(/Ğ/g, 'G')
+          .replace(/ü/g, 'u')
+          .replace(/Ü/g, 'U')
+          .replace(/ş/g, 's')
+          .replace(/Ş/g, 'S')
+          .replace(/ı/g, 'i')
+          .replace(/İ/g, 'I')
+          .replace(/ö/g, 'o')
+          .replace(/Ö/g, 'O')
+          .replace(/ç/g, 'c')
+          .replace(/Ç/g, 'C');
+      };
+      
+      pdf.text(`Ad Soyad: ${safeText(order.customerInfo?.firstName || '')} ${safeText(order.customerInfo?.lastName || '')}`, 20, 80);
       pdf.text(`E-posta: ${order.customerInfo?.email || '-'}`, 20, 90);
       pdf.text(`Telefon: ${order.customerInfo?.phone || '-'}`, 20, 100);
-      pdf.text(`Adres: ${order.customerInfo?.address || '-'}`, 20, 110);
-      pdf.text(`Şehir: ${order.customerInfo?.city || '-'}`, 20, 120);
+      pdf.text(`Adres: ${safeText(order.customerInfo?.address || '-')}`, 20, 110);
+      pdf.text(`Şehir: ${safeText(order.customerInfo?.city || '-')}`, 20, 120);
       pdf.text(`Posta Kodu: ${order.customerInfo?.postalCode || '-'}`, 20, 130);
       
       // Ürünler
       pdf.setFontSize(14);
-      pdf.text('Ürünler', 20, 150);
+      pdf.text('Urunler', 20, 150);
       pdf.setFontSize(10);
       
       let yPosition = 160;
@@ -267,8 +290,8 @@ const OrdersPage = () => {
           yPosition = 20;
         }
         
-        pdf.text(`${index + 1}. ${product.name}`, 20, yPosition);
-        pdf.text(`   Beden: ${product.selectedSize || '-'} | Renk: ${product.selectedColor || '-'}`, 25, yPosition + 5);
+        pdf.text(`${index + 1}. ${safeText(product.name)}`, 20, yPosition);
+        pdf.text(`   Beden: ${product.selectedSize || '-'} | Renk: ${safeText(product.selectedColor || '-')}`, 25, yPosition + 5);
         pdf.text(`   Adet: ${product.quantity} | Fiyat: ₺${product.price?.toLocaleString()} | Toplam: ₺${(product.price * product.quantity)?.toLocaleString()}`, 25, yPosition + 10);
         yPosition += 20;
       });
@@ -279,12 +302,17 @@ const OrdersPage = () => {
       
       // Ödeme bilgileri
       pdf.setFontSize(12);
-      pdf.text(`Ödeme Yöntemi: ${
-        order.paymentMethod === 'creditCard' ? 'Kredi Kartı' : 
-        order.paymentMethod === 'bankTransfer' ? 'Banka Havalesi' : 
-        order.paymentMethod === 'cashOnDelivery' ? 'Kapıda Ödeme' : 
-        order.paymentMethod
-      }`, 20, yPosition + 25);
+      const paymentMethod = order.paymentMethod === 'creditCard' ? 'Kredi Karti' : 
+                           order.paymentMethod === 'bankTransfer' ? 'Banka Havalesi' : 
+                           order.paymentMethod === 'cashOnDelivery' ? 'Kapida Odeme' : 
+                           order.paymentMethod;
+      
+      pdf.text(`Odeme Yontemi: ${paymentMethod}`, 20, yPosition + 25);
+      
+      // Alt bilgi
+      pdf.setFontSize(10);
+      pdf.text(`Bu fatura ${new Date().toLocaleDateString('tr-TR')} tarihinde olusturulmustur.`, 20, yPosition + 40);
+      pdf.text('Tesekkur ederiz!', 20, yPosition + 50);
       
       // PDF'i indir
       const fileName = `Fatura-${order.orderNumber}-${new Date().toISOString().split('T')[0]}.pdf`;
