@@ -19,7 +19,7 @@ const ProductItem = ({ productItem }) => {
   // Admin panelinden eklenen ürünler için veri yapısını uyarla
   const productImage = productItem.image || productItem.images?.[0] || productItem.img?.singleImage || '/img/products/product1/1.png';
   const productName = productItem.name || 'Ürün Adı';
-  const productPrice = productItem.price || productItem.price?.newPrice || 0;
+  const productPrice = typeof productItem.price === 'number' ? productItem.price : (productItem.price?.newPrice || 0);
   const productOldPrice = productItem.price?.oldPrice || productPrice * 1.2;
   const productDiscount = productItem.discount || Math.round(((productOldPrice - productPrice) / productOldPrice) * 100);
 

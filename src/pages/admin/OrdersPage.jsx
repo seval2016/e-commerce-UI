@@ -387,12 +387,12 @@ const OrdersPage = () => {
                     title: 'Fiyat',
                     dataIndex: 'price',
                     key: 'price',
-                    render: (price) => `${price.toFixed(2)} ₺`
+                    render: (price) => `${price.toLocaleString()} ₺`
                   },
                   {
                     title: 'Toplam',
                     key: 'total',
-                    render: (_, record) => `${(record.price * record.quantity).toFixed(2)} ₺`
+                    render: (_, record) => `${(record.price * record.quantity).toLocaleString()} ₺`
                   }
                 ]}
               />
@@ -411,6 +411,36 @@ const OrdersPage = () => {
                 <Option value="cancelled">İptal Edildi</Option>
               </Select>
             </div>
+
+            {/* Ödeme Bilgileri */}
+            {selectedOrder.paymentInfo && (
+              <div className="mt-6">
+                <h4>Ödeme Bilgileri</h4>
+                <Descriptions bordered column={2} size="small">
+                  <Descriptions.Item label="Ödeme Yöntemi">
+                    {selectedOrder.paymentMethod === 'creditCard' ? 'Kredi Kartı' : 
+                     selectedOrder.paymentMethod === 'bankTransfer' ? 'Banka Havalesi' : 
+                     selectedOrder.paymentMethod === 'cashOnDelivery' ? 'Kapıda Ödeme' : 
+                     selectedOrder.paymentMethod}
+                  </Descriptions.Item>
+                  {selectedOrder.paymentInfo.cardNumber && (
+                    <Descriptions.Item label="Kart Numarası">
+                      **** **** **** {selectedOrder.paymentInfo.cardNumber}
+                    </Descriptions.Item>
+                  )}
+                  {selectedOrder.paymentInfo.cardHolder && (
+                    <Descriptions.Item label="Kart Sahibi">
+                      {selectedOrder.paymentInfo.cardHolder}
+                    </Descriptions.Item>
+                  )}
+                  {selectedOrder.paymentInfo.expiryDate && (
+                    <Descriptions.Item label="Son Kullanma Tarihi">
+                      {selectedOrder.paymentInfo.expiryDate}
+                    </Descriptions.Item>
+                  )}
+                </Descriptions>
+              </div>
+            )}
 
             {selectedOrder.notes && (
               <div className="mt-6">

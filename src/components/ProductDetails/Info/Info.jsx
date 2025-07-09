@@ -37,8 +37,8 @@ const Info = () => {
   }
 
   // Fiyat hesaplama
-  const productPrice = product.price || 0;
-  const productOldPrice = productPrice * 1.2;
+  const productPrice = typeof product.price === 'number' ? product.price : (product.price?.newPrice || 0);
+  const productOldPrice = product.price?.oldPrice || productPrice * 1.2;
   const productDiscount = product.discount || Math.round(((productOldPrice - productPrice) / productOldPrice) * 100);
 
   // Renk ve beden seçenekleri

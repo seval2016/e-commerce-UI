@@ -22,6 +22,14 @@ const CheckoutForm = ({ onClose }) => {
     notes: ""
   });
 
+  const [cardData, setCardData] = useState({
+    cardNumber: "",
+    cardHolder: "",
+    expiryMonth: "",
+    expiryYear: "",
+    cvv: ""
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
@@ -30,6 +38,70 @@ const CheckoutForm = ({ onClose }) => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleCardInputChange = (e) => {
+    const { name, value } = e.target;
+    let formattedValue = value;
+
+    // Kart numarası formatlaması
+    if (name === 'cardNumber') {
+      formattedValue = value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
+      if (formattedValue.length > 19) formattedValue = formattedValue.slice(0, 19);
+    }
+
+    // CVV formatlaması
+    if (name === 'cvv') {
+      formattedValue = value.replace(/\D/g, '').slice(0, 4);
+    }
+
+    // Son kullanma tarihi formatlaması
+    if (name === 'expiryMonth') {
+      formattedValue = value.replace(/\D/g, '').slice(0, 2);
+      if (parseInt(formattedValue) > 12) formattedValue = '12';
+    }
+
+    if (name === 'expiryYear') {
+      formattedValue = value.replace(/\D/g, '').slice(0, 2);
+    }
+
+    setCardData(prev => ({
+      ...prev,
+      [name]: formattedValue
+    }));
+  };
+
+  const validateCardData = () => {
+    if (formData.paymentMethod === 'creditCard') {
+      if (!cardData.cardNumber.replace(/\s/g, '').match(/^\d{16}$/)) {
+        message.error("Geçerli bir kart numarası girin!");
+        return false;
+      }
+      if (!cardData.cardHolder.trim()) {
+        message.error("Kart sahibi adını girin!");
+        return false;
+      }
+      if (!cardData.expiryMonth || !cardData.expiryYear) {
+        message.error("Son kullanma tarihini girin!");
+        return false;
+      }
+      if (!cardData.cvv.match(/^\d{3,4}$/)) {
+        message.error("Geçerli bir CVV girin!");
+        return false;
+      }
+
+      // Son kullanma tarihi kontrolü
+      const currentYear = new Date().getFullYear() % 100;
+      const currentMonth = new Date().getMonth() + 1;
+      const expiryYear = parseInt(cardData.expiryYear);
+      const expiryMonth = parseInt(cardData.expiryMonth);
+
+      if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
+        message.error("Kartınızın son kullanma tarihi geçmiş!");
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -46,6 +118,11 @@ const CheckoutForm = ({ onClose }) => {
     
     if (missingFields.length > 0) {
       message.error("Lütfen tüm zorunlu alanları doldurun!");
+      return;
+    }
+
+    // Kredi kartı validasyonu
+    if (!validateCardData()) {
       return;
     }
 
@@ -69,6 +146,11 @@ const CheckoutForm = ({ onClose }) => {
         total: getCartTotal(),
         status: "pending",
         paymentMethod: formData.paymentMethod,
+        paymentInfo: formData.paymentMethod === 'creditCard' ? {
+          cardNumber: cardData.cardNumber.replace(/\s/g, '').slice(-4), // Sadece son 4 haneyi sakla
+          cardHolder: cardData.cardHolder,
+          expiryDate: `${cardData.expiryMonth}/${cardData.expiryYear}`
+        } : null,
         notes: formData.notes,
         orderDate: new Date().toISOString(),
         orderNumber: `ORD-${Date.now()}`
@@ -247,6 +329,92 @@ const CheckoutForm = ({ onClose }) => {
                 </select>
               </div>
 
+              {/* Kredi Kartı Bilgileri */}
+              {formData.paymentMethod === 'creditCard' && (
+                <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <h4 className="text-md font-semibold text-gray-900 mb-3">Kredi Kartı Bilgileri</h4>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Kart Numarası * <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      type="text"
+                      name="cardNumber"
+                      value={cardData.cardNumber}
+                      onChange={handleCardInputChange}
+                      placeholder="1234 5678 9012 3456"
+                      maxLength="19"
+                      required
+                      size="md"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Kart Sahibi * <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      type="text"
+                      name="cardHolder"
+                      value={cardData.cardHolder}
+                      onChange={handleCardInputChange}
+                      placeholder="AD SOYAD"
+                      required
+                      size="md"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ay * <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        type="text"
+                        name="expiryMonth"
+                        value={cardData.expiryMonth}
+                        onChange={handleCardInputChange}
+                        placeholder="MM"
+                        maxLength="2"
+                        required
+                        size="md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Yıl * <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        type="text"
+                        name="expiryYear"
+                        value={cardData.expiryYear}
+                        onChange={handleCardInputChange}
+                        placeholder="YY"
+                        maxLength="2"
+                        required
+                        size="md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        CVV * <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        type="text"
+                        name="cvv"
+                        value={cardData.cvv}
+                        onChange={handleCardInputChange}
+                        placeholder="123"
+                        maxLength="4"
+                        required
+                        size="md"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Sipariş Notları
@@ -280,7 +448,7 @@ const CheckoutForm = ({ onClose }) => {
                         <p className="text-xs text-gray-500">Adet: {item.quantity}</p>
                       </div>
                       <p className="text-sm font-medium text-gray-900">
-                        ₺{(item.price * item.quantity).toFixed(2)}
+                        ₺{(item.price * item.quantity).toLocaleString()}
                       </p>
                     </div>
                   ))}
@@ -290,15 +458,15 @@ const CheckoutForm = ({ onClose }) => {
               <div className="border-t border-gray-200 pt-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Ara Toplam</span>
-                  <span className="font-medium">₺{subTotal.toFixed(2)}</span>
+                  <span className="font-medium">₺{subTotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Kargo</span>
-                  <span className="font-medium">₺{shipping.toFixed(2)}</span>
+                  <span className="font-medium">₺{shipping.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-2">
                   <span>Toplam</span>
-                  <span className="text-primary-600">₺{total.toFixed(2)}</span>
+                  <span className="text-primary-600">₺{total.toLocaleString()}</span>
                 </div>
               </div>
 

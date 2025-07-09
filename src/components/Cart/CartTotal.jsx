@@ -38,7 +38,7 @@ const CartTotals = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center py-2">
             <span className="text-gray-600">Ara Toplam</span>
-            <span className="font-semibold text-gray-900">₺{subTotals.toFixed(2)}</span>
+            <span className="font-semibold text-gray-900">₺{subTotals.toLocaleString()}</span>
           </div>
           
           <div className="border-t border-gray-200 pt-4">
@@ -59,10 +59,10 @@ const CartTotals = () => {
           </div>
           
           <div className="border-t border-gray-200 pt-4">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-bold text-gray-900">Toplam</span>
-              <span className="text-xl font-bold text-primary-600">₺{cartTotals}</span>
-            </div>
+                      <div className="flex justify-between items-center">
+            <span className="text-lg font-bold text-gray-900">Toplam</span>
+            <span className="text-xl font-bold text-primary-600">₺{parseFloat(cartTotals).toLocaleString()}</span>
+          </div>
           </div>
         </div>
         

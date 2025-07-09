@@ -54,7 +54,7 @@ export const CartProvider = ({ children }) => {
           id: product.id,
           cartItemId: cartItemId,
           name: product.name || product.title || 'Ürün Adı',
-          price: product.price || product.price?.newPrice || 0,
+          price: typeof product.price === 'number' ? product.price : (product.price?.newPrice || 0),
           image: product.image || product.images?.[0] || product.img?.singleImage || '/img/products/product1/1.png',
           quantity: quantity,
           selectedSize: selectedSize,

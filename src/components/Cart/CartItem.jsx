@@ -50,7 +50,7 @@ const CartItem = ({ cartItem }) => {
         </div>
       </td>
       <td className="p-4 font-semibold text-gray-900">
-        ₺{cartItem.price.toFixed(2)}
+        ₺{cartItem.price.toLocaleString()}
       </td>
       <td className="p-4">
         <div className="flex items-center space-x-2 max-w-32">
@@ -77,7 +77,7 @@ const CartItem = ({ cartItem }) => {
         </div>
       </td>
       <td className="p-4 font-bold text-primary-600">
-        ₺{(cartItem.price * cartItem.quantity).toFixed(2)}
+        ₺{(cartItem.price * cartItem.quantity).toLocaleString()}
       </td>
     </tr>
   );

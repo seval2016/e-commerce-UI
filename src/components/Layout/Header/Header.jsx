@@ -285,8 +285,8 @@ const Header = ({ setIsSearchShow }) => {
               <div className="relative">
                 <Link to={"/cart"} className="text-lg text-gray-700 hover:text-blue-600 transition-colors">
                   <i className="bi bi-bag"></i>
-                  <span className="w-4 h-4 bg-blue-600 text-white text-xs rounded-full absolute -top-2 -right-2 flex items-center justify-center font-medium">
-                    {getCartCount()}
+                  <span className="min-w-[16px] h-4 bg-blue-600 text-white text-xs rounded-full absolute -top-2 -right-2 flex items-center justify-center font-medium px-1">
+                    {getCartCount() > 99 ? '99+' : getCartCount()}
                   </span>
                 </Link>
               </div>
