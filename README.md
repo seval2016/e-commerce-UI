@@ -1,6 +1,7 @@
 🛒 E-Ticaret Web Uygulaması
 
 Modern ve kullanıcı dostu bir e-ticaret platformu
+
 React.js ve Ant Design kullanılarak geliştirilmiş tam özellikli bir online alışveriş deneyimi sunar.
 
 🚧 Durum
