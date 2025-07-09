@@ -24,78 +24,81 @@ import Layout from "./layouts/Layout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 import { AdminAuthProvider } from "./context/AdminAuthContext.jsx";
 import { DataProvider } from "./context/DataContext.jsx";
+import { CartProvider } from "./context/CartContext.jsx";
 
 function App() {
   return (
     <ErrorBoundary>
       <DataProvider>
-        <AdminAuthProvider>
-          <Routes>
-            {/* Public Routes with Layout */}
-            <Route path="/" element={<Layout><HomePage /></Layout>} />
-            <Route path="/shop" element={<Layout><ShopPage /></Layout>} />
-            <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
-            <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
-            <Route path="/cart" element={<Layout><CartPage /></Layout>} />
-            <Route path="/auth" element={<Layout><AuthPage /></Layout>} />
-            <Route path="/product/:id" element={<Layout><ProductDetailsPage /></Layout>} />
-            <Route path="/blog/:id" element={<Layout><BlogDetailsPage /></Layout>} />
-            
-            {/* Admin Login Route */}
-            <Route path="/admin/login" element={<AdminLoginPage />} />
-            
-            {/* Protected Admin Routes */}
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<DashboardPage />} />
-              <Route path="products" element={
-                <ProtectedRoute requiredPermission="products">
-                  <ProductsPage />
+        <CartProvider>
+          <AdminAuthProvider>
+            <Routes>
+              {/* Public Routes with Layout */}
+              <Route path="/" element={<Layout><HomePage /></Layout>} />
+              <Route path="/shop" element={<Layout><ShopPage /></Layout>} />
+              <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
+              <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+              <Route path="/cart" element={<Layout><CartPage /></Layout>} />
+              <Route path="/auth" element={<Layout><AuthPage /></Layout>} />
+              <Route path="/product/:id" element={<Layout><ProductDetailsPage /></Layout>} />
+              <Route path="/blog/:id" element={<Layout><BlogDetailsPage /></Layout>} />
+              
+              {/* Admin Login Route */}
+              <Route path="/admin/login" element={<AdminLoginPage />} />
+              
+              {/* Protected Admin Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminLayout />
                 </ProtectedRoute>
-              } />
-              <Route path="categories" element={
-                <ProtectedRoute requiredPermission="categories">
-                  <CategoriesPage />
-                </ProtectedRoute>
-              } />
-              <Route path="orders" element={
-                <ProtectedRoute requiredPermission="orders">
-                  <OrdersPage />
-                </ProtectedRoute>
-              } />
-              <Route path="customers" element={
-                <ProtectedRoute requiredPermission="customers">
-                  <CustomersPage />
-                </ProtectedRoute>
-              } />
-              <Route path="blogs" element={
-                <ProtectedRoute requiredPermission="blogs">
-                  <BlogsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="analytics" element={
-                <ProtectedRoute requiredPermission="analytics">
-                  <AnalyticsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="support" element={
-                <ProtectedRoute requiredPermission="support">
-                  <SupportPage />
-                </ProtectedRoute>
-              } />
-              <Route path="settings" element={
-                <ProtectedRoute requiredPermission="settings">
-                  <SettingsPage />
-                </ProtectedRoute>
-              } />
-            </Route>
-            
-            <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
-          </Routes>
-        </AdminAuthProvider>
+              }>
+                <Route index element={<DashboardPage />} />
+                <Route path="products" element={
+                  <ProtectedRoute requiredPermission="products">
+                    <ProductsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="categories" element={
+                  <ProtectedRoute requiredPermission="categories">
+                    <CategoriesPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="orders" element={
+                  <ProtectedRoute requiredPermission="orders">
+                    <OrdersPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="customers" element={
+                  <ProtectedRoute requiredPermission="customers">
+                    <CustomersPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="blogs" element={
+                  <ProtectedRoute requiredPermission="blogs">
+                    <BlogsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="analytics" element={
+                  <ProtectedRoute requiredPermission="analytics">
+                    <AnalyticsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="support" element={
+                  <ProtectedRoute requiredPermission="support">
+                    <SupportPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="settings" element={
+                  <ProtectedRoute requiredPermission="settings">
+                    <SettingsPage />
+                  </ProtectedRoute>
+                } />
+              </Route>
+              
+              <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
+            </Routes>
+          </AdminAuthProvider>
+        </CartProvider>
       </DataProvider>
     </ErrorBoundary>
   );

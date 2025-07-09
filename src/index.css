@@ -10,14 +10,47 @@
     box-sizing: border-box;
   }
 
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
   body {
     font-family: 'Inter', system-ui, sans-serif;
     line-height: 1.6;
     color: #333;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
-  html {
-    scroll-behavior: smooth;
+  /* Enable mouse wheel scrolling */
+  .main-layout {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* Ensure all scrollable elements work with mouse wheel */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
+
+  /* Webkit scrollbar styles */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
   }
 }
 

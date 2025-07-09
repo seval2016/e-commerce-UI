@@ -1,18 +1,20 @@
 import PropTypes from "prop-types";
-import { useContext, useState } from "react";
-import { CartContext } from "../../context/CartContext";
+import { useState } from "react";
+import { useCart } from "../../context/CartContext.jsx";
 import { Link } from "react-router-dom";
 import Badge from "../common/Badge";
 import Card from "../common/Card";
 import Tooltip from "../common/Tooltip";
 
 const ProductItem = ({ productItem }) => {
-  const { cartItems, addToCart } = useContext(CartContext);
+  const { addToCart, isProductInCart } = useCart();
   const [isHovered, setIsHovered] = useState(false);
 
-  const filteredCart = cartItems.find(
-    (cartItem) => cartItem.id === productItem.id
-  );
+  // Varsayılan beden ve renk seçimi
+  const defaultSize = productItem.sizes?.[0] || "M";
+  const defaultColor = productItem.colors?.[0] || "blue";
+  
+  const isInCart = isProductInCart(productItem.id, defaultSize, defaultColor);
 
   // Admin panelinden eklenen ürünler için veri yapısını uyarla
   const productImage = productItem.image || productItem.images?.[0] || productItem.img?.singleImage || '/img/products/product1/1.png';
@@ -20,6 +22,10 @@ const ProductItem = ({ productItem }) => {
   const productPrice = productItem.price || productItem.price?.newPrice || 0;
   const productOldPrice = productItem.price?.oldPrice || productPrice * 1.2;
   const productDiscount = productItem.discount || Math.round(((productOldPrice - productPrice) / productOldPrice) * 100);
+
+  const handleQuickAdd = () => {
+    addToCart(productItem, defaultSize, defaultColor, 1);
+  };
 
   return (
     <Card
@@ -50,17 +56,17 @@ const ProductItem = ({ productItem }) => {
         <div className={`absolute left-4 top-4 flex flex-col gap-2 transition-all duration-300 ${
           isHovered ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'
         }`}>
-          <Tooltip content={filteredCart ? 'Sepete Eklendi' : 'Sepete Ekle'} position="right">
+          <Tooltip content={isInCart ? 'Sepete Eklendi' : 'Hızlı Ekle'} position="right">
             <button
-              onClick={() => addToCart(productItem)}
-              disabled={filteredCart}
+              onClick={handleQuickAdd}
+              disabled={isInCart}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
-                filteredCart 
+                isInCart 
                   ? 'bg-green-500 text-white' 
                   : 'bg-white text-gray-700 hover:bg-gray-100 shadow-lg'
               }`}
             >
-              <i className={`bi ${filteredCart ? 'bi-check-lg' : 'bi-basket-fill'} text-sm`}></i>
+              <i className={`bi ${isInCart ? 'bi-check-lg' : 'bi-basket-fill'} text-sm`}></i>
             </button>
           </Tooltip>
           
@@ -121,5 +127,4 @@ export default ProductItem;
 
 ProductItem.propTypes = {
   productItem: PropTypes.object,
-  setCartItems: PropTypes.func,
 };

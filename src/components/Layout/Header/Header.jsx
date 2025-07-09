@@ -1,13 +1,13 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import Proptypes from "prop-types";
 import { Link, useLocation } from "react-router-dom";
-import { CartContext } from "../../../context/CartContext";
+import { useCart } from "../../../context/CartContext.jsx";
 import { useAdminAuth } from "../../../context/AdminAuthContext.jsx";
 import MobileMenu from "./MobileMenu";
 import Dropdown from "../../common/Dropdown";
 
 const Header = ({ setIsSearchShow }) => {
-  const { getCartCount } = useContext(CartContext);
+  const { getCartCount } = useCart();
   const { isAdmin } = useAdminAuth();
   const user = localStorage.getItem("user");
   const { pathname } = useLocation();
@@ -216,15 +216,17 @@ const Header = ({ setIsSearchShow }) => {
                   </li>
                   {isAdmin() && (
                     <li className="flex items-center relative h-20">
-                      <Link
-                        to={"/admin"}
+                      <a
+                        href={"/admin"}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className={`text-sm font-medium uppercase tracking-wider relative ${
                           pathname.startsWith("/admin") ? "text-blue-600" : "text-gray-700"
                         } hover:text-blue-600 transition-colors duration-200 flex items-center gap-1`}
                       >
                         <i className="bi bi-gear-fill text-xs"></i>
                         Admin
-                      </Link>
+                      </a>
                     </li>
                   )}
                 </ul>

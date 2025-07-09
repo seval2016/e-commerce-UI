@@ -1,7 +1,28 @@
+import { useParams } from "react-router-dom";
 import Reviews from "../Reviews/Reviews";
 import Badge from "../common/Badge";
+import { useData } from "../../context/DataContext.jsx";
 
 const BlogDetails = () => {
+  const { id } = useParams();
+  const { blogs } = useData();
+  
+  // Find blog by slug
+  const blog = blogs.find(b => b.slug === id);
+
+  
+  if (!blog) {
+    return (
+      <section className="py-12 bg-white min-h-screen">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Blog bulunamadı</h1>
+            <p className="text-gray-600">Aradığınız blog yazısı mevcut değil.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="py-12 bg-white min-h-screen">
       <div className="container mx-auto px-4 max-w-4xl">
@@ -10,13 +31,13 @@ const BlogDetails = () => {
           {/* Featured Image */}
           <figure className="relative">
             <img 
-              src="/img/blogs/blog1.jpg" 
-              alt="Blog Post" 
+              src={blog.image} 
+              alt={blog.title} 
               className="w-full h-64 md:h-96 object-cover"
             />
             <div className="absolute top-6 left-6">
               <Badge variant="primary" size="lg">
-                COLLECTION
+                {blog.category}
               </Badge>
             </div>
           </figure>
@@ -27,111 +48,44 @@ const BlogDetails = () => {
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6">
               <div className="flex items-center gap-2">
                 <i className="bi bi-calendar3 text-gray-400"></i>
-                <span>April 25, 2022</span>
+                <span>{blog.date}</span>
               </div>
               <div className="flex items-center gap-2">
                 <i className="bi bi-chat-dots text-gray-400"></i>
-                <span>0 Comments</span>
+                <span>{blog.comments} Comments</span>
               </div>
               <div className="flex items-center gap-2">
-                <i className="bi bi-tags text-gray-400"></i>
-                <div className="flex gap-2">
-                  <a href="#" className="hover:text-blue-600 transition-colors">products</a>
-                  <span>,</span>
-                  <a href="#" className="hover:text-blue-600 transition-colors">coats</a>
-                </div>
+                <i className="bi bi-eye text-gray-400"></i>
+                <span>{blog.views || 0} Views</span>
               </div>
+              <div className="flex items-center gap-2">
+                <i className="bi bi-heart text-gray-400"></i>
+                <span>{blog.likes || 0} Likes</span>
+              </div>
+              {blog.tags && blog.tags.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <i className="bi bi-tags text-gray-400"></i>
+                  <div className="flex gap-2">
+                    {blog.tags.map((tag, index) => (
+                      <span key={index}>
+                        <a href="#" className="hover:text-blue-600 transition-colors">{tag}</a>
+                        {index < blog.tags.length - 1 && <span>,</span>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Blog Title */}
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 leading-tight">
-              The Best Products That Shape Fashion
+              {blog.title}
             </h1>
 
             {/* Blog Content */}
             <div className="prose prose-lg max-w-none">
               <p className="text-gray-700 leading-relaxed mb-6">
-                Donec rhoncus quis diam sit amet faucibus. Vivamus pellentesque,
-                sem sed convallis ultricies, ante eros laoreet libero, vitae
-                suscipit lorem turpis sit amet lectus. Quisque egestas lorem ut
-                mauris ultrices, vitae sollicitudin quam facilisis. Vivamus
-                rutrum urna non ligula tempor aliquet. Fusce tincidunt est
-                magna, id malesuada massa imperdiet ut. Nunc non nisi urna. Nam
-                consequat est nec turpis eleifend ornare. Vestibulum eu justo
-                lobortis mauris commodo efficitur. Nunc pulvinar pulvinar
-                cursus.
-              </p>
-              
-              <p className="text-gray-700 leading-relaxed mb-6">
-                Nulla id nibh ligula. Etiam finibus elit nec nisl faucibus, vel
-                auctor tortor iaculis. Vivamus aliquet ipsum purus, vel auctor
-                felis interdum at. Praesent quis fringilla justo. Ut non dui at
-                mi laoreet gravida vitae eu elit. Aliquam in elit eget purus
-                scelerisque efficitur vel ac sem. Etiam ante magna, vehicula et
-                vulputate in, aliquam sit amet metus. Donec mauris eros, aliquet
-                in nibh quis, semper suscipit nunc. Phasellus ornare nibh vitae
-                dapibus tempor.
-              </p>
-
-              {/* Quote Block */}
-              <blockquote className="border-l-4 border-blue-500 pl-6 py-4 my-8 bg-blue-50 rounded-r-lg">
-                <p className="text-lg italic text-gray-800 font-medium">
-                  "Aliquam purus enim, fringilla vel nunc imperdiet, consequat
-                  ultricies massa. Praesent sed turpis sollicitudin, dignissim
-                  justo vel, fringilla mi."
-                </p>
-              </blockquote>
-
-              <p className="text-gray-700 leading-relaxed mb-6">
-                Vivamus libero leo, tincidunt eget lectus rhoncus, finibus
-                interdum neque. Curabitur aliquet dolor purus, id molestie purus
-                elementum vitae. Sed quis aliquet eros. Morbi condimentum ornare
-                nibh, et tincidunt ante interdum facilisis. Praesent sagittis
-                tortor et felis finibus vestibulum. Interdum et malesuada fames
-                ac ante ipsum primis in faucibus. Vivamus dapibus turpis sit
-                amet turpis tincidunt, sit amet mollis turpis suscipit. Proin
-                arcu diam, pretium nec tempus eu, feugiat non ex.
-              </p>
-              
-              <p className="text-gray-700 leading-relaxed mb-6">
-                Nulla id nibh ligula. Etiam finibus elit nec nisl faucibus, vel
-                auctor tortor iaculis. Vivamus aliquet ipsum purus, vel auctor
-                felis interdum at. Praesent quis fringilla justo. Ut non dui at
-                mi laoreet gravida vitae eu elit. Aliquam in elit eget purus
-                scelerisque efficitur vel ac sem. Etiam ante magna, vehicula et
-                vulputate in, aliquam sit amet metus. Donec mauris eros, aliquet
-                in nibh quis, semper suscipit nunc. Phasellus ornare nibh vitae
-                dapibus tempor.
-              </p>
-              
-              <p className="text-gray-700 leading-relaxed mb-6">
-                Donec feugiat tincidunt eros, ac aliquam purus egestas
-                condimentum. Curabitur imperdiet at leo pellentesque mattis.
-                Fusce a dignissim est. In enim nisi, hendrerit placerat nunc
-                quis, porttitor lobortis neque. Donec nec nulla arcu. Proin
-                felis augue, volutpat ac nunc a, semper egestas dolor. Sed
-                varius magna non lacus viverra, at dapibus sem interdum. Proin
-                urna nibh, maximus nec interdum ut, hendrerit et arcu. Nunc
-                venenatis eget nulla at tempor. Duis sed tellus placerat,
-                bibendum felis quis, efficitur nisi. Morbi porta placerat urna
-                et pharetra. Proin condimentum, libero ac feugiat efficitur, est
-                orci consectetur sapien, a pretium leo leo in elit. Quisque
-                fringilla finibus arcu, pretium posuere urna posuere sit amet.
-                Nullam quis sapien a augue aliquet accumsan eget eu risus. Ut at
-                mi sed velit condimentum porta. Proin vestibulum congue
-                ullamcorper.
-              </p>
-              
-              <p className="text-gray-700 leading-relaxed">
-                Nunc blandit ligula mi, quis commodo dolor fermentum sit amet.
-                Nam vehicula pharetra lacus a vulputate. Duis pulvinar
-                vestibulum dolor, vel commodo arcu laoreet ac. Vestibulum sed
-                consequat purus, vitae auctor metus. Duis ut aliquet odio, at
-                tincidunt nunc. Vestibulum dignissim aliquet orci, rutrum
-                malesuada ipsum facilisis vel. Morbi tempor dignissim nisi.
-                Maecenas scelerisque maximus justo eget sodales. Sed finibus
-                consectetur vulputate. Pellentesque id pellentesque nulla. Sed
-                ut viverra eros. Vestibulum ut ligula quam.
+                {blog.content}
               </p>
             </div>
 
@@ -142,8 +96,8 @@ const BlogDetails = () => {
                   <i className="bi bi-person text-2xl text-gray-500"></i>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">John Doe</h3>
-                  <p className="text-sm text-gray-600">Fashion Blogger & Designer</p>
+                  <h3 className="font-semibold text-gray-900">{blog.author}</h3>
+                  <p className="text-sm text-gray-600">Blog Yazarı</p>
                 </div>
               </div>
             </div>

@@ -1,22 +1,21 @@
 import PropTypes from "prop-types";
-import { useContext } from "react";
-import { CartContext } from "../../context/CartContext";
+import { useCart } from "../../context/CartContext.jsx";
 
 const CartItem = ({ cartItem }) => {
-  const { removeFromCart, updateQuantity } = useContext(CartContext);
+  const { removeFromCart, updateQuantity } = useCart();
 
   const handleQuantityChange = (e) => {
     const newQuantity = parseInt(e.target.value);
-    updateQuantity(cartItem.id, newQuantity);
+    updateQuantity(cartItem.cartItemId, newQuantity);
   };
 
   const handleIncrement = () => {
-    updateQuantity(cartItem.id, cartItem.quantity + 1);
+    updateQuantity(cartItem.cartItemId, cartItem.quantity + 1);
   };
 
   const handleDecrement = () => {
     if (cartItem.quantity > 1) {
-      updateQuantity(cartItem.id, cartItem.quantity - 1);
+      updateQuantity(cartItem.cartItemId, cartItem.quantity - 1);
     }
   };
 
@@ -26,12 +25,12 @@ const CartItem = ({ cartItem }) => {
       <td className="p-4 relative">
         <div className="relative">
           <img 
-            src={cartItem.img.singleImage} 
+            src={cartItem.image} 
             alt={cartItem.name} 
             className="w-16 h-16 object-cover rounded-md"
           />
           <button
-            onClick={() => removeFromCart(cartItem.id)}
+            onClick={() => removeFromCart(cartItem.cartItemId)}
             title="Ürünü kaldır"
             className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
           >
@@ -51,7 +50,7 @@ const CartItem = ({ cartItem }) => {
         </div>
       </td>
       <td className="p-4 font-semibold text-gray-900">
-        ${cartItem.price.newPrice.toFixed(2)}
+        ₺{cartItem.price.toFixed(2)}
       </td>
       <td className="p-4">
         <div className="flex items-center space-x-2 max-w-32">
@@ -78,7 +77,7 @@ const CartItem = ({ cartItem }) => {
         </div>
       </td>
       <td className="p-4 font-bold text-primary-600">
-        ${(cartItem.price.newPrice * cartItem.quantity).toFixed(2)}
+        ₺{(cartItem.price * cartItem.quantity).toFixed(2)}
       </td>
     </tr>
   );

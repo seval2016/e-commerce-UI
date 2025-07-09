@@ -51,14 +51,16 @@ const MobileMenu = ({ isOpen, onClose }) => {
               Contact
             </Link>
             {isAdmin() && (
-              <Link 
-                to={"/admin"} 
+              <a 
+                href={"/admin"} 
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`text-lg font-medium transition-colors ${pathname.startsWith("/admin") ? "text-blue-600" : "text-gray-700"} flex items-center gap-2`}
                 onClick={onClose}
               >
                 <i className="bi bi-gear-fill"></i>
                 Admin
-              </Link>
+              </a>
             )}
           </nav>
         </div>

@@ -110,18 +110,61 @@ const ProductsPage = () => {
       key: 'name',
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Image
-            width={50}
-            height={50}
-            src={record.image || record.images?.[0]}
-            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-            style={{ borderRadius: 8, marginRight: 12 }}
-          />
-          <div>
-            <div style={{ fontWeight: 500 }}>{text}</div>
-            <div style={{ fontSize: 12, color: '#666' }}>{record.description}</div>
+          <div style={{ 
+            width: 60, 
+            height: 60, 
+            borderRadius: 8, 
+            marginRight: 12,
+            overflow: 'hidden',
+            border: '1px solid #f0f0f0',
+            backgroundColor: '#fafafa',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Image
+              width={60}
+              height={60}
+              src={record.image || record.images?.[0]}
+              fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+              style={{ 
+                objectFit: 'cover',
+                borderRadius: 8
+              }}
+              preview={{
+                mask: <div style={{ color: '#fff', fontSize: 12 }}>Büyüt</div>
+              }}
+            />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ 
+              fontWeight: 500, 
+              fontSize: 14,
+              marginBottom: 4,
+              color: '#262626'
+            }}>
+              {text}
+            </div>
+            <div style={{ 
+              fontSize: 12, 
+              color: '#8c8c8c',
+              lineHeight: 1.4,
+              marginBottom: 2
+            }}>
+              {record.description && record.description.length > 50 
+                ? `${record.description.substring(0, 50)}...` 
+                : record.description
+              }
+            </div>
             {record.images && record.images.length > 1 && (
-              <div style={{ fontSize: 10, color: '#999' }}>
+              <div style={{ 
+                fontSize: 11, 
+                color: '#bfbfbf',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+              }}>
+                <i className="bi bi-images" style={{ fontSize: 10 }}></i>
                 {record.images.length} resim
               </div>
             )}

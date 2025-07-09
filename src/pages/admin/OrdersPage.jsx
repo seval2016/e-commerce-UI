@@ -39,90 +39,17 @@ import {
   CloseOutlined,
   SyncOutlined
 } from '@ant-design/icons';
+import { useData } from '../../context/DataContext.jsx';
 
 const { Search } = Input;
 const { Option } = Select;
 
 const OrdersPage = () => {
+  const { orders, updateOrder, deleteOrder } = useData();
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [form] = Form.useForm();
-
-  // Mock data
-  const orders = [
-    {
-      key: '1',
-      id: 'ORD-001',
-      customer: {
-        name: 'Ahmet Yılmaz',
-        email: 'ahmet@email.com',
-        phone: '0532 123 4567'
-      },
-      products: [
-        { name: 'iPhone 15 Pro', quantity: 1, price: 45000 },
-        { name: 'AirPods Pro', quantity: 1, price: 6000 }
-      ],
-      total: 51000,
-      status: 'completed',
-      paymentStatus: 'paid',
-      shippingAddress: 'İstanbul, Kadıköy, Örnek Mahallesi No:123',
-      orderDate: '2024-01-15 14:30',
-      deliveryDate: '2024-01-17 10:15'
-    },
-    {
-      key: '2',
-      id: 'ORD-002',
-      customer: {
-        name: 'Fatma Demir',
-        email: 'fatma@email.com',
-        phone: '0533 456 7890'
-      },
-      products: [
-        { name: 'Samsung Galaxy S24', quantity: 1, price: 35000 }
-      ],
-      total: 35000,
-      status: 'pending',
-      paymentStatus: 'pending',
-      shippingAddress: 'Ankara, Çankaya, Test Sokak No:45',
-      orderDate: '2024-01-15 16:45'
-    },
-    {
-      key: '3',
-      id: 'ORD-003',
-      customer: {
-        name: 'Mehmet Kaya',
-        email: 'mehmet@email.com',
-        phone: '0534 789 1234'
-      },
-      products: [
-        { name: 'MacBook Air M2', quantity: 1, price: 45000 },
-        { name: 'iPad Air', quantity: 1, price: 15000 }
-      ],
-      total: 60000,
-      status: 'processing',
-      paymentStatus: 'paid',
-      shippingAddress: 'İzmir, Konak, Deneme Caddesi No:67',
-      orderDate: '2024-01-14 09:20'
-    },
-    {
-      key: '4',
-      id: 'ORD-004',
-      customer: {
-        name: 'Ayşe Özkan',
-        email: 'ayse@email.com',
-        phone: '0535 321 6543'
-      },
-      products: [
-        { name: 'AirPods Pro', quantity: 2, price: 6000 }
-      ],
-      total: 12000,
-      status: 'cancelled',
-      paymentStatus: 'refunded',
-      shippingAddress: 'Bursa, Nilüfer, Örnek Mahallesi No:89',
-      orderDate: '2024-01-14 11:15'
-    }
-  ];
 
   const statusConfig = {
     pending: { color: 'orange', text: 'Beklemede', icon: <ClockCircleOutlined /> },
@@ -138,12 +65,26 @@ const OrdersPage = () => {
     refunded: { color: 'purple', text: 'İade Edildi' }
   };
 
+  // Siparişleri tablo formatına çevir
+  const tableData = orders.map(order => ({
+    key: order.id,
+    ...order,
+    customer: {
+      name: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`,
+      email: order.customerInfo.email,
+      phone: order.customerInfo.phone
+    },
+    products: order.items,
+    total: order.total,
+    orderDate: new Date(order.orderDate).toLocaleString('tr-TR')
+  }));
+
   const columns = [
     {
       title: 'Sipariş ID',
-      dataIndex: 'id',
-      key: 'id',
-      render: (id) => <strong>{id}</strong>,
+      dataIndex: 'orderNumber',
+      key: 'orderNumber',
+      render: (orderNumber) => <strong>{orderNumber}</strong>,
     },
     {
       title: 'Müşteri',
@@ -165,6 +106,8 @@ const OrdersPage = () => {
           {products.map((product, index) => (
             <div key={index} style={{ fontSize: 12 }}>
               {product.name} x{product.quantity}
+              {product.selectedSize && ` (${product.selectedSize})`}
+              {product.selectedColor && ` - ${product.selectedColor}`}
             </div>
           ))}
         </div>
@@ -196,48 +139,55 @@ const OrdersPage = () => {
     },
     {
       title: 'Ödeme',
-      dataIndex: 'paymentStatus',
-      key: 'paymentStatus',
-      render: (status) => {
-        const config = paymentStatusConfig[status];
-        return <Tag color={config.color}>{config.text}</Tag>;
+      dataIndex: 'paymentMethod',
+      key: 'paymentMethod',
+      render: (paymentMethod) => {
+        const methodNames = {
+          creditCard: 'Kredi Kartı',
+          bankTransfer: 'Banka Havalesi',
+          cashOnDelivery: 'Kapıda Ödeme'
+        };
+        return <span>{methodNames[paymentMethod] || paymentMethod}</span>;
       },
     },
     {
       title: 'Tarih',
       dataIndex: 'orderDate',
       key: 'orderDate',
-      render: (date) => (
+      render: (orderDate) => (
         <div style={{ fontSize: 12 }}>
-          {new Date(date).toLocaleDateString('tr-TR')}
-          <br />
-          {new Date(date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+          {new Date(orderDate).toLocaleDateString('tr-TR')}
         </div>
       ),
+      sorter: (a, b) => new Date(a.orderDate) - new Date(b.orderDate),
     },
     {
       title: 'İşlemler',
       key: 'actions',
       render: (_, record) => (
-        <Space>
-          <Button 
-            type="text" 
-            icon={<EditOutlined />} 
+        <Space size="small">
+          <Button
+            type="link"
             size="small"
-            onClick={() => handleEdit(record)}
-          />
+            icon={<EditOutlined />}
+            onClick={() => handleView(record)}
+          >
+            Görüntüle
+          </Button>
           <Popconfirm
-            title="Bu siparişi silmek istediğinizden emin misiniz?"
+            title="Bu siparişi silmek istediğinize emin misiniz?"
             onConfirm={() => handleDelete(record.id)}
             okText="Evet"
             cancelText="Hayır"
           >
-            <Button 
-              type="text" 
-              icon={<DeleteOutlined />} 
-              size="small" 
+            <Button
+              type="link"
+              size="small"
               danger
-            />
+              icon={<DeleteOutlined />}
+            >
+              Sil
+            </Button>
           </Popconfirm>
         </Space>
       ),
@@ -253,226 +203,221 @@ const OrdersPage = () => {
     setIsModalVisible(true);
   };
 
-  const handleEdit = (order) => {
-    setSelectedOrder(order);
-    form.setFieldsValue({
-      status: order.status,
-      paymentStatus: order.paymentStatus
-    });
-    setIsModalVisible(true);
-  };
-
   const handleDelete = (id) => {
-    message.success('Sipariş başarıyla silindi');
+    deleteOrder(id);
+    message.success('Sipariş başarıyla silindi!');
   };
 
   const handleModalOk = () => {
-    form.validateFields().then((values) => {
-      message.success('Sipariş durumu güncellendi');
-      setIsModalVisible(false);
-      form.resetFields();
-    });
+    setIsModalVisible(false);
+    setSelectedOrder(null);
   };
 
-  const filteredOrders = orders.filter(order =>
-    order.id.toLowerCase().includes(searchText.toLowerCase()) ||
+  const handleStatusChange = (orderId, newStatus) => {
+    updateOrder(orderId, { status: newStatus });
+    message.success('Sipariş durumu güncellendi!');
+  };
+
+  // İstatistikler
+  const totalOrders = orders.length;
+  const pendingOrders = orders.filter(order => order.status === 'pending').length;
+  const completedOrders = orders.filter(order => order.status === 'completed').length;
+  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+
+  const filteredData = tableData.filter(order =>
+    order.orderNumber.toLowerCase().includes(searchText.toLowerCase()) ||
     order.customer.name.toLowerCase().includes(searchText.toLowerCase()) ||
     order.customer.email.toLowerCase().includes(searchText.toLowerCase())
   );
 
   return (
-    <div>
-      {/* Page Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, margin: 0 }}>Siparişler</h1>
-        <p style={{ color: '#666', margin: '8px 0 0 0' }}>
-          Tüm siparişleri görüntüleyin ve yönetin
-        </p>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Siparişler</h1>
+        <p className="text-gray-600">Tüm siparişleri yönetin ve takip edin</p>
       </div>
 
-      {/* Statistics */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
+      {/* İstatistikler */}
+      <Row gutter={16} className="mb-6">
+        <Col span={6}>
           <Card>
             <Statistic
               title="Toplam Sipariş"
-              value={orders.length}
+              value={totalOrders}
               prefix={<ShoppingCartOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col span={6}>
           <Card>
             <Statistic
               title="Bekleyen Sipariş"
-              value={orders.filter(o => o.status === 'pending').length}
+              value={pendingOrders}
               prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col span={6}>
           <Card>
             <Statistic
               title="Tamamlanan Sipariş"
-              value={orders.filter(o => o.status === 'completed').length}
+              value={completedOrders}
               prefix={<CheckCircleOutlined />}
               valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col span={6}>
           <Card>
             <Statistic
               title="Toplam Gelir"
-              value={orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.total, 0)}
+              value={totalRevenue}
               prefix={<DollarOutlined />}
               suffix="₺"
-              valueStyle={{ color: '#722ed1' }}
+              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
       </Row>
 
-      {/* Search */}
-      <Card style={{ marginBottom: 16 }}>
-        <Search
-          placeholder="Sipariş ID, müşteri adı veya email ile ara..."
-          allowClear
-          enterButton={<SearchOutlined />}
-          size="large"
-          style={{ width: 400 }}
-          onSearch={handleSearch}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
+      {/* Arama ve Filtreler */}
+      <Card className="mb-6">
+        <div className="flex justify-between items-center">
+          <Search
+            placeholder="Sipariş ara..."
+            allowClear
+            enterButton={<SearchOutlined />}
+            size="large"
+            onSearch={handleSearch}
+            style={{ width: 300 }}
+          />
+          <Space>
+            <Button icon={<ReloadOutlined />} onClick={() => window.location.reload()}>
+              Yenile
+            </Button>
+            <Button icon={<ExportOutlined />} type="primary">
+              Dışa Aktar
+            </Button>
+          </Space>
+        </div>
       </Card>
 
-      {/* Orders Table */}
+      {/* Sipariş Tablosu */}
       <Card>
         <Table
           columns={columns}
-          dataSource={filteredOrders}
+          dataSource={filteredData}
           pagination={{
-            total: filteredOrders.length,
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total, range) => 
-              `${range[0]}-${range[1]} / ${total} sipariş`,
+            showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} sipariş`,
           }}
+          scroll={{ x: 1200 }}
         />
       </Card>
 
-      {/* Order Details Modal */}
+      {/* Sipariş Detay Modal */}
       <Modal
-        title={`Sipariş Detayları - ${selectedOrder?.id}`}
+        title="Sipariş Detayları"
         open={isModalVisible}
         onOk={handleModalOk}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={handleModalOk}
         width={800}
-        footer={selectedOrder && [
-          <Button key="cancel" onClick={() => setIsModalVisible(false)}>
+        footer={[
+          <Button key="close" onClick={handleModalOk}>
             Kapat
-          </Button>,
-          <Button key="submit" type="primary" onClick={handleModalOk}>
-            Güncelle
           </Button>
         ]}
       >
         {selectedOrder && (
           <div>
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Descriptions title="Müşteri Bilgileri" column={1} size="small">
-                  <Descriptions.Item label="Ad Soyad">{selectedOrder.customer.name}</Descriptions.Item>
-                  <Descriptions.Item label="Email">{selectedOrder.customer.email}</Descriptions.Item>
-                  <Descriptions.Item label="Telefon">{selectedOrder.customer.phone}</Descriptions.Item>
-                  <Descriptions.Item label="Adres">{selectedOrder.shippingAddress}</Descriptions.Item>
-                </Descriptions>
-              </Col>
-              <Col span={12}>
-                <Descriptions title="Sipariş Bilgileri" column={1} size="small">
-                  <Descriptions.Item label="Sipariş ID">{selectedOrder.id}</Descriptions.Item>
-                  <Descriptions.Item label="Sipariş Tarihi">
-                    {new Date(selectedOrder.orderDate).toLocaleString('tr-TR')}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Durum">
-                    <Tag color={statusConfig[selectedOrder.status].color}>
-                      {statusConfig[selectedOrder.status].text}
-                    </Tag>
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Ödeme Durumu">
-                    <Tag color={paymentStatusConfig[selectedOrder.paymentStatus].color}>
-                      {paymentStatusConfig[selectedOrder.paymentStatus].text}
-                    </Tag>
-                  </Descriptions.Item>
-                </Descriptions>
-              </Col>
-            </Row>
+            <Descriptions title="Müşteri Bilgileri" bordered column={2}>
+              <Descriptions.Item label="Ad Soyad">
+                {selectedOrder.customer.name}
+              </Descriptions.Item>
+              <Descriptions.Item label="E-posta">
+                {selectedOrder.customer.email}
+              </Descriptions.Item>
+              <Descriptions.Item label="Telefon">
+                {selectedOrder.customer.phone}
+              </Descriptions.Item>
+              <Descriptions.Item label="Adres">
+                {selectedOrder.customerInfo?.address}
+              </Descriptions.Item>
+              <Descriptions.Item label="Şehir">
+                {selectedOrder.customerInfo?.city}
+              </Descriptions.Item>
+              <Descriptions.Item label="Posta Kodu">
+                {selectedOrder.customerInfo?.postalCode}
+              </Descriptions.Item>
+            </Descriptions>
 
-            <div style={{ marginTop: 24 }}>
+            <div className="mt-6">
               <h4>Ürünler</h4>
               <Table
                 dataSource={selectedOrder.products}
                 pagination={false}
-                size="small"
                 columns={[
-                  { title: 'Ürün', dataIndex: 'name', key: 'name' },
-                  { title: 'Adet', dataIndex: 'quantity', key: 'quantity' },
-                  { 
-                    title: 'Fiyat', 
-                    dataIndex: 'price', 
-                    key: 'price',
-                    render: (price) => `${price.toLocaleString()} ₺`
+                  {
+                    title: 'Ürün',
+                    dataIndex: 'name',
+                    key: 'name',
                   },
-                  { 
-                    title: 'Toplam', 
+                  {
+                    title: 'Beden',
+                    dataIndex: 'selectedSize',
+                    key: 'selectedSize',
+                    render: (size) => size || '-'
+                  },
+                  {
+                    title: 'Renk',
+                    dataIndex: 'selectedColor',
+                    key: 'selectedColor',
+                    render: (color) => color || '-'
+                  },
+                  {
+                    title: 'Adet',
+                    dataIndex: 'quantity',
+                    key: 'quantity',
+                  },
+                  {
+                    title: 'Fiyat',
+                    dataIndex: 'price',
+                    key: 'price',
+                    render: (price) => `${price.toFixed(2)} ₺`
+                  },
+                  {
+                    title: 'Toplam',
                     key: 'total',
-                    render: (_, record) => `${(record.price * record.quantity).toLocaleString()} ₺`
+                    render: (_, record) => `${(record.price * record.quantity).toFixed(2)} ₺`
                   }
                 ]}
               />
-              <div style={{ textAlign: 'right', marginTop: 16 }}>
-                <strong style={{ fontSize: 18 }}>
-                  Toplam: {selectedOrder.total.toLocaleString()} ₺
-                </strong>
-              </div>
             </div>
 
-            {selectedOrder.deliveryDate && (
-              <div style={{ marginTop: 24 }}>
-                <h4>Teslimat Bilgileri</h4>
-                <p>Teslimat Tarihi: {new Date(selectedOrder.deliveryDate).toLocaleString('tr-TR')}</p>
+            <div className="mt-6">
+              <h4>Sipariş Durumu</h4>
+              <Select
+                value={selectedOrder.status}
+                onChange={(value) => handleStatusChange(selectedOrder.id, value)}
+                style={{ width: 200 }}
+              >
+                <Option value="pending">Beklemede</Option>
+                <Option value="processing">İşleniyor</Option>
+                <Option value="completed">Tamamlandı</Option>
+                <Option value="cancelled">İptal Edildi</Option>
+              </Select>
+            </div>
+
+            {selectedOrder.notes && (
+              <div className="mt-6">
+                <h4>Sipariş Notları</h4>
+                <p className="text-gray-600">{selectedOrder.notes}</p>
               </div>
             )}
-
-            <Form form={form} layout="vertical" style={{ marginTop: 24 }}>
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item name="status" label="Sipariş Durumu">
-                    <Select>
-                      {Object.entries(statusConfig).map(([key, config]) => (
-                        <Option key={key} value={key}>
-                          {config.text}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item name="paymentStatus" label="Ödeme Durumu">
-                    <Select>
-                      {Object.entries(paymentStatusConfig).map(([key, config]) => (
-                        <Option key={key} value={key}>
-                          {config.text}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-            </Form>
           </div>
         )}
       </Modal>

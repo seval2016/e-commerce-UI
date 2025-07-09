@@ -1,9 +1,8 @@
-import { useContext } from "react";
-import { CartContext } from "../../context/CartContext";
+import { useCart } from "../../context/CartContext.jsx";
 import CartItem from "./CartItem";
 
 const CartTable = () => {
-  const { cartItems } = useContext(CartContext);
+  const { cartItems } = useCart();
   
   if (cartItems.length === 0) {
     return (

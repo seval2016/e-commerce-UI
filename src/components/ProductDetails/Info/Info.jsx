@@ -1,6 +1,6 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { CartContext } from "../../../context/CartContext";
+import { useCart } from "../../../context/CartContext.jsx";
 import { useData } from "../../../context/DataContext.jsx";
 import { message } from "antd";
 import Button from "../../common/Button";
@@ -10,7 +10,7 @@ import Input from "../../common/Input";
 const Info = () => {
   const { id } = useParams();
   const { products } = useData();
-  const { cartItems, addToCart } = useContext(CartContext);
+  const { addToCart, isProductInCart } = useCart();
   const [product, setProduct] = useState(null);
   const [activeSize, setActiveSize] = useState("M");
   const [activeColor, setActiveColor] = useState("green");
@@ -26,18 +26,11 @@ const Info = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
-    const cartItem = {
-      ...product,
-      quantity: quantity,
-      selectedSize: activeSize,
-      selectedColor: activeColor
-    };
-    
-    addToCart(cartItem);
+    addToCart(product, activeSize, activeColor, quantity);
     message.success("Ürün sepete eklendi!");
   };
 
-  const isInCart = product && cartItems.find(item => item.id === product.id);
+  const isInCart = product && isProductInCart(product.id, activeSize, activeColor);
 
   if (!product) {
     return <div>Ürün bulunamadı...</div>;
@@ -134,7 +127,7 @@ const Info = () => {
             size="lg"
             fullWidth
           >
-            {isInCart ? "Sepette Mevcut" : "Sepete Ekle"}
+            {isInCart ? "Bu Beden/Renk Sepette Mevcut" : "Sepete Ekle"}
           </Button>
         </div>
         {/* Extra Buttons */}

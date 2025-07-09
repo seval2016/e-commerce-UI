@@ -16,6 +16,7 @@ import {
   Select,
   DatePicker,
   Upload,
+  message,
 } from "antd";
 import {
   PlusOutlined,
@@ -29,8 +30,10 @@ import {
   UploadOutlined,
   CalendarOutlined,
   UserOutlined,
+  PictureOutlined,
 } from "@ant-design/icons";
 import { useData } from "../../context/DataContext.jsx";
+import dayjs from "dayjs";
 
 const { Search } = Input;
 const { Option } = Select;
@@ -40,17 +43,11 @@ const BlogsPage = () => {
   const [searchText, setSearchText] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [form] = Form.useForm();
 
-  const { blogs, addBlog, updateBlog, deleteBlog } = useData();
-
-  const categories = [
-    { value: "teknoloji", label: "Teknoloji" },
-    { value: "bilgisayar", label: "Bilgisayar" },
-    { value: "telefon", label: "Telefon" },
-    { value: "aksesuar", label: "Aksesuar" },
-    { value: "yazilim", label: "Yazılım" },
-  ];
+  const { blogs, addBlog, updateBlog, deleteBlog, categories } = useData();
 
   const columns = [
     {
@@ -107,9 +104,9 @@ const BlogsPage = () => {
       key: "stats",
       render: (_, record) => (
         <div style={{ fontSize: 12 }}>
-          <div>👁️ {record.views} görüntüleme</div>
-          <div>❤️ {record.likes} beğeni</div>
-          <div>💬 {record.comments} yorum</div>
+          <div>👁️ {record.views || 0} görüntüleme</div>
+          <div>❤️ {record.likes || 0} beğeni</div>
+          <div>💬 {record.comments || 0} yorum</div>
         </div>
       ),
     },
@@ -152,39 +149,163 @@ const BlogsPage = () => {
   };
 
   const handleAdd = () => {
-    setEditingBlog(null);
-    form.resetFields();
-    setIsModalVisible(true);
+    try {
+      setEditingBlog(null);
+      setImageFile(null);
+      setImagePreview("");
+      form.resetFields();
+      setIsModalVisible(true);
+    } catch (error) {
+      console.error('Yeni blog ekleme hatası:', error);
+      message.error('Yeni blog ekleme sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+    }
+  };
+
+  const handleModalCancel = () => {
+    try {
+      setIsModalVisible(false);
+      setImageFile(null);
+      setImagePreview("");
+      setEditingBlog(null);
+      form.resetFields();
+    } catch (error) {
+      console.error('Modal kapatma hatası:', error);
+      setIsModalVisible(false);
+      setEditingBlog(null);
+    }
   };
 
   const handleEdit = (blog) => {
-    setEditingBlog(blog);
-    form.setFieldsValue({
-      ...blog,
-      publishDate: blog.publishDate ? new Date(blog.publishDate) : null,
-    });
-    setIsModalVisible(true);
+    try {
+      setEditingBlog(blog);
+      setImageFile(null);
+      setImagePreview(blog.image || "");
+      // Form alanlarını güvenli şekilde doldur
+      const formValues = {
+        title: blog.title || '',
+        excerpt: blog.excerpt || '',
+        content: blog.content || '',
+        author: blog.author || '',
+        category: blog.category || '',
+        status: blog.status || 'draft',
+        tags: blog.tags || [],
+        image: blog.image || '',
+      };
+      // publishDate için dayjs kullan
+      if (blog.publishDate) {
+        const date = dayjs(blog.publishDate);
+        formValues.publishDate = date.isValid() ? date : null;
+      } else {
+        formValues.publishDate = null;
+      }
+      setTimeout(() => {
+        try {
+          form.setFieldsValue(formValues);
+        } catch {
+          Object.keys(formValues).forEach(key => {
+            try {
+              form.setFieldValue(key, formValues[key]);
+            } catch {
+              // ignore
+            }
+          });
+        }
+      }, 100);
+      setIsModalVisible(true);
+    } catch {
+      message.error('Blog düzenleme sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+    }
   };
 
   const handleDelete = (id) => {
     deleteBlog(id);
   };
 
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
+  const handleImageUpload = (file) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      message.error('Sadece resim dosyaları yükleyebilirsiniz!');
+      return false;
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      message.error('Resim dosyası 2MB\'dan küçük olmalıdır!');
+      return false;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+    setImageFile(file);
+    return false;
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    form.setFieldsValue({ image: "" });
+  };
+
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      let imageBase64 = imagePreview;
+      if (imageFile) {
+        imageBase64 = await fileToBase64(imageFile);
+      }
+      const publishDate = values.publishDate ? values.publishDate.toISOString() : null;
+      const date = publishDate ? new Date(publishDate).toLocaleDateString('en-US', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }) : null;
+      const slug = values.title
+        .toLowerCase()
+        .replace(/[^a-z0-9 -]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      const blogData = {
+        ...values,
+        image: imageBase64,
+        publishDate,
+        date,
+        slug,
+        tags: values.tags || [],
+        updatedAt: new Date().toISOString()
+      };
       if (editingBlog) {
-        updateBlog(editingBlog.id, values);
+        console.log('Blog güncelleniyor:', blogData); // Debug için
+        updateBlog(editingBlog.id, blogData);
       } else {
-        addBlog({
-          ...values,
+        const newBlogData = {
+          ...blogData,
           views: 0,
           likes: 0,
           comments: 0,
-          tags: values.tags || []
-        });
+          createdAt: new Date().toISOString()
+        };
+        console.log('Yeni blog ekleniyor:', newBlogData); // Debug için
+        addBlog(newBlogData);
       }
       setIsModalVisible(false);
+      setImageFile(null);
+      setImagePreview("");
+      setEditingBlog(null);
       form.resetFields();
+    } catch (error) {
+      console.error('Blog kaydetme hatası:', error);
+      message.error('Blog kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+    }
+  };
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
     });
   };
 
@@ -248,7 +369,7 @@ const BlogsPage = () => {
           <Card>
             <Statistic
               title="Toplam Görüntüleme"
-              value={blogs.reduce((sum, b) => sum + b.views, 0)}
+              value={blogs.reduce((sum, b) => sum + (b.views || 0), 0)}
               prefix={<EyeOutlined />}
               valueStyle={{ color: "#722ed1" }}
             />
@@ -306,7 +427,7 @@ const BlogsPage = () => {
         title={editingBlog ? "Blog Yazısını Düzenle" : "Yeni Blog Yazısı"}
         open={isModalVisible}
         onOk={handleModalOk}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={handleModalCancel}
         width={800}
       >
         <Form form={form} layout="vertical">
@@ -328,8 +449,8 @@ const BlogsPage = () => {
               >
                 <Select placeholder="Kategori seçin">
                   {categories.map((cat) => (
-                    <Option key={cat.value} value={cat.value}>
-                      {cat.label}
+                    <Option key={cat.name} value={cat.name}>
+                      {cat.name}
                     </Option>
                   ))}
                 </Select>
@@ -388,25 +509,69 @@ const BlogsPage = () => {
 
           <Form.Item name="tags" label="Etiketler">
             <Select mode="tags" placeholder="Etiket ekleyin">
-              <Option value="teknoloji">Teknoloji</Option>
-              <Option value="apple">Apple</Option>
-              <Option value="samsung">Samsung</Option>
-              <Option value="telefon">Telefon</Option>
-              <Option value="bilgisayar">Bilgisayar</Option>
+              <Option value="fashion">Fashion</Option>
+              <Option value="lifestyle">Lifestyle</Option>
+              <Option value="technology">Technology</Option>
+              <Option value="style">Style</Option>
+              <Option value="trends">Trends</Option>
+              <Option value="health">Health</Option>
+              <Option value="wellness">Wellness</Option>
+              <Option value="innovation">Innovation</Option>
+              <Option value="future">Future</Option>
+              <Option value="design">Design</Option>
+              <Option value="creativity">Creativity</Option>
+              <Option value="motivation">Motivation</Option>
+              <Option value="success">Success</Option>
+              <Option value="software">Software</Option>
+              <Option value="development">Development</Option>
             </Select>
           </Form.Item>
 
-          <Form.Item label="Kapak Görseli">
-            <Upload
-              listType="picture-card"
-              maxCount={1}
-              beforeUpload={() => false}
-            >
-              <div>
-                <UploadOutlined />
-                <div style={{ marginTop: 8 }}>Yükle</div>
-              </div>
-            </Upload>
+          <Form.Item
+            name="image"
+            label="Kapak Görseli"
+            rules={[{ required: true, message: "Lütfen bir görsel yükleyin!" }]}
+          >
+            <div>
+              {imagePreview && (
+                <div style={{ marginBottom: 16, textAlign: 'center' }}>
+                  <img 
+                    src={imagePreview} 
+                    alt="Preview" 
+                    style={{ 
+                      maxWidth: '100%', 
+                      maxHeight: 200, 
+                      borderRadius: 8,
+                      border: '1px solid #d9d9d9'
+                    }} 
+                  />
+                  <div style={{ marginTop: 8 }}>
+                    <Button 
+                      type="link" 
+                      danger 
+                      onClick={handleRemoveImage}
+                      icon={<DeleteOutlined />}
+                    >
+                      Görseli Kaldır
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {!imagePreview && (
+                <Upload
+                  name="image"
+                  listType="picture-card"
+                  className="avatar-uploader"
+                  showUploadList={false}
+                  beforeUpload={handleImageUpload}
+                >
+                  <div>
+                    <PictureOutlined />
+                    <div style={{ marginTop: 8 }}>Görsel Yükle</div>
+                  </div>
+                </Upload>
+              )}
+            </div>
           </Form.Item>
         </Form>
       </Modal>
