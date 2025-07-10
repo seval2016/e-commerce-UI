@@ -5,6 +5,7 @@ import { useCart } from "../../../context/CartContext.jsx";
 import { useAdminAuth } from "../../../context/AdminAuthContext.jsx";
 import MobileMenu from "./MobileMenu";
 import Dropdown from "../../common/Dropdown";
+import { images } from "../../../utils/imageImports";
 
 const Header = ({ setIsSearchShow }) => {
   const { getCartCount } = useCart();
@@ -176,7 +177,7 @@ const Header = ({ setIsSearchShow }) => {
                         </div>
                         <div>
                           <a href="#">
-                            <img src="/img/mega-menu.jpg" alt="" className="w-96 h-64 object-cover rounded-lg" />
+                            <img src={images.megaMenu} alt="" className="w-96 h-64 object-cover rounded-lg" />
                           </a>
                           <h3 className="text-lg font-medium mt-2">
                             JOIN THE LAYERING GANG

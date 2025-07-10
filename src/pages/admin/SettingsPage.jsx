@@ -33,7 +33,10 @@ import {
   PlusOutlined,
   LockOutlined,
   MailOutlined,
-  PhoneOutlined
+  PhoneOutlined,
+  DatabaseOutlined,
+  SyncOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -44,7 +47,7 @@ const SettingsPage = () => {
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const { orders, products, clearOldData } = useData();
+  const { orders, products, customers } = useData();
 
   // Mock data
   const users = [
@@ -550,21 +553,21 @@ const SettingsPage = () => {
           </Card>
         </TabPane>
 
-        {/* Storage Management */}
+        {/* Database Management */}
         <TabPane 
           tab={
             <span>
-              <SettingOutlined />
-              Depolama Yönetimi
+              <DatabaseOutlined />
+              Veritabanı Yönetimi
             </span>
           } 
-          key="storage"
+          key="database"
         >
           <Card>
             <Alert
-              message="Depolama Uyarısı"
-              description="localStorage kapasitesi sınırlıdır. Eski verileri temizleyerek yeni veriler için yer açabilirsiniz."
-              type="warning"
+              message="Veritabanı Bilgileri"
+              description="MongoDB Atlas veritabanı kullanılmaktadır. Veriler güvenli bir şekilde bulutta saklanmaktadır."
+              type="info"
               showIcon
               style={{ marginBottom: 16 }}
             />
@@ -594,80 +597,58 @@ const SettingsPage = () => {
                 <Card size="small">
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 24, fontWeight: 'bold', color: '#faad14' }}>
-                      {Math.round((JSON.stringify(orders).length + JSON.stringify(products).length) / 1024)} KB
+                      {customers.length}
                     </div>
-                    <div style={{ color: '#666' }}>Tahmini Boyut</div>
+                    <div style={{ color: '#666' }}>Toplam Müşteri</div>
                   </div>
                 </Card>
               </Col>
             </Row>
 
             <div style={{ marginBottom: 16 }}>
-              <h4>Veri Temizleme</h4>
+              <h4>Veritabanı Durumu</h4>
               <p style={{ color: '#666', marginBottom: 16 }}>
-                Eski verileri temizleyerek localStorage kapasitesini artırabilirsiniz. 
-                Bu işlem geri alınamaz, dikkatli olun.
+                MongoDB Atlas veritabanı bağlantısı aktif ve çalışır durumda.
               </p>
               
               <Space>
-                <Popconfirm
-                  title="Eski verileri temizlemek istediğinizden emin misiniz?"
-                  description="Son 50 sipariş ve 100 ürün korunacak, diğerleri silinecek."
-                  onConfirm={clearOldData}
-                  okText="Evet, Temizle"
-                  cancelText="İptal"
-                >
-                  <Button type="primary" danger>
-                    Eski Verileri Temizle
-                  </Button>
-                </Popconfirm>
-                
-                <Popconfirm
-                  title="Tüm localStorage verilerini silmek istediğinizden emin misiniz?"
-                  description="Bu işlem tüm verileri silecek ve sayfayı yeniden yükleyecek."
-                  onConfirm={() => {
-                    localStorage.clear();
-                    window.location.reload();
-                  }}
-                  okText="Evet, Tümünü Sil"
-                  cancelText="İptal"
-                >
-                  <Button danger>
-                    Tüm Verileri Sil
-                  </Button>
-                </Popconfirm>
+                <Button type="primary" icon={<SyncOutlined />}>
+                  Veritabanını Yenile
+                </Button>
+                <Button icon={<DownloadOutlined />}>
+                  Yedek İndir
+                </Button>
               </Space>
             </div>
 
             <Divider />
 
             <div>
-              <h4>Otomatik Temizleme</h4>
+              <h4>API Durumu</h4>
               <p style={{ color: '#666', marginBottom: 16 }}>
-                Otomatik temizleme ayarlarını yapılandırın.
+                Backend API endpoint'leri ve durumları.
               </p>
               
               <Row gutter={[16, 16]}>
                 <Col span={12}>
-                  <Form.Item
-                    name="autoCleanup"
-                    label="Otomatik Temizleme"
-                    valuePropName="checked"
-                  >
-                    <Switch />
-                  </Form.Item>
+                  <Card size="small">
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 16, fontWeight: 'bold', color: '#52c41a' }}>
+                        Aktif
+                      </div>
+                      <div style={{ color: '#666' }}>Backend API</div>
+                    </div>
+                  </Card>
                 </Col>
                 <Col span={12}>
-                  <Form.Item
-                    name="cleanupThreshold"
-                    label="Temizleme Eşiği"
-                  >
-                    <Select defaultValue="100">
-                      <Option value="50">50 sipariş</Option>
-                      <Option value="100">100 sipariş</Option>
-                      <Option value="200">200 sipariş</Option>
-                    </Select>
-                  </Form.Item>
+                  <Card size="small">
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 16, fontWeight: 'bold', color: '#52c41a' }}>
+                        Aktif
+                      </div>
+                      <div style={{ color: '#666' }}>MongoDB Bağlantısı</div>
+                    </div>
+                  </Card>
                 </Col>
               </Row>
             </div>

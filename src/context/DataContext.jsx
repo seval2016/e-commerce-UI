@@ -1,13 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { message } from 'antd';
-import { 
-  products as initialProducts, 
-  categories as initialCategories,
-  blogs as initialBlogs,
-  sliders as initialSliders,
-  campaigns as initialCampaigns,
-  brands as initialBrands
-} from '../data';
+import api from '../services/api';
 
 const DataContext = createContext();
 
@@ -24,9 +17,9 @@ export const DataProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [blogs, setBlogs] = useState([]);
-  const [sliders, setSliders] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
-  const [brands, setBrands] = useState([]);
+  const [sliders, _setSliders] = useState([]);
+  const [campaigns, _setCampaigns] = useState([]);
+  const [brands, _setBrands] = useState([]);
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
 
@@ -61,504 +54,390 @@ export const DataProvider = ({ children }) => {
     });
   };
 
-  // Kategori ürün sayılarını hesapla
-  const calculateCategoryProductCounts = () => {
-    const categoryCounts = {};
-    
-    // Her ürünün kategorisini say
-    products.forEach(product => {
-      if (product.category) {
-        categoryCounts[product.category] = (categoryCounts[product.category] || 0) + 1;
-      }
-    });
-    
-    // Kategorileri güncelle
-    const updatedCategories = categories.map(category => ({
-      ...category,
-      productCount: categoryCounts[category.name] || 0,
-      updatedAt: new Date().toISOString()
-    }));
-    
-    setCategories(updatedCategories);
-    saveToStorage('categories', updatedCategories);
-  };
-
-  // Load data from localStorage on mount
+  // Load data from API on mount
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       try {
-        // Kategorileri yükle
-        const savedCategories = localStorage.getItem('categories');
-        
-        if (savedCategories) {
-          const parsedCategories = JSON.parse(savedCategories);
-          // Duplicate kontrolü
-          const uniqueCategories = parsedCategories.filter((category, index, self) => 
-            index === self.findIndex(c => c.id === category.id)
-          );
-          setCategories(uniqueCategories);
-        } else {
-          setCategories(initialCategories);
+        // Load categories
+        setLoading(prev => ({ ...prev, categories: true }));
+        const categoriesResponse = await api.get('/categories');
+        if (categoriesResponse.success) {
+          setCategories(categoriesResponse.categories);
         }
-        
-        // Ürünleri yükle
-        const savedProducts = localStorage.getItem('products');
-        if (savedProducts) {
-          const parsedProducts = JSON.parse(savedProducts);
-          // Duplicate kontrolü
-          const uniqueProducts = parsedProducts.filter((product, index, self) => 
-            index === self.findIndex(p => p.id === product.id)
-          );
-          setProducts(uniqueProducts);
-        } else {
-          setProducts(initialProducts);
+        setLoading(prev => ({ ...prev, categories: false }));
+
+        // Load products
+        setLoading(prev => ({ ...prev, products: true }));
+        const productsResponse = await api.get('/products');
+        if (productsResponse.success) {
+          setProducts(productsResponse.products);
         }
-        
-        // Diğer verileri yükle
-        const savedBlogs = localStorage.getItem('blogs');
-        if (savedBlogs) {
-          const parsedBlogs = JSON.parse(savedBlogs);
-          const uniqueBlogs = parsedBlogs.filter((blog, index, self) => 
-            index === self.findIndex(b => b.id === blog.id)
-          );
-          setBlogs(uniqueBlogs);
-        } else {
-          setBlogs(initialBlogs);
+        setLoading(prev => ({ ...prev, products: false }));
+
+        // Load blogs
+        setLoading(prev => ({ ...prev, blogs: true }));
+        const blogsResponse = await api.get('/blogs');
+        if (blogsResponse.success) {
+          setBlogs(blogsResponse.blogs);
         }
-        
-        const savedSliders = localStorage.getItem('sliders');
-        if (savedSliders) {
-          const parsedSliders = JSON.parse(savedSliders);
-          const uniqueSliders = parsedSliders.filter((slider, index, self) => 
-            index === self.findIndex(s => s.id === slider.id)
-          );
-          setSliders(uniqueSliders);
-        } else {
-          setSliders(initialSliders);
+        setLoading(prev => ({ ...prev, blogs: false }));
+
+        // Load orders (admin only)
+        setLoading(prev => ({ ...prev, orders: true }));
+        const ordersResponse = await api.get('/orders');
+        if (ordersResponse.success) {
+          setOrders(ordersResponse.orders);
         }
-        
-        const savedCampaigns = localStorage.getItem('campaigns');
-        if (savedCampaigns) {
-          const parsedCampaigns = JSON.parse(savedCampaigns);
-          const uniqueCampaigns = parsedCampaigns.filter((campaign, index, self) => 
-            index === self.findIndex(c => c.id === campaign.id)
-          );
-          setCampaigns(uniqueCampaigns);
-        } else {
-          setCampaigns(initialCampaigns);
+        setLoading(prev => ({ ...prev, orders: false }));
+
+        // Load customers (admin only)
+        setLoading(prev => ({ ...prev, customers: true }));
+        const customersResponse = await api.get('/users');
+        if (customersResponse.success) {
+          setCustomers(customersResponse.users);
         }
-        
-        const savedBrands = localStorage.getItem('brands');
-        if (savedBrands) {
-          const parsedBrands = JSON.parse(savedBrands);
-          const uniqueBrands = parsedBrands.filter((brand, index, self) => 
-            index === self.findIndex(b => b.id === brand.id)
-          );
-          setBrands(uniqueBrands);
-        } else {
-          setBrands(initialBrands);
-        }
-        
-        const savedOrders = localStorage.getItem('orders');
-        if (savedOrders) {
-          const parsedOrders = JSON.parse(savedOrders);
-          const uniqueOrders = parsedOrders.filter((order, index, self) => 
-            index === self.findIndex(o => o.id === order.id)
-          );
-          setOrders(uniqueOrders);
-        } else {
-          setOrders([]);
-        }
-        
-        const savedCustomers = localStorage.getItem('customers');
-        if (savedCustomers) {
-          const parsedCustomers = JSON.parse(savedCustomers);
-          const uniqueCustomers = parsedCustomers.filter((customer, index, self) => 
-            index === self.findIndex(c => c.id === customer.id)
-          );
-          setCustomers(uniqueCustomers);
-        } else {
-          setCustomers([]);
-        }
-        
+        setLoading(prev => ({ ...prev, customers: false }));
+
       } catch (error) {
         console.error('DataContext: Error loading data:', error);
-        // Fallback to initial data
-        setCategories(initialCategories);
-        setProducts(initialProducts);
-        setBlogs(initialBlogs);
-        setSliders(initialSliders);
-        setCampaigns(initialCampaigns);
-        setBrands(initialBrands);
-        setOrders([]);
-        setCustomers([]);
+        message.error('Veriler yüklenirken hata oluştu');
+        setLoading({
+          products: false,
+          categories: false,
+          blogs: false,
+          orders: false,
+          customers: false
+        });
       }
     };
     loadData();
   }, []);
 
-  // Kategori ürün sayılarını hesapla (veriler yüklendikten sonra)
-  useEffect(() => {
-    if (products.length > 0 && categories.length > 0) {
-      calculateCategoryProductCounts();
-    }
-  }, [products.length, categories.length]);
-
-  // Save data to localStorage whenever it changes
-  const saveToStorage = (key, data) => {
+  // Product operations
+  const addProduct = async (product, imageFiles = []) => {
     try {
-      // Siparişler için özel işlem
-      if (key === 'orders') {
-        // Sipariş verilerini sıkıştır (tüm customerInfo alanlarını koru)
-        const compressedData = data.map(order => ({
-          id: order.id,
-          orderNumber: order.orderNumber,
-          customerInfo: {
-            firstName: order.customerInfo?.firstName,
-            lastName: order.customerInfo?.lastName,
-            email: order.customerInfo?.email,
-            phone: order.customerInfo?.phone,
-            address: order.customerInfo?.address,
-            city: order.customerInfo?.city,
-            postalCode: order.customerInfo?.postalCode,
-            country: order.customerInfo?.country
-          },
-          products: order.products?.map(product => ({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            quantity: product.quantity,
-            selectedSize: product.selectedSize,
-            selectedColor: product.selectedColor
-          })),
-          total: order.total,
-          status: order.status,
-          paymentMethod: order.paymentMethod,
-          paymentInfo: order.paymentInfo,
-          notes: order.notes,
-          createdAt: order.createdAt,
-          updatedAt: order.updatedAt
-        }));
-
-        // Eski siparişleri temizle (son 100 siparişi tut)
-        const limitedData = compressedData.slice(-100);
-        
-        localStorage.setItem(key, JSON.stringify(limitedData));
-      } else {
-        localStorage.setItem(key, JSON.stringify(data));
+      setLoading(prev => ({ ...prev, products: true }));
+      const response = await api.createProduct(product, imageFiles);
+      if (response.success) {
+        setProducts(prev => [...prev, response.product]);
+        notifyUpdate('products', 'add', response.product);
+        message.success('Ürün başarıyla eklendi');
       }
     } catch (error) {
-      console.error(`Error saving ${key} to localStorage:`, error);
-      
-      // Siparişler için özel hata yönetimi
-      if (key === 'orders') {
-        try {
-          // Sadece son 50 siparişi tut
-          const limitedData = data.slice(-50);
-          localStorage.setItem(key, JSON.stringify(limitedData));
-          message.warning('Eski siparişler temizlendi. Son 50 sipariş korundu.');
-        } catch (secondError) {
-          console.error('Critical error saving orders:', secondError);
-          message.error('Sipariş kaydedilemedi. Lütfen daha sonra tekrar deneyin.');
-        }
-      }
+      console.error('Error adding product:', error);
+      message.error('Ürün eklenirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, products: false }));
     }
   };
 
-  // Products CRUD
-  const addProduct = (product) => {
-    const newProduct = {
-      ...product,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    // Ürünü ekle
-    const updatedProducts = [...products, newProduct];
-    setProducts(updatedProducts);
-    saveToStorage('products', updatedProducts);
-    
-    // Kategori ürün sayısını güncelle
-    if (product.category) {
-      const categoryToUpdate = categories.find(cat => cat.name === product.category);
-      if (categoryToUpdate) {
-        const updatedCategories = categories.map(category => 
-          category.name === product.category 
-            ? { ...category, productCount: (category.productCount || 0) + 1, updatedAt: new Date().toISOString() }
-            : category
-        );
-        setCategories(updatedCategories);
-        saveToStorage('categories', updatedCategories);
-      }
-    }
-    
-    notifyUpdate('products', 'add', newProduct);
-    message.success('Ürün başarıyla eklendi');
-    return newProduct;
-  };
-
-  const updateProduct = (id, updates) => {
-    const productToUpdate = products.find(p => p.id === id);
-    if (!productToUpdate) return;
-    
-    // Kategori değişikliği kontrol et
-    const oldCategory = productToUpdate.category;
-    const newCategory = updates.category;
-    
-    const updatedProducts = products.map(product => 
-      product.id === id 
-        ? { ...product, ...updates, updatedAt: new Date().toISOString() }
-        : product
-    );
-    setProducts(updatedProducts);
-    saveToStorage('products', updatedProducts);
-    
-    // Kategori ürün sayılarını güncelle
-    if (oldCategory !== newCategory) {
-      let updatedCategories = [...categories];
-      
-      // Eski kategorinin sayısını azalt
-      if (oldCategory) {
-        updatedCategories = updatedCategories.map(category => 
-          category.name === oldCategory 
-            ? { ...category, productCount: Math.max(0, (category.productCount || 0) - 1), updatedAt: new Date().toISOString() }
-            : category
-        );
-      }
-      
-      // Yeni kategorinin sayısını artır
-      if (newCategory) {
-        updatedCategories = updatedCategories.map(category => 
-          category.name === newCategory 
-            ? { ...category, productCount: (category.productCount || 0) + 1, updatedAt: new Date().toISOString() }
-            : category
-        );
-      }
-      
-      setCategories(updatedCategories);
-      saveToStorage('categories', updatedCategories);
-    }
-    
-    notifyUpdate('products', 'update', { id, updates });
-    message.success('Ürün başarıyla güncellendi');
-  };
-
-  const deleteProduct = (id) => {
-    const productToDelete = products.find(p => p.id === id);
-    if (!productToDelete) return;
-    
-    // Ürünü sil
-    const updatedProducts = products.filter(product => product.id !== id);
-    setProducts(updatedProducts);
-    saveToStorage('products', updatedProducts);
-    
-    // Kategori ürün sayısını azalt
-    if (productToDelete.category) {
-      const updatedCategories = categories.map(category => 
-        category.name === productToDelete.category 
-          ? { ...category, productCount: Math.max(0, (category.productCount || 0) - 1), updatedAt: new Date().toISOString() }
-          : category
-      );
-      setCategories(updatedCategories);
-      saveToStorage('categories', updatedCategories);
-    }
-    
-    notifyUpdate('products', 'delete', { id });
-    message.success('Ürün başarıyla silindi');
-  };
-
-  // Categories CRUD
-  const addCategory = (category) => {
-    const newCategory = {
-      ...category,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    const updatedCategories = [...categories, newCategory];
-    setCategories(updatedCategories);
-    saveToStorage('categories', updatedCategories);
-    notifyUpdate('categories', 'add', newCategory);
-    message.success('Kategori başarıyla eklendi');
-    return newCategory;
-  };
-
-  const updateCategory = (id, updates) => {
-    const updatedCategories = categories.map(category => 
-      category.id === id 
-        ? { ...category, ...updates, updatedAt: new Date().toISOString() }
-        : category
-    );
-    setCategories(updatedCategories);
-    saveToStorage('categories', updatedCategories);
-    notifyUpdate('categories', 'update', { id, updates });
-    message.success('Kategori başarıyla güncellendi');
-  };
-
-  const deleteCategory = (id) => {
-    const updatedCategories = categories.filter(category => category.id !== id);
-    setCategories(updatedCategories);
-    saveToStorage('categories', updatedCategories);
-    notifyUpdate('categories', 'delete', { id });
-    message.success('Kategori başarıyla silindi');
-  };
-
-  // Blogs CRUD
-  const addBlog = (blog) => {
-    const newBlog = {
-      ...blog,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    const updatedBlogs = [...blogs, newBlog];
-    setBlogs(updatedBlogs);
-    saveToStorage('blogs', updatedBlogs);
-    notifyUpdate('blogs', 'add', newBlog);
-    message.success('Blog başarıyla eklendi');
-    return newBlog;
-  };
-
-  const updateBlog = (id, updates) => {
-    const updatedBlogs = blogs.map(blog => 
-      blog.id === id 
-        ? { ...blog, ...updates, updatedAt: new Date().toISOString() }
-        : blog
-    );
-    setBlogs(updatedBlogs);
-    saveToStorage('blogs', updatedBlogs);
-    notifyUpdate('blogs', 'update', { id, updates });
-    message.success('Blog başarıyla güncellendi');
-  };
-
-  const deleteBlog = (id) => {
-    const updatedBlogs = blogs.filter(blog => blog.id !== id);
-    setBlogs(updatedBlogs);
-    saveToStorage('blogs', updatedBlogs);
-    notifyUpdate('blogs', 'delete', { id });
-    message.success('Blog başarıyla silindi');
-  };
-
-  // Orders CRUD
-  const addOrder = (order) => {
-    const newOrder = {
-      ...order,
-      id: `ORD-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: 'pending'
-    };
-    const updatedOrders = [...orders, newOrder];
-    setOrders(updatedOrders);
-    saveToStorage('orders', updatedOrders);
-    message.success('Sipariş başarıyla eklendi');
-    return newOrder;
-  };
-
-  const updateOrder = (id, updates) => {
-    const updatedOrders = orders.map(order => 
-      order.id === id 
-        ? { ...order, ...updates, updatedAt: new Date().toISOString() }
-        : order
-    );
-    setOrders(updatedOrders);
-    saveToStorage('orders', updatedOrders);
-    message.success('Sipariş başarıyla güncellendi');
-  };
-
-  const deleteOrder = (id) => {
-    const updatedOrders = orders.filter(order => order.id !== id);
-    setOrders(updatedOrders);
-    saveToStorage('orders', updatedOrders);
-    message.success('Sipariş başarıyla silindi');
-  };
-
-  // Customers CRUD
-  const addCustomer = (customer) => {
-    const newCustomer = {
-      ...customer,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    const updatedCustomers = [...customers, newCustomer];
-    setCustomers(updatedCustomers);
-    saveToStorage('customers', updatedCustomers);
-    message.success('Müşteri başarıyla eklendi');
-    return newCustomer;
-  };
-
-  const updateCustomer = (id, updates) => {
-    const updatedCustomers = customers.map(customer => 
-      customer.id === id 
-        ? { ...customer, ...updates, updatedAt: new Date().toISOString() }
-        : customer
-    );
-    setCustomers(updatedCustomers);
-    saveToStorage('customers', updatedCustomers);
-    message.success('Müşteri başarıyla güncellendi');
-  };
-
-  const deleteCustomer = (id) => {
-    const updatedCustomers = customers.filter(customer => customer.id !== id);
-    setCustomers(updatedCustomers);
-    saveToStorage('customers', updatedCustomers);
-    message.success('Müşteri başarıyla silindi');
-  };
-
-  // Storage management
-  const clearOldData = () => {
+  const updateProduct = async (id, updates, imageFiles = []) => {
     try {
-      // Sadece son 50 siparişi tut
-      const limitedOrders = orders.slice(-50);
-      setOrders(limitedOrders);
-      saveToStorage('orders', limitedOrders);
-      
-      // Sadece son 100 ürünü tut
-      const limitedProducts = products.slice(-100);
-      setProducts(limitedProducts);
-      saveToStorage('products', limitedProducts);
-      
-      message.success('Eski veriler temizlendi');
+      setLoading(prev => ({ ...prev, products: true }));
+      const response = await api.updateProduct(id, updates, imageFiles);
+      if (response.success) {
+        setProducts(prev => prev.map(product => 
+          product.id === id ? { ...product, ...updates } : product
+        ));
+        notifyUpdate('products', 'update', { id, ...updates });
+        message.success('Ürün başarıyla güncellendi');
+      }
     } catch (error) {
-      console.error('Error clearing old data:', error);
-      message.error('Veri temizleme başarısız');
+      console.error('Error updating product:', error);
+      message.error('Ürün güncellenirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, products: false }));
     }
   };
 
-  // Analytics functions
+  const deleteProduct = async (id) => {
+    try {
+      setLoading(prev => ({ ...prev, products: true }));
+      const response = await api.delete(`/products/${id}`);
+      if (response.success) {
+        setProducts(prev => prev.filter(product => product.id !== id));
+        notifyUpdate('products', 'delete', { id });
+        message.success('Ürün başarıyla silindi');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      message.error('Ürün silinirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, products: false }));
+    }
+  };
+
+  // Category operations
+  const addCategory = async (category) => {
+    try {
+      setLoading(prev => ({ ...prev, categories: true }));
+      const response = await api.post('/categories', category);
+      if (response.success) {
+        setCategories(prev => [...prev, response.category]);
+        notifyUpdate('categories', 'add', response.category);
+        message.success('Kategori başarıyla eklendi');
+      }
+    } catch (error) {
+      console.error('Error adding category:', error);
+      message.error('Kategori eklenirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, categories: false }));
+    }
+  };
+
+  const updateCategory = async (id, updates) => {
+    try {
+      setLoading(prev => ({ ...prev, categories: true }));
+      const response = await api.put(`/categories/${id}`, updates);
+      if (response.success) {
+        setCategories(prev => prev.map(category => 
+          category.id === id ? { ...category, ...updates } : category
+        ));
+        notifyUpdate('categories', 'update', { id, ...updates });
+        message.success('Kategori başarıyla güncellendi');
+      }
+    } catch (error) {
+      console.error('Error updating category:', error);
+      message.error('Kategori güncellenirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, categories: false }));
+    }
+  };
+
+  const deleteCategory = async (id) => {
+    try {
+      setLoading(prev => ({ ...prev, categories: true }));
+      const response = await api.delete(`/categories/${id}`);
+      if (response.success) {
+        setCategories(prev => prev.filter(category => category.id !== id));
+        notifyUpdate('categories', 'delete', { id });
+        message.success('Kategori başarıyla silindi');
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      message.error('Kategori silinirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, categories: false }));
+    }
+  };
+
+  // Blog operations
+  const addBlog = async (blog) => {
+    try {
+      setLoading(prev => ({ ...prev, blogs: true }));
+      const response = await api.post('/blogs', blog);
+      if (response.success) {
+        setBlogs(prev => [...prev, response.blog]);
+        notifyUpdate('blogs', 'add', response.blog);
+        message.success('Blog başarıyla eklendi');
+      }
+    } catch (error) {
+      console.error('Error adding blog:', error);
+      message.error('Blog eklenirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, blogs: false }));
+    }
+  };
+
+  const updateBlog = async (id, updates) => {
+    try {
+      setLoading(prev => ({ ...prev, blogs: true }));
+      const response = await api.put(`/blogs/${id}`, updates);
+      if (response.success) {
+        setBlogs(prev => prev.map(blog => 
+          blog.id === id ? { ...blog, ...updates } : blog
+        ));
+        notifyUpdate('blogs', 'update', { id, ...updates });
+        message.success('Blog başarıyla güncellendi');
+      }
+    } catch (error) {
+      console.error('Error updating blog:', error);
+      message.error('Blog güncellenirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, blogs: false }));
+    }
+  };
+
+  const deleteBlog = async (id) => {
+    try {
+      setLoading(prev => ({ ...prev, blogs: true }));
+      const response = await api.delete(`/blogs/${id}`);
+      if (response.success) {
+        setBlogs(prev => prev.filter(blog => blog.id !== id));
+        notifyUpdate('blogs', 'delete', { id });
+        message.success('Blog başarıyla silindi');
+      }
+    } catch (error) {
+      console.error('Error deleting blog:', error);
+      message.error('Blog silinirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, blogs: false }));
+    }
+  };
+
+  // Order operations
+  const addOrder = async (order) => {
+    try {
+      setLoading(prev => ({ ...prev, orders: true }));
+      const response = await api.post('/orders', order);
+      if (response.success) {
+        setOrders(prev => [...prev, response.order]);
+        notifyUpdate('orders', 'add', response.order);
+        message.success('Sipariş başarıyla eklendi');
+      }
+    } catch (error) {
+      console.error('Error adding order:', error);
+      message.error('Sipariş eklenirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, orders: false }));
+    }
+  };
+
+  const updateOrder = async (id, updates) => {
+    try {
+      setLoading(prev => ({ ...prev, orders: true }));
+      const response = await api.put(`/orders/${id}`, updates);
+      if (response.success) {
+        setOrders(prev => prev.map(order => 
+          order.id === id ? { ...order, ...updates } : order
+        ));
+        notifyUpdate('orders', 'update', { id, ...updates });
+        message.success('Sipariş başarıyla güncellendi');
+      }
+    } catch (error) {
+      console.error('Error updating order:', error);
+      message.error('Sipariş güncellenirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, orders: false }));
+    }
+  };
+
+  const deleteOrder = async (id) => {
+    try {
+      setLoading(prev => ({ ...prev, orders: true }));
+      const response = await api.delete(`/orders/${id}`);
+      if (response.success) {
+        setOrders(prev => prev.filter(order => order.id !== id));
+        notifyUpdate('orders', 'delete', { id });
+        message.success('Sipariş başarıyla silindi');
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      message.error('Sipariş silinirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, orders: false }));
+    }
+  };
+
+  // Customer operations
+  const addCustomer = async (customer) => {
+    try {
+      setLoading(prev => ({ ...prev, customers: true }));
+      const response = await api.post('/users', customer);
+      if (response.success) {
+        setCustomers(prev => [...prev, response.user]);
+        notifyUpdate('customers', 'add', response.user);
+        message.success('Müşteri başarıyla eklendi');
+      }
+    } catch (error) {
+      console.error('Error adding customer:', error);
+      message.error('Müşteri eklenirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, customers: false }));
+    }
+  };
+
+  const updateCustomer = async (id, updates) => {
+    try {
+      setLoading(prev => ({ ...prev, customers: true }));
+      const response = await api.put(`/users/${id}`, updates);
+      if (response.success) {
+        setCustomers(prev => prev.map(customer => 
+          customer.id === id ? { ...customer, ...updates } : customer
+        ));
+        notifyUpdate('customers', 'update', { id, ...updates });
+        message.success('Müşteri başarıyla güncellendi');
+      }
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      message.error('Müşteri güncellenirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, customers: false }));
+    }
+  };
+
+  const deleteCustomer = async (id) => {
+    try {
+      setLoading(prev => ({ ...prev, customers: true }));
+      const response = await api.delete(`/users/${id}`);
+      if (response.success) {
+        setCustomers(prev => prev.filter(customer => customer.id !== id));
+        notifyUpdate('customers', 'delete', { id });
+        message.success('Müşteri başarıyla silindi');
+      }
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      message.error('Müşteri silinirken hata oluştu');
+    } finally {
+      setLoading(prev => ({ ...prev, customers: false }));
+    }
+  };
+
+  // Analytics
   const getAnalytics = () => {
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const totalProducts = products.length;
+    const totalCategories = categories.length;
     const totalOrders = orders.length;
     const totalCustomers = customers.length;
-    const totalProducts = products.length;
-    
-    const monthlyRevenue = orders
-      .filter(order => {
-        const orderDate = new Date(order.createdAt);
-        const currentDate = new Date();
-        return orderDate.getMonth() === currentDate.getMonth() && 
-               orderDate.getFullYear() === currentDate.getFullYear();
-      })
+    const totalBlogs = blogs.length;
+
+    // Kategori bazında ürün sayıları
+    const categoryStats = categories.map(category => ({
+      name: category.name,
+      productCount: products.filter(product => product.category === category.name).length
+    }));
+
+    // Sipariş durumu istatistikleri
+    const orderStatusStats = orders.reduce((acc, order) => {
+      acc[order.status] = (acc[order.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Toplam satış tutarı
+    const totalRevenue = orders
+      .filter(order => order.status === 'completed')
       .reduce((sum, order) => sum + (order.total || 0), 0);
 
-    const topProducts = products
-      .sort((a, b) => (b.sales || 0) - (a.sales || 0))
-      .slice(0, 5);
-
+    // Son siparişler (son 5 sipariş)
     const recentOrders = orders
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 10);
+      .slice(0, 5)
+      .map(order => ({
+        id: order.id,
+        customerName: order.customerName || 'Bilinmeyen Müşteri',
+        total: order.total || 0,
+        status: order.status || 'pending',
+        createdAt: order.createdAt || new Date().toISOString()
+      }));
+
+    // En çok satan ürünler (mock data)
+    const topProducts = products.slice(0, 5).map(product => ({
+      name: product.name,
+      sales: Math.floor(Math.random() * 100) + 10, // Mock sales data
+      price: product.price || 0
+    }));
 
     return {
-      totalRevenue,
+      totalProducts,
+      totalCategories,
       totalOrders,
       totalCustomers,
-      totalProducts,
-      monthlyRevenue,
-      topProducts,
-      recentOrders
+      totalBlogs,
+      categoryStats,
+      orderStatusStats,
+      totalRevenue,
+      recentOrders,
+      topProducts
     };
   };
 
@@ -575,12 +454,8 @@ export const DataProvider = ({ children }) => {
     
     // Loading states
     loading,
-    setLoading,
     
-    // Real-time updates
-    addUpdateListener,
-    
-    // CRUD operations
+    // Operations
     addProduct,
     updateProduct,
     deleteProduct,
@@ -597,10 +472,8 @@ export const DataProvider = ({ children }) => {
     updateCustomer,
     deleteCustomer,
     
-    // Storage management
-    clearOldData,
-    
-    // Analytics
+    // Utilities
+    addUpdateListener,
     getAnalytics
   };
 

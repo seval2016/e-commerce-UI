@@ -266,37 +266,24 @@ const ProductsPage = () => {
     try {
       const values = await form.validateFields();
       
-      // Handle image upload
-      let imageUrls = values.images || [];
-      if (imageFiles.length > 0) {
-        try {
-          const base64Images = await filesToBase64(imageFiles);
-          imageUrls = base64Images;
-        } catch {
-          message.error('Resim yüklenirken hata oluştu');
-          return;
-        }
-      }
-
       const productData = {
         ...values,
-        image: imageUrls[0] || '', // Ana resim
-        images: imageUrls, // Tüm resimler
         status: values.status ? 'active' : 'inactive'
       };
 
       if (editingProduct) {
-        updateProduct(editingProduct.id, productData);
+        await updateProduct(editingProduct.id, productData, imageFiles);
       } else {
-        addProduct(productData);
+        await addProduct(productData, imageFiles);
       }
       
       setIsModalVisible(false);
       form.resetFields();
       setImageFiles([]);
       setImagePreviews([]);
-    } catch {
-      console.error('Form validation failed');
+    } catch (error) {
+      console.error('Form submission error:', error);
+      message.error('Ürün kaydedilirken hata oluştu');
     }
   };
 

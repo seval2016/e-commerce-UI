@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import Button from "../../common/Button";
 import Input from "../../common/Input";
 import Modal from "../../common/Modal";
+import { images } from "../../../utils/imageImports";
 
 const Dialog = ({ isDialogShow, setIsDialogShow }) => {
 
@@ -18,7 +19,7 @@ const Dialog = ({ isDialogShow, setIsDialogShow }) => {
       className="flex items-center sm:flex-col"
     >
       <div className="flex sm:hidden">
-        <img src="/img/modal-dialog.jpg" alt="" />
+        <img src={images.modalDialog} alt="" />
       </div>
       <div className="p-8 text-center">
         <div>

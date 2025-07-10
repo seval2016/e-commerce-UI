@@ -1,7 +1,9 @@
+import { images } from "../../utils/imageImports";
+
 const CampaignSingle = () => {
   return (
     <section className="relative bg-cover bg-center bg-fixed py-32 md:py-40 mb-8" 
-             style={{ backgroundImage: 'url(/img/single-campaign.png)' }}>
+             style={{ backgroundImage: `url(${images.singleCampaign})` }}>
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center text-white">
           <h2 className="text-2xl md:text-3xl font-semibold mb-4">

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../services/api';
 
 const AdminAuthContext = createContext();
 
@@ -14,25 +15,29 @@ export const AdminAuthProvider = ({ children }) => {
   const [adminUser, setAdminUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock admin credentials (gerçek uygulamada API'den gelecek)
-  const adminCredentials = {
-    email: 'admin@example.com',
-    password: 'admin123',
-    name: 'Admin User',
-    role: 'admin',
-    permissions: ['dashboard', 'products', 'categories', 'orders', 'customers', 'blogs', 'analytics', 'support', 'settings']
-  };
-
   useEffect(() => {
     // Sayfa yüklendiğinde localStorage'dan admin bilgilerini kontrol et
-    const checkAdminAuth = () => {
+    const checkAdminAuth = async () => {
       const savedAdmin = localStorage.getItem('adminUser');
       if (savedAdmin) {
         try {
           const adminData = JSON.parse(savedAdmin);
-          // Basit bir geçerlilik kontrolü
-          if (adminData && adminData.email && adminData.loginTime) {
-            setAdminUser(adminData);
+          // Token kontrolü yap
+          if (adminData && adminData.token) {
+            try {
+              const response = await api.getCurrentUser();
+              if (response.success && response.user.role === 'admin') {
+                setAdminUser({
+                  ...adminData,
+                  ...response.user
+                });
+              } else {
+                localStorage.removeItem('adminUser');
+              }
+            } catch (error) {
+              console.error('Token validation failed:', error);
+              localStorage.removeItem('adminUser');
+            }
           } else {
             localStorage.removeItem('adminUser');
           }
@@ -43,27 +48,22 @@ export const AdminAuthProvider = ({ children }) => {
       setIsLoading(false);
     };
 
-    // Kısa bir gecikme ile çalıştır (gerçek uygulamada bu gecikme olmayacak)
-    const timer = setTimeout(checkAdminAuth, 100);
-    
-    return () => clearTimeout(timer);
+    checkAdminAuth();
   }, []);
 
   const login = async (email, password) => {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock authentication
-      if (email === adminCredentials.email && password === adminCredentials.password) {
+      const response = await api.adminLogin(email, password);
+      
+      if (response.success) {
         const adminData = {
-          id: 1,
-          email: adminCredentials.email,
-          name: adminCredentials.name,
-          role: adminCredentials.role,
-          permissions: adminCredentials.permissions,
+          id: response.user.id,
+          email: response.user.email,
+          name: response.user.name,
+          role: response.user.role,
+          token: response.token,
           loginTime: new Date().toISOString()
         };
 
@@ -77,13 +77,14 @@ export const AdminAuthProvider = ({ children }) => {
       } else {
         return {
           success: false,
-          message: 'Email veya şifre hatalı!'
+          message: response.message || 'Giriş başarısız!'
         };
       }
-    } catch {
+    } catch (error) {
+      console.error('Login error:', error);
       return {
         success: false,
-        message: 'Giriş sırasında bir hata oluştu!'
+        message: error.message || 'Giriş sırasında bir hata oluştu!'
       };
     } finally {
       setIsLoading(false);
@@ -95,9 +96,10 @@ export const AdminAuthProvider = ({ children }) => {
     localStorage.removeItem('adminUser');
   };
 
-  const hasPermission = (permission) => {
+  const hasPermission = () => {
     if (!adminUser) return false;
-    return adminUser.permissions.includes(permission);
+    // Admin kullanıcılar tüm izinlere sahip
+    return adminUser.role === 'admin';
   };
 
   const isAdmin = () => {

@@ -53,20 +53,12 @@ const Products = () => {
   console.log('Products component - Ürün sayısı:', products.length);
   console.log('Products component - Aktif ürün sayısı:', activeProducts.length);
 
-  const clearLocalStorage = () => {
-    // Sadece products ve categories'i temizle, diğer verileri koru
-    localStorage.removeItem('products');
-    localStorage.removeItem('categories');
-    window.location.reload();
-  };
-
   const activateAllProducts = () => {
     products.forEach(product => {
       if (product.status !== 'active') {
         updateProduct(product.id, { ...product, status: 'active' });
       }
     });
-    window.location.reload();
   };
 
   const sliderSettings = {
@@ -115,12 +107,6 @@ const Products = () => {
               <p className="text-gray-500">Henüz ürün bulunmuyor.</p>
               <p className="text-sm text-gray-400 mt-2">Admin panelinden ürün ekleyebilirsiniz.</p>
               <div className="mt-4 space-x-4">
-                <button 
-                  onClick={clearLocalStorage}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  localStorage Temizle (Debug)
-                </button>
                 {products.length > 0 && (
                   <button 
                     onClick={activateAllProducts}

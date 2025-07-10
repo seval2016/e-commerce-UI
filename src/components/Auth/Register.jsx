@@ -3,16 +3,16 @@ import { message } from "antd";
 import { useNavigate } from "react-router-dom";
 import Button from "../common/Button";
 import Input from "../common/Input";
+import api from "../../services/api";
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    username: "",
+    name: "",
     email: "",
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const apiUrl = import.meta.env.VITE_API_BASE_URL;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -23,25 +23,19 @@ const Register = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await fetch(`${apiUrl}/api/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("user", JSON.stringify(data));
-        message.success("Kayıt başarılı.");
+      const response = await api.register(formData.name, formData.email, formData.password);
+      
+      if (response.success) {
+        localStorage.setItem("user", JSON.stringify(response.user));
+        localStorage.setItem("token", response.token);
+        message.success("Kayıt başarılı!");
         navigate("/");
       } else {
-        message.error("Kayıt başarısız.");
+        message.error(response.message || "Kayıt başarısız.");
       }
     } catch (error) {
       console.log("Kayıt hatası:", error);
-      message.error("Bir hata oluştu. Lütfen tekrar deneyin.");
+      message.error(error.message || "Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsLoading(false);
     }
@@ -49,15 +43,15 @@ const Register = () => {
 
   return (
     <form onSubmit={handleRegister} className="space-y-6">
-      {/* Username Field */}
+      {/* Name Field */}
       <Input
         type="text"
-        label="Kullanıcı Adı"
-        name="username"
-        value={formData.username}
+        label="Ad Soyad"
+        name="name"
+        value={formData.name}
         onChange={handleInputChange}
         required
-        placeholder="kullanici_adi"
+        placeholder="Ad Soyad"
         size="lg"
         fullWidth
         icon={
@@ -103,7 +97,7 @@ const Register = () => {
         }
       />
       <p className="text-xs text-gray-500">
-        En az 8 karakter, büyük harf, küçük harf ve rakam içermelidir
+        En az 6 karakter olmalıdır
       </p>
 
       {/* Terms and Conditions */}

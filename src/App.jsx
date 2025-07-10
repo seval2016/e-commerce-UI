@@ -8,6 +8,7 @@ import AuthPage from "./pages/AuthPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import BlogDetailsPage from "./pages/BlogDetailsPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import TestPage from "./pages/TestPage";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
@@ -42,6 +43,7 @@ function App() {
               <Route path="/auth" element={<Layout><AuthPage /></Layout>} />
               <Route path="/product/:id" element={<Layout><ProductDetailsPage /></Layout>} />
               <Route path="/blog/:id" element={<Layout><BlogDetailsPage /></Layout>} />
+              <Route path="/test" element={<Layout><TestPage /></Layout>} />
               
               {/* Admin Login Route */}
               <Route path="/admin/login" element={<AdminLoginPage />} />
