@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Category = require('../models/Category');
+const auth = require('../middleware/auth');
 const router = express.Router();
 
 // @route   GET /api/categories
@@ -8,7 +9,8 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true }).sort('sortOrder');
+    // Show all categories (including inactive ones) for debugging
+    const categories = await Category.find().sort('sortOrder');
     
     res.json({
       success: true,
@@ -23,29 +25,35 @@ router.get('/', async (req, res) => {
 // @route   POST /api/categories
 // @desc    Create a new category
 // @access  Private (Admin)
-router.post('/', [
-  body('name', 'Category name is required').not().isEmpty(),
-  body('description', 'Description is required').not().isEmpty()
-], async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+
+    const { name, description = '', slug, image = '', parentCategory, status = 'active' } = req.body;
+
+    // Validate required fields
+    if (!name || !slug) {
+      return res.status(400).json({ message: 'Name and slug are required' });
     }
 
-    const { name, description, image, parentCategory } = req.body;
-
-    // Check if category already exists
-    let category = await Category.findOne({ name });
-    if (category) {
-      return res.status(400).json({ message: 'Category already exists' });
+    // Check if category already exists by name
+    let existingCategory = await Category.findOne({ name });
+    if (existingCategory) {
+      return res.status(400).json({ message: 'Category with this name already exists' });
     }
 
-    category = new Category({
+    // Check if category already exists by slug
+    existingCategory = await Category.findOne({ slug });
+    if (existingCategory) {
+      return res.status(400).json({ message: 'Category with this slug already exists' });
+    }
+
+    const category = new Category({
       name,
       description,
+      slug,
       image,
-      parentCategory
+      parentCategory,
+      isActive: status === 'active' || status === true
     });
 
     await category.save();
@@ -63,13 +71,33 @@ router.post('/', [
 // @route   PUT /api/categories/:id
 // @desc    Update a category
 // @access  Private (Admin)
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   try {
-    const { name, description, image, isActive, sortOrder } = req.body;
+    const { name, description = '', slug, image = '', status = 'active', sortOrder = 0 } = req.body;
+
+    // Validate required fields
+    if (!name || !slug) {
+      return res.status(400).json({ message: 'Name and slug are required' });
+    }
+
+    // Check if slug already exists for another category
+    if (slug) {
+      const existingCategory = await Category.findOne({ slug, _id: { $ne: req.params.id } });
+      if (existingCategory) {
+        return res.status(400).json({ message: 'Category with this slug already exists' });
+      }
+    }
 
     const category = await Category.findByIdAndUpdate(
       req.params.id,
-      { name, description, image, isActive, sortOrder },
+      { 
+        name, 
+        description, 
+        slug, 
+        image, 
+        isActive: status === 'active' || status === true,
+        sortOrder 
+      },
       { new: true, runValidators: true }
     );
 
@@ -90,7 +118,7 @@ router.put('/:id', async (req, res) => {
 // @route   DELETE /api/categories/:id
 // @desc    Delete a category
 // @access  Private (Admin)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
 

@@ -191,10 +191,11 @@ const CategoriesPage = () => {
       }
       
       const categoryData = {
-        ...values,
-        status: values.status ? 'active' : 'inactive',
-        productCount: 0,
-        image: imageBase64
+        name: values.name,
+        description: values.description,
+        slug: values.slug,
+        image: imageBase64,
+        status: values.status ? 'active' : 'inactive'
       };
       
       if (editingCategory) {
@@ -303,6 +304,7 @@ const CategoriesPage = () => {
         <Table
           columns={columns}
           dataSource={tableCategories}
+          rowKey="id"
           pagination={{
             total: tableCategories.length,
             pageSize: 10,

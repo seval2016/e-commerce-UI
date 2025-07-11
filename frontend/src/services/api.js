@@ -165,37 +165,23 @@ class ApiService {
     return this.request('/categories');
   }
 
-  // Category operations with file upload
-  async createCategory(categoryData, imageFile = null) {
-    const formData = new FormData();
-    
-    // Add category data
-    Object.keys(categoryData).forEach(key => {
-      formData.append(key, categoryData[key]);
+  // Category operations
+  async createCategory(categoryData) {
+    return this.request('/categories', {
+      method: 'POST',
+      body: JSON.stringify(categoryData)
     });
-
-    // Add image file
-    if (imageFile) {
-      formData.append('image', imageFile);
-    }
-
-    return this.uploadFile('/categories', formData);
   }
 
-  async updateCategory(id, categoryData, imageFile = null) {
-    const formData = new FormData();
-    
-    // Add category data
-    Object.keys(categoryData).forEach(key => {
-      formData.append(key, categoryData[key]);
+  async updateCategory(id, categoryData) {
+    return this.request(`/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(categoryData)
     });
+  }
 
-    // Add image file
-    if (imageFile) {
-      formData.append('image', imageFile);
-    }
-
-    return this.uploadFile(`/categories/${id}`, formData);
+  async deleteCategory(id) {
+    return this.request(`/categories/${id}`, { method: 'DELETE' });
   }
 
   // Orders endpoints
@@ -252,6 +238,10 @@ class ApiService {
     }
 
     return this.uploadFile(`/blogs/${id}`, formData);
+  }
+
+  async deleteBlog(id) {
+    return this.request(`/blogs/${id}`, { method: 'DELETE' });
   }
 
   // Admin endpoints

@@ -276,6 +276,7 @@ const AnalyticsPage = () => {
             <Table
               columns={productColumns}
               dataSource={topProducts}
+              rowKey="name"
               pagination={false}
               size="small"
             />
@@ -286,6 +287,7 @@ const AnalyticsPage = () => {
             <Table
               columns={categoryColumns}
               dataSource={topCategories}
+              rowKey="name"
               pagination={false}
               size="small"
             />
@@ -320,6 +322,7 @@ const AnalyticsPage = () => {
             <Table
               columns={activityColumns}
               dataSource={recentActivity}
+              rowKey="id"
               pagination={false}
               size="small"
             />

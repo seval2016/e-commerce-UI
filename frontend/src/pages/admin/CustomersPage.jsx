@@ -225,10 +225,10 @@ const CustomersPage = () => {
     setSearchText(value);
   };
 
-  const handleView = (customer) => {
-    setSelectedCustomer(customer);
-    setIsModalVisible(true);
-  };
+  // const handleView = (customer) => {
+  //   setSelectedCustomer(customer);
+  //   setIsModalVisible(true);
+  // };
 
   const handleEdit = (customer) => {
     setSelectedCustomer(customer);
@@ -236,12 +236,12 @@ const CustomersPage = () => {
     setIsModalVisible(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = () => {
     message.success('Müşteri başarıyla silindi');
   };
 
   const handleModalOk = () => {
-    form.validateFields().then((values) => {
+    form.validateFields().then(() => {
       message.success('Müşteri bilgileri güncellendi');
       setIsModalVisible(false);
       form.resetFields();
@@ -334,6 +334,7 @@ const CustomersPage = () => {
         <Table
           columns={columns}
           dataSource={filteredCustomers}
+          rowKey="id"
           pagination={{
             total: filteredCustomers.length,
             pageSize: 10,

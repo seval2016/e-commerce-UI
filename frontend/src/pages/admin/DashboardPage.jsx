@@ -161,6 +161,7 @@ const DashboardPage = () => {
             <Table 
               columns={orderColumns} 
               dataSource={recentOrders} 
+              rowKey="orderId"
               pagination={false}
               size="small"
             />

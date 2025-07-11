@@ -60,7 +60,7 @@ export const DataProvider = ({ children }) => {
       try {
         // Load categories
         setLoading(prev => ({ ...prev, categories: true }));
-        const categoriesResponse = await api.get('/categories');
+        const categoriesResponse = await api.getCategories();
         if (categoriesResponse.success) {
           setCategories(categoriesResponse.categories);
         }
@@ -68,7 +68,7 @@ export const DataProvider = ({ children }) => {
 
         // Load products
         setLoading(prev => ({ ...prev, products: true }));
-        const productsResponse = await api.get('/products');
+        const productsResponse = await api.getProducts();
         if (productsResponse.success) {
           setProducts(productsResponse.products);
         }
@@ -76,7 +76,7 @@ export const DataProvider = ({ children }) => {
 
         // Load blogs
         setLoading(prev => ({ ...prev, blogs: true }));
-        const blogsResponse = await api.get('/blogs');
+        const blogsResponse = await api.getBlogs();
         if (blogsResponse.success) {
           setBlogs(blogsResponse.blogs);
         }
@@ -84,7 +84,7 @@ export const DataProvider = ({ children }) => {
 
         // Load orders (admin only)
         setLoading(prev => ({ ...prev, orders: true }));
-        const ordersResponse = await api.get('/orders');
+        const ordersResponse = await api.getOrders();
         if (ordersResponse.success) {
           setOrders(ordersResponse.orders);
         }
@@ -92,7 +92,7 @@ export const DataProvider = ({ children }) => {
 
         // Load customers (admin only)
         setLoading(prev => ({ ...prev, customers: true }));
-        const customersResponse = await api.get('/users');
+        const customersResponse = await api.getUsers();
         if (customersResponse.success) {
           setCustomers(customersResponse.users);
         }
@@ -153,7 +153,7 @@ export const DataProvider = ({ children }) => {
   const deleteProduct = async (id) => {
     try {
       setLoading(prev => ({ ...prev, products: true }));
-      const response = await api.delete(`/products/${id}`);
+      const response = await api.request(`/products/${id}`, { method: 'DELETE' });
       if (response.success) {
         setProducts(prev => prev.filter(product => product.id !== id));
         notifyUpdate('products', 'delete', { id });
@@ -171,7 +171,7 @@ export const DataProvider = ({ children }) => {
   const addCategory = async (category) => {
     try {
       setLoading(prev => ({ ...prev, categories: true }));
-      const response = await api.post('/categories', category);
+      const response = await api.createCategory(category);
       if (response.success) {
         setCategories(prev => [...prev, response.category]);
         notifyUpdate('categories', 'add', response.category);
@@ -188,7 +188,7 @@ export const DataProvider = ({ children }) => {
   const updateCategory = async (id, updates) => {
     try {
       setLoading(prev => ({ ...prev, categories: true }));
-      const response = await api.put(`/categories/${id}`, updates);
+      const response = await api.updateCategory(id, updates);
       if (response.success) {
         setCategories(prev => prev.map(category => 
           category.id === id ? { ...category, ...updates } : category
@@ -207,7 +207,7 @@ export const DataProvider = ({ children }) => {
   const deleteCategory = async (id) => {
     try {
       setLoading(prev => ({ ...prev, categories: true }));
-      const response = await api.delete(`/categories/${id}`);
+      const response = await api.deleteCategory(id);
       if (response.success) {
         setCategories(prev => prev.filter(category => category.id !== id));
         notifyUpdate('categories', 'delete', { id });
@@ -225,7 +225,7 @@ export const DataProvider = ({ children }) => {
   const addBlog = async (blog) => {
     try {
       setLoading(prev => ({ ...prev, blogs: true }));
-      const response = await api.post('/blogs', blog);
+      const response = await api.createBlog(blog);
       if (response.success) {
         setBlogs(prev => [...prev, response.blog]);
         notifyUpdate('blogs', 'add', response.blog);
@@ -242,7 +242,7 @@ export const DataProvider = ({ children }) => {
   const updateBlog = async (id, updates) => {
     try {
       setLoading(prev => ({ ...prev, blogs: true }));
-      const response = await api.put(`/blogs/${id}`, updates);
+      const response = await api.updateBlog(id, updates);
       if (response.success) {
         setBlogs(prev => prev.map(blog => 
           blog.id === id ? { ...blog, ...updates } : blog
@@ -261,7 +261,7 @@ export const DataProvider = ({ children }) => {
   const deleteBlog = async (id) => {
     try {
       setLoading(prev => ({ ...prev, blogs: true }));
-      const response = await api.delete(`/blogs/${id}`);
+      const response = await api.deleteBlog(id);
       if (response.success) {
         setBlogs(prev => prev.filter(blog => blog.id !== id));
         notifyUpdate('blogs', 'delete', { id });
@@ -279,7 +279,10 @@ export const DataProvider = ({ children }) => {
   const addOrder = async (order) => {
     try {
       setLoading(prev => ({ ...prev, orders: true }));
-      const response = await api.post('/orders', order);
+      const response = await api.request('/orders', {
+        method: 'POST',
+        body: JSON.stringify(order)
+      });
       if (response.success) {
         setOrders(prev => [...prev, response.order]);
         notifyUpdate('orders', 'add', response.order);
@@ -296,7 +299,10 @@ export const DataProvider = ({ children }) => {
   const updateOrder = async (id, updates) => {
     try {
       setLoading(prev => ({ ...prev, orders: true }));
-      const response = await api.put(`/orders/${id}`, updates);
+      const response = await api.request(`/orders/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
       if (response.success) {
         setOrders(prev => prev.map(order => 
           order.id === id ? { ...order, ...updates } : order
@@ -315,7 +321,7 @@ export const DataProvider = ({ children }) => {
   const deleteOrder = async (id) => {
     try {
       setLoading(prev => ({ ...prev, orders: true }));
-      const response = await api.delete(`/orders/${id}`);
+      const response = await api.request(`/orders/${id}`, { method: 'DELETE' });
       if (response.success) {
         setOrders(prev => prev.filter(order => order.id !== id));
         notifyUpdate('orders', 'delete', { id });
@@ -333,7 +339,10 @@ export const DataProvider = ({ children }) => {
   const addCustomer = async (customer) => {
     try {
       setLoading(prev => ({ ...prev, customers: true }));
-      const response = await api.post('/users', customer);
+      const response = await api.request('/users', {
+        method: 'POST',
+        body: JSON.stringify(customer)
+      });
       if (response.success) {
         setCustomers(prev => [...prev, response.user]);
         notifyUpdate('customers', 'add', response.user);
@@ -350,7 +359,10 @@ export const DataProvider = ({ children }) => {
   const updateCustomer = async (id, updates) => {
     try {
       setLoading(prev => ({ ...prev, customers: true }));
-      const response = await api.put(`/users/${id}`, updates);
+      const response = await api.request(`/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
       if (response.success) {
         setCustomers(prev => prev.map(customer => 
           customer.id === id ? { ...customer, ...updates } : customer
@@ -369,7 +381,7 @@ export const DataProvider = ({ children }) => {
   const deleteCustomer = async (id) => {
     try {
       setLoading(prev => ({ ...prev, customers: true }));
-      const response = await api.delete(`/users/${id}`);
+      const response = await api.request(`/users/${id}`, { method: 'DELETE' });
       if (response.success) {
         setCustomers(prev => prev.filter(customer => customer.id !== id));
         notifyUpdate('customers', 'delete', { id });

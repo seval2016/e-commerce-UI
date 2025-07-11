@@ -425,6 +425,7 @@ const OrdersPage = () => {
         <Table
           columns={columns}
           dataSource={filteredData}
+          rowKey="id"
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
@@ -478,6 +479,7 @@ const OrdersPage = () => {
               <h4>Ürünler</h4>
               <Table
                 dataSource={selectedOrder.products}
+                rowKey="id"
                 pagination={false}
                 columns={[
                   {

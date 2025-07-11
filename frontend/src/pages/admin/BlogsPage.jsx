@@ -411,6 +411,7 @@ const BlogsPage = () => {
         <Table
           columns={columns}
           dataSource={tableBlogs}
+          rowKey="id"
           pagination={{
             total: tableBlogs.length,
             pageSize: 10,

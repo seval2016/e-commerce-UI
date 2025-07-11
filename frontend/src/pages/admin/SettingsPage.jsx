@@ -375,6 +375,7 @@ const SettingsPage = () => {
             <Table
               columns={userColumns}
               dataSource={users}
+              rowKey="id"
               pagination={false}
             />
           </Card>

@@ -38,9 +38,9 @@ const categorySchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Create slug from name
+// Create slug from name if not provided
 categorySchema.pre('save', function(next) {
-  if (!this.isModified('name')) return next();
+  if (!this.isModified('name') || this.slug) return next();
   
   this.slug = this.name
     .toLowerCase()

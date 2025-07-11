@@ -390,6 +390,7 @@ const SupportPage = () => {
             <Table
               columns={columns}
               dataSource={filteredTickets}
+              rowKey="id"
               pagination={{
                 total: filteredTickets.length,
                 pageSize: 10,
@@ -404,6 +405,7 @@ const SupportPage = () => {
             <Table
               columns={columns}
               dataSource={filteredTickets.filter(t => t.status === 'open')}
+              rowKey="id"
               pagination={false}
             />
           </TabPane>
@@ -411,6 +413,7 @@ const SupportPage = () => {
             <Table
               columns={columns}
               dataSource={filteredTickets.filter(t => t.status === 'in_progress')}
+              rowKey="id"
               pagination={false}
             />
           </TabPane>
@@ -418,6 +421,7 @@ const SupportPage = () => {
             <Table
               columns={columns}
               dataSource={filteredTickets.filter(t => t.status === 'resolved')}
+              rowKey="id"
               pagination={false}
             />
           </TabPane>

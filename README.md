@@ -11,7 +11,7 @@ Modern e-commerce web application built with React, Node.js, Express, and MongoD
 - 👥 **User Authentication**: Register, login, profile management
 - 📝 **Blog System**: Create and manage blog posts
 - 📱 **Responsive Design**: Mobile-friendly interface
-- 🖼️ **Image Management**: Cloudinary integration for optimized image storage
+- 🖼️ **Image Management**: Local file storage for image uploads
 
 ## Tech Stack
 
@@ -25,7 +25,6 @@ Modern e-commerce web application built with React, Node.js, Express, and MongoD
 - **Node.js** with Express
 - **MongoDB** with Mongoose
 - **JWT** for authentication
-- **Cloudinary** for image storage
 - **Multer** for file uploads
 
 ## Setup Instructions
@@ -33,7 +32,6 @@ Modern e-commerce web application built with React, Node.js, Express, and MongoD
 ### Prerequisites
 - Node.js (v16 or higher)
 - MongoDB Atlas account
-- Cloudinary account
 
 ### 1. Clone the Repository
 ```bash
@@ -61,17 +59,15 @@ MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ecommerce_store?
 JWT_SECRET=your_jwt_secret_key_here
 JWT_EXPIRE=7d
 
-# Cloudinary Configuration
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+# Image Upload Configuration
+# Images will be stored locally in uploads folder
 ```
 
-### 3. Cloudinary Setup
+### 3. Image Upload Setup
 
-1. Sign up at [Cloudinary](https://cloudinary.com/)
-2. Get your credentials from the dashboard
-3. Update the `.env` file with your Cloudinary credentials
+1. Create an `uploads` folder in the backend directory
+2. Ensure the folder has write permissions
+3. Images will be stored locally in this folder
 
 ### 4. Frontend Setup
 
@@ -109,13 +105,12 @@ You can change these credentials in `backend/server.js` or create a new admin us
 
 ## Image Upload System
 
-The application uses Cloudinary for image storage, which provides:
+The application uses local file storage for image uploads:
 
-- ✅ **Automatic optimization**: Images are compressed and optimized
-- ✅ **CDN delivery**: Fast global image delivery
-- ✅ **Multiple formats**: Automatic format conversion
-- ✅ **Responsive images**: Different sizes for different devices
-- ✅ **Secure URLs**: HTTPS by default
+- ✅ **Local storage**: Images stored on your server
+- ✅ **No external dependencies**: No third-party service required
+- ✅ **Full control**: Complete control over your image data
+- ✅ **Cost effective**: No monthly fees
 
 ### Supported Image Formats
 - JPEG, JPG
@@ -126,7 +121,6 @@ The application uses Cloudinary for image storage, which provides:
 ### Image Limits
 - Maximum file size: 5MB
 - Maximum images per product: 6
-- Automatic resizing for large images
 
 ## API Endpoints
 

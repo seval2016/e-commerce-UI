@@ -377,6 +377,7 @@ const ProductsPage = () => {
         <Table
           columns={columns}
           dataSource={tableProducts}
+          rowKey="id"
           pagination={{
             total: tableProducts.length,
             pageSize: 10,

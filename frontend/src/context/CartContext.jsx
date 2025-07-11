@@ -13,20 +13,22 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
 
-  // localStorage kullanımını kontrol et
+  // localStorage kullanımını kontrol et (sadece development'ta)
   const _checkStorageUsage = () => {
-    try {
-      let totalSize = 0;
-      for (let key in localStorage) {
-        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
-          totalSize += localStorage[key].length;
+    if (import.meta.env.DEV) {
+      try {
+        let totalSize = 0;
+        for (let key in localStorage) {
+          if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
+            totalSize += localStorage[key].length;
+          }
         }
+        console.log(`localStorage kullanımı: ${totalSize} karakter`);
+        return totalSize;
+      } catch (error) {
+        console.error('Storage kullanımı kontrol edilemedi:', error);
+        return 0;
       }
-      console.log(`localStorage kullanımı: ${totalSize} karakter`);
-      return totalSize;
-    } catch (error) {
-      console.error('Storage kullanımı kontrol edilemedi:', error);
-      return 0;
     }
   };
 
@@ -88,7 +90,9 @@ export const CartProvider = ({ children }) => {
       }));
       
       const compressedData = JSON.stringify(cartData);
-      console.log(`Cart veri boyutu: ${compressedData.length} karakter`);
+      if (import.meta.env.DEV) {
+        console.log(`Cart veri boyutu: ${compressedData.length} karakter`);
+      }
       
       // localStorage'a kaydet
       localStorage.setItem('cart', compressedData);

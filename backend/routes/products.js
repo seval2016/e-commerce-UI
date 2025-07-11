@@ -3,7 +3,6 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Product = require('../models/Product');
 const upload = require('../middleware/upload');
-const { uploadMultipleImages, deleteImage } = require('../utils/imageUpload');
 
 // @route   GET /api/products
 // @desc    Get all products
@@ -38,14 +37,15 @@ router.post('/', upload.array('images', 6), [
 
     const { name, description, price, originalPrice, discount, category, stock, sku, brand, tags, specifications, variants, status } = req.body;
 
-    // Upload images to Cloudinary
+    // Handle image uploads (local storage)
     let imageUrls = [];
     let mainImage = '';
     
     if (req.files && req.files.length > 0) {
-      const uploadedImages = await uploadMultipleImages(req.files, 'products');
-      imageUrls = uploadedImages.map(img => img.url);
-      mainImage = uploadedImages[0].url; // First image as main image
+      // For now, we'll use placeholder URLs
+      // You can implement local file storage later
+      imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+      mainImage = imageUrls[0]; // First image as main image
     }
 
     const product = new Product({
@@ -88,8 +88,9 @@ router.put('/:id', upload.array('images', 6), async (req, res) => {
 
     // Handle image updates
     if (req.files && req.files.length > 0) {
-      const uploadedImages = await uploadMultipleImages(req.files, 'products');
-      const imageUrls = uploadedImages.map(img => img.url);
+      // For now, we'll use placeholder URLs
+      // You can implement local file storage later
+      const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
       
       updateData.mainImage = imageUrls[0];
       updateData.images = imageUrls.map(url => ({ url, alt: req.body.name || 'Product' }));
@@ -131,14 +132,9 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    // Delete images from Cloudinary
-    if (product.images && product.images.length > 0) {
-      for (const image of product.images) {
-        if (image.public_id) {
-          await deleteImage(image.public_id);
-        }
-      }
-    }
+    // Delete images from local storage (if implemented)
+    // For now, we'll just delete the product
+    // You can implement local file deletion later
 
     await Product.findByIdAndDelete(req.params.id);
 
