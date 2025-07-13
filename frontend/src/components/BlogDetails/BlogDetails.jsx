@@ -3,6 +3,18 @@ import Reviews from "../Reviews/Reviews";
 import Badge from "../common/Badge";
 import { useData } from "../../context/DataContext.jsx";
 
+// Backend API base URL
+const API_BASE_URL = "http://localhost:5000";
+
+// Blog görsel yolunu backend ile birleştir
+const getBlogImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith("/uploads/")) {
+    return API_BASE_URL + imagePath;
+  }
+  return imagePath;
+};
+
 const BlogDetails = () => {
   const { id } = useParams();
   const { blogs } = useData();
@@ -31,7 +43,7 @@ const BlogDetails = () => {
           {/* Featured Image */}
           <figure className="relative">
             <img 
-              src={blog.image} 
+              src={getBlogImageUrl(blog.image)} 
               alt={blog.title} 
               className="w-full h-64 md:h-96 object-cover"
             />

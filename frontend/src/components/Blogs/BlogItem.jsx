@@ -2,13 +2,25 @@ import { Link } from "react-router-dom";
 import Badge from "../common/Badge";
 import Card from "../common/Card";
 
+// Backend API base URL
+const API_BASE_URL = "http://localhost:5000";
+
+// Blog görsel yolunu backend ile birleştir
+const getBlogImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith("/uploads/")) {
+    return API_BASE_URL + imagePath;
+  }
+  return imagePath;
+};
+
 const BlogItem = ({ blog }) => {
   return (
     <Card className="overflow-hidden group h-full" padding="p-0">
       {/* Blog Image */}
       <Link to={`/blog/${blog.slug}`} className="block relative overflow-hidden">
         <img 
-          src={blog.image} 
+          src={getBlogImageUrl(blog.image)} 
           alt={blog.title} 
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />

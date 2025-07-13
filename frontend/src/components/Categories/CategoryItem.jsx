@@ -1,5 +1,17 @@
 import Card from "../common/Card";
 
+// Backend API base URL
+const API_BASE_URL = "http://localhost:5000";
+
+// Kategori görsel yolunu backend ile birleştir
+const getCategoryImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith("/uploads/")) {
+    return API_BASE_URL + imagePath;
+  }
+  return imagePath;
+};
+
 const CategoryItem = ({ category }) => {
   return (
     <Card className="group cursor-pointer h-full" padding="p-0">
@@ -7,7 +19,7 @@ const CategoryItem = ({ category }) => {
         {/* Image Container with Background */}
         <div className="relative w-full h-48 bg-[#f7f7f7] flex items-center justify-center">
           <img
-            src={category.image}
+            src={getCategoryImageUrl(category.image)}
             alt={category.name}
             className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700"
           />

@@ -47,16 +47,12 @@ const Products = () => {
     return products.filter(p => p.status === 'active');
   }, [products]);
 
-  // Debug log'ları
-  console.log('Products component - Tüm ürünler:', products);
-  console.log('Products component - Aktif ürünler:', activeProducts);
-  console.log('Products component - Ürün sayısı:', products.length);
-  console.log('Products component - Aktif ürün sayısı:', activeProducts.length);
+
 
   const activateAllProducts = () => {
     products.forEach(product => {
       if (product.status !== 'active') {
-        updateProduct(product.id, { ...product, status: 'active' });
+        updateProduct(product._id, { ...product, status: 'active' });
       }
     });
   };
@@ -97,7 +93,7 @@ const Products = () => {
           {activeProducts.length > 0 ? (
             <Slider {...sliderSettings}>
               {activeProducts.map((product) => (
-                <div key={product.id} className="px-2">
+                <div key={product._id} className="px-2">
                   <ProductItem productItem={product} />
                 </div>
               ))}

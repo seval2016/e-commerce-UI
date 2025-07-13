@@ -32,10 +32,11 @@ export const AdminAuthProvider = ({ children }) => {
                   ...response.user
                 });
               } else {
+                // Sessizce temizle
                 localStorage.removeItem('adminUser');
               }
-            } catch (error) {
-              console.error('Token validation failed:', error);
+            } catch {
+              // Token geçersiz, sessizce temizle
               localStorage.removeItem('adminUser');
             }
           } else {

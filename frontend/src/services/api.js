@@ -33,6 +33,9 @@ class ApiService {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
+    // Don't set Content-Type for FormData - let browser set it automatically
+    // with boundary parameter
+    
     return headers;
   }
 
@@ -49,21 +52,28 @@ class ApiService {
       const data = await response.json();
 
       if (!response.ok) {
+        // 401 hatalarını sessizce işle
+        if (response.status === 401) {
+          throw new Error('Token is not valid');
+        }
         throw new Error(data.message || 'API request failed');
       }
 
       return data;
     } catch (error) {
-      console.error('API Error:', error);
+      // Sadece 401 olmayan hataları logla
+      if (!error.message.includes('Token is not valid')) {
+        console.error('API Error:', error);
+      }
       throw error;
     }
   }
 
   // Upload file method
-  async uploadFile(endpoint, formData) {
+  async uploadFile(endpoint, formData, method = 'POST') {
     const url = `${this.baseURL}${endpoint}`;
     const config = {
-      method: 'POST',
+      method: method,
       headers: this.getUploadHeaders(),
       body: formData,
     };
@@ -157,7 +167,7 @@ class ApiService {
       formData.append('images', file);
     });
 
-    return this.uploadFile(`/products/${id}`, formData);
+    return this.uploadFile(`/products/${id}`, formData, 'PUT');
   }
 
   // Categories endpoints
@@ -166,18 +176,54 @@ class ApiService {
   }
 
   // Category operations
-  async createCategory(categoryData) {
-    return this.request('/categories', {
-      method: 'POST',
-      body: JSON.stringify(categoryData)
-    });
+  async createCategory(categoryData, imageFile = null) {
+    // If image file is provided, use FormData
+    if (imageFile) {
+      const formData = new FormData();
+      
+      // Add category data
+      Object.keys(categoryData).forEach(key => {
+        if (key !== 'image') { // Don't add image field to FormData
+          formData.append(key, categoryData[key]);
+        }
+      });
+
+      // Add image file
+      formData.append('image', imageFile);
+
+      return this.uploadFile('/categories', formData);
+    } else {
+      // Use JSON for creation without image
+      return this.request('/categories', {
+        method: 'POST',
+        body: JSON.stringify(categoryData)
+      });
+    }
   }
 
-  async updateCategory(id, categoryData) {
-    return this.request(`/categories/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(categoryData)
-    });
+  async updateCategory(id, categoryData, imageFile = null) {
+    // If image file is provided, use FormData
+    if (imageFile) {
+      const formData = new FormData();
+      
+      // Add category data
+      Object.keys(categoryData).forEach(key => {
+        if (key !== 'image') { // Don't add image field to FormData
+          formData.append(key, categoryData[key]);
+        }
+      });
+
+      // Add image file
+      formData.append('image', imageFile);
+
+      return this.uploadFile(`/categories/${id}`, formData, 'PUT');
+    } else {
+      // Use JSON for updates without image
+      return this.request(`/categories/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(categoryData)
+      });
+    }
   }
 
   async deleteCategory(id) {
@@ -237,7 +283,7 @@ class ApiService {
       formData.append('image', imageFile);
     }
 
-    return this.uploadFile(`/blogs/${id}`, formData);
+    return this.uploadFile(`/blogs/${id}`, formData, 'PUT');
   }
 
   async deleteBlog(id) {

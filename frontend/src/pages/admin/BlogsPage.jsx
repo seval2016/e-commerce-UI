@@ -133,7 +133,7 @@ const BlogsPage = () => {
           />
           <Popconfirm
             title="Bu blog yazısını silmek istediğinizden emin misiniz?"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDelete(record._id)}
             okText="Evet"
             cancelText="Hayır"
           >

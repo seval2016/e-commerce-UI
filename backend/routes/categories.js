@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Category = require('../models/Category');
 const auth = require('../middleware/auth');
+const { uploadCategory } = require('../middleware/upload');
 const router = express.Router();
 
 // @route   GET /api/categories
@@ -9,7 +10,6 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    // Show all categories (including inactive ones) for debugging
     const categories = await Category.find().sort('sortOrder');
     
     res.json({
@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
       categories
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching categories:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -25,10 +25,13 @@ router.get('/', async (req, res) => {
 // @route   POST /api/categories
 // @desc    Create a new category
 // @access  Private (Admin)
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, uploadCategory.single('image'), async (req, res) => {
   try {
-
-    const { name, description = '', slug, image = '', parentCategory, status = 'active' } = req.body;
+    // Handle upload errors
+    if (req.fileValidationError) {
+      return res.status(400).json({ message: req.fileValidationError });
+    }
+    const { name, description = '', slug, parentCategory, status = 'active' } = req.body;
 
     // Validate required fields
     if (!name || !slug) {
@@ -47,11 +50,17 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ message: 'Category with this slug already exists' });
     }
 
+    // Handle image file
+    let imageUrl = '';
+    if (req.file) {
+      imageUrl = `/uploads/categories/${req.file.filename}`;
+    }
+
     const category = new Category({
       name,
       description,
       slug,
-      image,
+      image: imageUrl,
       parentCategory,
       isActive: status === 'active' || status === true
     });
@@ -63,7 +72,7 @@ router.post('/', auth, async (req, res) => {
       category
     });
   } catch (error) {
-    console.error(error);
+    console.error('Category creation error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -71,9 +80,13 @@ router.post('/', auth, async (req, res) => {
 // @route   PUT /api/categories/:id
 // @desc    Update a category
 // @access  Private (Admin)
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', auth, uploadCategory.single('image'), async (req, res) => {
   try {
-    const { name, description = '', slug, image = '', status = 'active', sortOrder = 0 } = req.body;
+    // Handle upload errors
+    if (req.fileValidationError) {
+      return res.status(400).json({ message: req.fileValidationError });
+    }
+    const { name, description = '', slug, status = 'active', sortOrder = 0 } = req.body;
 
     // Validate required fields
     if (!name || !slug) {
@@ -88,16 +101,28 @@ router.put('/:id', auth, async (req, res) => {
       }
     }
 
+    // Handle file upload if image is provided
+    let imageUrl = '';
+    if (req.file) {
+      imageUrl = `/uploads/categories/${req.file.filename}`;
+    }
+
+    const updateData = { 
+      name, 
+      description, 
+      slug, 
+      isActive: status === 'active' || status === true,
+      sortOrder 
+    };
+
+    // Only update image if new file is uploaded
+    if (imageUrl) {
+      updateData.image = imageUrl;
+    }
+
     const category = await Category.findByIdAndUpdate(
       req.params.id,
-      { 
-        name, 
-        description, 
-        slug, 
-        image, 
-        isActive: status === 'active' || status === true,
-        sortOrder 
-      },
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -110,7 +135,7 @@ router.put('/:id', auth, async (req, res) => {
       category
     });
   } catch (error) {
-    console.error(error);
+    console.error('Category update error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

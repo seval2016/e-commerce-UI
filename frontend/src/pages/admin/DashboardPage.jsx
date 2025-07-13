@@ -57,7 +57,7 @@ const DashboardPage = () => {
   ];
 
   // Real data for recent orders
-  const recentOrders = analytics.recentOrders.map((order, index) => ({
+  const recentOrders = (analytics.recentOrders || []).map((order, index) => ({
     key: index,
     orderId: order.id,
     customer: order.customerName || 'Bilinmeyen Müşteri',
@@ -107,7 +107,7 @@ const DashboardPage = () => {
   ];
 
   // Real data for top products
-  const topProducts = analytics.topProducts.map(product => ({
+  const topProducts = (analytics.topProducts || []).map(product => ({
     name: product.name,
     sales: product.sales || 0,
     revenue: (product.sales || 0) * (product.price || 0)

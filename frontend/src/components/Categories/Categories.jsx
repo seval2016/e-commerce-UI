@@ -39,31 +39,53 @@ PrevBtn.propTypes = {
 };
 
 const Categories = () => {
-  const { categories } = useData();
+  const { categories, loading } = useData();
+
+  // Sadece aktif kategorileri filtrele
+  const activeCategories = categories.filter(category => 
+    category.isActive === true || category.status === 'active'
+  );
+
+  // Loading durumunda boş array döndür
+  if (loading.categories) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Kategoriler yükleniyor...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const slidesToShow = Math.max(1, Math.min(4, activeCategories.length));
+  const slidesToScroll = Math.max(1, Math.min(1, activeCategories.length));
 
   const sliderSettings = {
     dots: false,
-    infinite: true,
-    slidesToShow: 4,
-    slidesToScroll: 1,
+    infinite: activeCategories.length > 4,
+    slidesToShow,
+    slidesToScroll,
     nextArrow: <NextBtn />,
     prevArrow: <PrevBtn />,
     autoplaySpeed: 3000,
-    autoplay: true,
-    responsive: [
-      {
-        breakpoint: 992,
-        settings: {
-          slidesToShow: 2,
-        },
-      },
-      {
-        breakpoint: 520,
-        settings: {
-          slidesToShow: 1,
-        },
-      },
-    ],
+    autoplay: activeCategories.length > 4,
+            responsive: [
+          {
+            breakpoint: 992,
+            settings: {
+              slidesToShow: Math.max(1, Math.min(2, activeCategories.length)),
+            },
+          },
+          {
+            breakpoint: 520,
+            settings: {
+              slidesToShow: 1,
+            },
+          },
+        ],
   };
 
   return (
@@ -76,8 +98,8 @@ const Categories = () => {
         
         <div className="relative">
           <Slider {...sliderSettings}>
-            {categories.map((category) => (
-              <div key={category.id} className="px-2">
+            {activeCategories.map((category) => (
+              <div key={category._id} className="px-2">
                 <CategoryItem category={category} />
               </div>
             ))}

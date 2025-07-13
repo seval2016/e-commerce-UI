@@ -55,7 +55,7 @@ const ProductsPage = () => {
   // Transform products for table
   const tableProducts = filteredProducts.map(product => ({
     ...product,
-    key: product.id
+    key: product._id
   }));
 
   // Handle image upload
@@ -219,7 +219,7 @@ const ProductsPage = () => {
           />
           <Popconfirm
             title="Bu ürünü silmek istediğinizden emin misiniz?"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDelete(record._id)}
             okText="Evet"
             cancelText="Hayır"
           >

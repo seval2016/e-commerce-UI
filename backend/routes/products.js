@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Product = require('../models/Product');
-const upload = require('../middleware/upload');
+const { uploadProduct } = require('../middleware/upload');
 
 // @route   GET /api/products
 // @desc    Get all products
@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 // @route   POST /api/products
 // @desc    Create a new product
 // @access  Private (Admin)
-router.post('/', upload.array('images', 6), [
+router.post('/', uploadProduct.array('images', 6), [
   body('name', 'Product name is required').not().isEmpty(),
   body('description', 'Product description is required').not().isEmpty(),
   body('price', 'Product price is required').isNumeric(),
@@ -81,7 +81,7 @@ router.post('/', upload.array('images', 6), [
 // @route   PUT /api/products/:id
 // @desc    Update a product
 // @access  Private (Admin)
-router.put('/:id', upload.array('images', 6), async (req, res) => {
+router.put('/:id', uploadProduct.array('images', 6), async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body };

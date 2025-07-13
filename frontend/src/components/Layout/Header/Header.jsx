@@ -258,7 +258,10 @@ const Header = ({ setIsSearchShow }) => {
                       icon: <i className="bi bi-heart"></i>,
                       onClick: () => console.log("Favoriler")
                     },
-                    { divider: true },
+                    { 
+                      label: "",
+                      divider: true 
+                    },
                     {
                       label: "Çıkış Yap",
                       icon: <i className="bi bi-box-arrow-right"></i>,

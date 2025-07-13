@@ -30,6 +30,28 @@ import { useData } from '../../context/DataContext.jsx';
 
 const { Search } = Input;
 
+// Slug oluşturucu fonksiyon
+function generateSlug(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// Backend API base URL (gerekirse .env'den alınabilir)
+const API_BASE_URL = "http://localhost:5000";
+
+// Kategori görsel yolunu backend ile birleştir
+const getCategoryImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith("/uploads/")) {
+    return API_BASE_URL + imagePath;
+  }
+  return imagePath;
+};
+
 const CategoriesPage = () => {
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -37,6 +59,7 @@ const CategoriesPage = () => {
   const [form] = Form.useForm();
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [slugError, setSlugError] = useState("");
   
   const { categories, addCategory, updateCategory, deleteCategory } = useData();
 
@@ -49,7 +72,7 @@ const CategoriesPage = () => {
   // Transform categories for table
   const tableCategories = filteredCategories.map(category => ({
     ...category,
-    key: category.id
+    key: category._id
   }));
 
   const columns = [
@@ -62,9 +85,10 @@ const CategoriesPage = () => {
           <Image
             width={50}
             height={50}
-            src={record.image}
+            src={getCategoryImageUrl(record.image)}
             fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-            style={{ borderRadius: 8, marginRight: 12 }}
+            style={{ borderRadius: 5, marginRight:100, objectFit: 'contain', background: '#f7f7f7' }}
+            preview={false}
           />
           <div>
             <div style={{ fontWeight: 500 }}>{text}</div>
@@ -112,7 +136,7 @@ const CategoriesPage = () => {
           <Popconfirm
             title="Bu kategoriyi silmek istediğinizden emin misiniz?"
             description="Bu işlem geri alınamaz!"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDelete(record._id)}
             okText="Evet"
             cancelText="Hayır"
           >
@@ -151,8 +175,11 @@ const CategoriesPage = () => {
     setIsModalVisible(true);
   };
 
-  const handleDelete = (id) => {
-    deleteCategory(id);
+  const handleDelete = async (id) => {
+    const result = await deleteCategory(id);
+    if (result && !result.success) {
+      console.error('Delete failed:', result.error);
+    }
   };
 
   const handleImageUpload = (file) => {
@@ -161,11 +188,15 @@ const CategoriesPage = () => {
       message.error('Sadece resim dosyaları yükleyebilirsiniz!');
       return false;
     }
-    const isLt2M = file.size / 1024 / 1024 < 2;
-    if (!isLt2M) {
-      message.error('Resim dosyası 2MB\'dan küçük olmalıdır!');
+    
+    const fileSizeMB = file.size / 1024 / 1024;
+    const maxSizeMB = 2;
+    
+    if (fileSizeMB > maxSizeMB) {
+      message.error(`Resim dosyası ${maxSizeMB}MB'dan büyük olamaz! (Mevcut: ${fileSizeMB.toFixed(1)}MB)`);
       return false;
     }
+    
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target.result);
@@ -181,45 +212,58 @@ const CategoriesPage = () => {
     form.setFieldsValue({ image: '' });
   };
 
+  // handleModalOk fonksiyonunda kategori eklenmeden önce slug'ı tekrar benzersizleştir
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      
-      let imageBase64 = imagePreview;
-      if (imageFile) {
-        imageBase64 = await fileToBase64(imageFile);
-      }
-      
       const categoryData = {
         name: values.name,
         description: values.description,
-        slug: values.slug,
-        image: imageBase64,
+        slug: getUniqueSlug(generateSlug(values.name)),
         status: values.status ? 'active' : 'inactive'
       };
       
+      let result;
       if (editingCategory) {
-        updateCategory(editingCategory.id, categoryData);
+        // Güncelleme işlemi - imageFile varsa onu gönder, yoksa mevcut resmi kullan
+        result = await updateCategory(editingCategory._id, categoryData, imageFile);
+        if (result.success) {
+          setEditingCategory(null);
+        }
       } else {
-        addCategory(categoryData);
+        // Yeni kategori ekleme - imageFile varsa onu gönder
+        result = await addCategory(categoryData, imageFile);
       }
       
-      setIsModalVisible(false);
-      setImageFile(null);
-      setImagePreview('');
-      form.resetFields();
+      if (result && result.success) {
+        setIsModalVisible(false);
+        setImageFile(null);
+        setImagePreview('');
+        form.resetFields();
+      }
     } catch (error) {
       console.error('Error in handleModalOk:', error);
     }
   };
 
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
+  // Slug benzersizliğini kontrol eden fonksiyon
+  const getUniqueSlug = (baseSlug) => {
+    let slug = baseSlug;
+    let counter = 1;
+    while (categories.some((cat) => cat.slug === slug)) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    return slug;
+  };
+
+  // Formda isim değiştiğinde slug'ı otomatik üret
+  const handleNameChange = (e) => {
+    const name = e.target.value;
+    const baseSlug = generateSlug(name);
+    const uniqueSlug = getUniqueSlug(baseSlug);
+    form.setFieldsValue({ slug: uniqueSlug });
+    setSlugError("");
   };
 
   return (
@@ -258,7 +302,7 @@ const CategoriesPage = () => {
           <Card>
             <Statistic
               title="Toplam Ürün"
-              value={categories.reduce((sum, c) => sum + c.productCount, 0)}
+              value={categories.reduce((sum, c) => sum + (c.productCount || 0), 0)}
               prefix={<ShoppingOutlined />}
               valueStyle={{ color: '#722ed1' }}
             />
@@ -268,7 +312,13 @@ const CategoriesPage = () => {
           <Card>
             <Statistic
               title="Ortalama Ürün/Kategori"
-              value={Math.round(categories.reduce((sum, c) => sum + c.productCount, 0) / categories.length)}
+              value={
+                categories.length > 0
+                  ? Math.round(
+                      categories.reduce((sum, c) => sum + (c.productCount || 0), 0) / categories.length
+                    )
+                  : 0
+              }
               prefix={<TagsOutlined />}
               valueStyle={{ color: '#fa8c16' }}
             />
@@ -301,19 +351,30 @@ const CategoriesPage = () => {
 
       {/* Categories Table */}
       <Card>
-        <Table
-          columns={columns}
-          dataSource={tableCategories}
-          rowKey="id"
-          pagination={{
-            total: tableCategories.length,
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => 
-              `${range[0]}-${range[1]} / ${total} kategori`,
-          }}
-        />
+        {tableCategories.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
+              Henüz kategori eklenmemiş
+            </div>
+            <div style={{ fontSize: 14, color: '#999' }}>
+              İlk kategorinizi eklemek için "Yeni Kategori Ekle" butonunu kullanın
+            </div>
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={tableCategories}
+            rowKey="_id"
+            pagination={{
+              total: tableCategories.length,
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => 
+                `${range[0]}-${range[1]} / ${total} kategori`,
+            }}
+          />
+        )}
       </Card>
 
       {/* Add/Edit Modal */}
@@ -338,7 +399,13 @@ const CategoriesPage = () => {
           </div>
         )}
         open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setEditingCategory(null);
+          setImageFile(null);
+          setImagePreview('');
+          form.resetFields();
+        }}
         width={480}
         footer={null}
         style={{ borderRadius: 16 }}
@@ -377,7 +444,7 @@ const CategoriesPage = () => {
             label="Kategori Adı"
             rules={[{ required: true, message: 'Lütfen kategori adını girin!' }]}
           >
-            <Input size="large" placeholder="Örn: Laptop, Akıllı Saat, Telefon" />
+            <Input size="large" placeholder="Örn: Laptop, Akıllı Saat, Telefon" onChange={handleNameChange} />
           </Form.Item>
 
           <Form.Item
@@ -390,16 +457,14 @@ const CategoriesPage = () => {
 
           <Form.Item
             name="slug"
-            label="Slug (URL Kısa Adı)"
-            rules={[
-              { required: true, message: 'Lütfen slug girin!' },
-              { min: 2, message: 'En az 2 karakter olmalı.' },
-              { pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/, message: 'Sadece küçük harf, rakam ve tire (-) kullanın. Boşluk, Türkçe karakter veya özel karakter olmamalı.' }
-            ]}
+            label="Slug"
+            rules={[{ required: true, message: 'Lütfen slug girin!' }]}
           >
-            <Input size="large" placeholder="örn: akilli-saat, laptop, cocuk-oyuncaklari" />
+            <Input size="large" placeholder="Otomatik oluşturulur" readOnly />
           </Form.Item>
           
+          {slugError && <div style={{ color: 'red', marginBottom: 8 }}>{slugError}</div>}
+
           <div style={{ color: '#888', fontSize: 12, marginTop: -8, marginBottom: 16 }}>
             Sadece küçük harf, rakam ve tire (-) kullanın. Boşluk, Türkçe karakter veya özel karakter olmamalı.
           </div>
