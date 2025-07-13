@@ -39,81 +39,94 @@ PrevBtn.propTypes = {
   onClick: PropTypes.func,
 };
 
-const Products = () => {
-  const { products, updateProduct } = useData();
+const Products = ({ title = "Öne Çıkan Ürünler", showTitle = true, limit = null }) => {
+  const { products } = useData();
   
   // useMemo ile aktif ürünleri hesapla - DataContext güncellendiğinde otomatik yeniden hesaplanır
   const activeProducts = useMemo(() => {
-    return products.filter(p => p.status === 'active');
-  }, [products]);
-
-
-
-  const activateAllProducts = () => {
-    products.forEach(product => {
-      if (product.status !== 'active') {
-        updateProduct(product._id, { ...product, status: 'active' });
-      }
-    });
-  };
+    let filtered = products.filter(p => p.isActive === true);
+    
+    // Limit uygula
+    if (limit) {
+      filtered = filtered.slice(0, limit);
+    }
+    
+    return filtered;
+  }, [products, limit]);
 
   const sliderSettings = {
     dots: false,
-    infinite: true,
+    infinite: activeProducts.length > 4,
+    speed: 500,
     slidesToShow: 4,
     slidesToScroll: 1,
     nextArrow: <NextBtn />,
     prevArrow: <PrevBtn />,
-    autoplaySpeed: 3000,
-    autoplay: true,
     responsive: [
       {
-        breakpoint: 992,
+        breakpoint: 1200,
         settings: {
-          slidesToShow: 2,
+          slidesToShow: 3,
+          infinite: activeProducts.length > 3,
         },
       },
       {
-        breakpoint: 520,
+        breakpoint: 768,
+        settings: {
+          slidesToShow: 2,
+          infinite: activeProducts.length > 2,
+        },
+      },
+      {
+        breakpoint: 480,
         settings: {
           slidesToShow: 1,
+          infinite: activeProducts.length > 1,
         },
       },
     ],
   };
 
-  return (
-    <section className="py-16 bg-white">
-      <div className="container mx-auto px-4 max-w-7xl">
-        <SectionTitle 
-          title="Featured Products"
-          subtitle="Summer Collection New Modern Design"
-        />
-        <div className="relative">
-          {activeProducts.length > 0 ? (
-            <Slider {...sliderSettings}>
-              {activeProducts.map((product) => (
-                <div key={product._id} className="px-2">
-                  <ProductItem productItem={product} />
-                </div>
-              ))}
-            </Slider>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Henüz ürün bulunmuyor.</p>
-              <p className="text-sm text-gray-400 mt-2">Admin panelinden ürün ekleyebilirsiniz.</p>
-              <div className="mt-4 space-x-4">
-                {products.length > 0 && (
-                  <button 
-                    onClick={activateAllProducts}
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                  >
-                    Tüm Ürünleri Aktif Yap (Debug)
-                  </button>
-                )}
-              </div>
-            </div>
+  if (activeProducts.length === 0) {
+    return (
+      <section className="py-12 bg-gray-50">
+        <div className="container mx-auto px-4">
+          {showTitle && (
+            <SectionTitle 
+              title={title}
+              subtitle="En yeni ve popüler ürünlerimizi keşfedin"
+            />
           )}
+          <div className="text-center py-12">
+            <div className="text-4xl text-gray-400 mb-4">
+              <i className="bi bi-box-seam"></i>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">Henüz ürün bulunmuyor</h3>
+            <p className="text-gray-500">Yakında yeni ürünler eklenecek</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-12 bg-gray-50">
+      <div className="container mx-auto px-4">
+        {showTitle && (
+          <SectionTitle 
+            title={title}
+            subtitle="En yeni ve popüler ürünlerimizi keşfedin"
+          />
+        )}
+        
+        <div className="relative">
+          <Slider {...sliderSettings}>
+            {activeProducts.map((product) => (
+              <div key={product._id || product.id} className="px-2">
+                <ProductItem productItem={product} />
+              </div>
+            ))}
+          </Slider>
         </div>
       </div>
     </section>
@@ -121,3 +134,9 @@ const Products = () => {
 };
 
 export default Products;
+
+Products.propTypes = {
+  title: PropTypes.string,
+  showTitle: PropTypes.bool,
+  limit: PropTypes.number,
+};

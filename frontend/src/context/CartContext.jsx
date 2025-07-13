@@ -147,17 +147,19 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product, selectedSize = null, selectedColor = null, quantity = 1) => {
     setCartItems(prevItems => {
+      const productId = product._id || product.id;
+      
       // Aynı ürünün aynı beden ve renk kombinasyonu sepette var mı kontrol et
       const existingProduct = prevItems.find(
         item =>
-          item.id === product.id &&
+          item.id === productId &&
           item.selectedSize === selectedSize &&
           item.selectedColor === selectedColor
       );
       if (existingProduct) {
         // Eğer aynı ürün, beden ve renk kombinasyonu sepette varsa, miktarını artır
         return prevItems.map(item =>
-          item.id === product.id &&
+          item.id === productId &&
           item.selectedSize === selectedSize &&
           item.selectedColor === selectedColor
             ? { ...item, quantity: item.quantity + quantity }
@@ -165,13 +167,13 @@ export const CartProvider = ({ children }) => {
         );
       } else {
         // Eğer bu kombinasyon sepette yoksa, yeni ürün ekle
-        const cartItemId = generateCartItemId(product.id, selectedSize, selectedColor);
+        const cartItemId = generateCartItemId(productId, selectedSize, selectedColor);
         const newItem = {
-          id: product.id,
+          id: productId,
           cartItemId: cartItemId,
           name: product.name || product.title || 'Ürün Adı',
           price: typeof product.price === 'number' ? product.price : (product.price?.newPrice || 0),
-          image: product.image || product.images?.[0] || product.img?.singleImage || '/img/products/product1/1.png',
+          image: product.image || product.images?.[0]?.url || product.mainImage || product.img?.singleImage || '/img/products/product1/1.png',
           quantity: quantity,
           selectedSize: selectedSize,
           selectedColor: selectedColor

@@ -150,7 +150,7 @@ class ApiService {
     return this.uploadFile('/products', formData);
   }
 
-  async updateProduct(id, productData, imageFiles = []) {
+  async updateProduct(id, productData, imageFiles = [], removedImages = []) {
     const formData = new FormData();
     
     // Add product data
@@ -166,6 +166,11 @@ class ApiService {
     imageFiles.forEach(file => {
       formData.append('images', file);
     });
+
+    // Add removed images info
+    if (removedImages.length > 0) {
+      formData.append('removedImages', JSON.stringify(removedImages));
+    }
 
     return this.uploadFile(`/products/${id}`, formData, 'PUT');
   }

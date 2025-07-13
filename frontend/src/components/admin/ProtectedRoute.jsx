@@ -4,7 +4,7 @@ import { Spin } from 'antd';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 
 const ProtectedRoute = ({ children, requiredPermission = null }) => {
-  const { isAdmin, hasPermission, isLoading } = useAdminAuth();
+  const { isAdmin, hasPermission, isLoading, logout } = useAdminAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -34,7 +34,10 @@ const ProtectedRoute = ({ children, requiredPermission = null }) => {
     return <Navigate to="/admin" replace />;
   }
 
-  return children;
+  // Logout fonksiyonunu children'a geçir
+  const childrenWithLogout = React.cloneElement(children, { logout });
+
+  return childrenWithLogout;
 };
 
 export default ProtectedRoute; 

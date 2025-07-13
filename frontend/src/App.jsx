@@ -25,13 +25,15 @@ import Layout from "./layouts/Layout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 import { AdminAuthProvider } from "./context/AdminAuthContext.jsx";
 import { DataProvider } from "./context/DataContext.jsx";
+import { CartProvider } from "./context/CartContext.jsx";
 
 
 function App() {
   return (
     <ErrorBoundary>
-      <DataProvider>
-        <AdminAuthProvider>
+      <CartProvider>
+        <DataProvider>
+          <AdminAuthProvider>
             <Routes>
               {/* Public Routes with Layout */}
               <Route path="/" element={<Layout><HomePage /></Layout>} />
@@ -100,6 +102,7 @@ function App() {
             </Routes>
           </AdminAuthProvider>
         </DataProvider>
+      </CartProvider>
     </ErrorBoundary>
   );
 }

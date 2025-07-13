@@ -16,15 +16,13 @@ import {
   CustomerServiceOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useAdminAuth } from '../context/AdminAuthContext.jsx';
 
 const { Header, Sider, Content } = Layout;
 
-const AdminLayout = () => {
+const AdminLayout = ({ logout }) => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { adminUser, logout } = useAdminAuth();
 
   const menuItems = [
     {
@@ -180,7 +178,7 @@ const AdminLayout = () => {
                   icon={<UserOutlined />}
                   style={{ backgroundColor: '#1890ff' }}
                 />
-                <span style={{ color: '#333' }}>{adminUser?.name || 'Admin'}</span>
+                <span style={{ color: '#333' }}>Admin</span>
               </Space>
             </Dropdown>
           </Space>

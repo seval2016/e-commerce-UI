@@ -10,7 +10,7 @@ const ProductBreadcrumb = () => {
   const [product, setProduct] = useState(null);
 
   useEffect(() => {
-    const foundProduct = products.find(p => p.id === id);
+    const foundProduct = products.find(p => p._id === id || p.id === id);
     if (foundProduct) {
       setProduct(foundProduct);
     }
@@ -35,7 +35,7 @@ const ProductBreadcrumb = () => {
       href: "/shop"
     },
     {
-      label: product.name
+      label: product.name || "Ürün"
     }
   ];
 

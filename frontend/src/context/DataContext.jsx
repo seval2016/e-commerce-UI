@@ -191,10 +191,10 @@ export const DataProvider = ({ children }) => {
     }
   }, []);
 
-  const updateProduct = useCallback(async (id, updates, imageFiles = []) => {
+  const updateProduct = useCallback(async (id, updates, imageFiles = [], removedImages = []) => {
     try {
       setLoading(prev => ({ ...prev, products: true }));
-      const response = await api.updateProduct(id, updates, imageFiles);
+      const response = await api.updateProduct(id, updates, imageFiles, removedImages);
       if (response.success) {
         setProducts(prev => prev.map(product => 
           product._id === id ? { ...product, ...response.product } : product

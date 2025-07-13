@@ -10,18 +10,31 @@ const ProductItem = ({ productItem }) => {
   const { addToCart, isProductInCart } = useCart();
   const [isHovered, setIsHovered] = useState(false);
 
+  // Backend API base URL
+  const API_BASE_URL = "http://localhost:5000";
+
   // Varsayılan beden ve renk seçimi
   const defaultSize = productItem.sizes?.[0] || "M";
   const defaultColor = productItem.colors?.[0] || "blue";
   
-  const isInCart = isProductInCart(productItem.id, defaultSize, defaultColor);
+  const isInCart = isProductInCart(productItem._id || productItem.id, defaultSize, defaultColor);
 
-  // Admin panelinden eklenen ürünler için veri yapısını uyarla
-  const productImage = productItem.image || productItem.images?.[0] || productItem.img?.singleImage || '/img/products/product1/1.png';
+  // Ürün görsel yolunu backend ile birleştir
+  const getProductImageUrl = (imagePath) => {
+    if (!imagePath || typeof imagePath !== 'string') return '/img/products/product1/1.png';
+    if (imagePath.startsWith("/uploads/")) {
+      return API_BASE_URL + imagePath;
+    }
+    return imagePath;
+  };
+
+  // Ürün verilerini güvenli şekilde al
+  const productImage = getProductImageUrl(productItem.image || productItem.images?.[0]?.url || productItem.mainImage || productItem.img?.singleImage);
   const productName = productItem.name || 'Ürün Adı';
   const productPrice = typeof productItem.price === 'number' ? productItem.price : (productItem.price?.newPrice || 0);
   const productOldPrice = productItem.price?.oldPrice || productPrice * 1.2;
   const productDiscount = productItem.discount || Math.round(((productOldPrice - productPrice) / productOldPrice) * 100);
+  const productId = productItem._id || productItem.id;
 
   const handleQuickAdd = () => {
     addToCart(productItem, defaultSize, defaultColor, 1);
@@ -34,21 +47,26 @@ const ProductItem = ({ productItem }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Discount Badge */}
-      <div className="absolute top-4 right-4 z-10">
-        <Badge variant="danger" size="md">
-          -{productDiscount}%
-        </Badge>
-      </div>
+      {productDiscount > 0 && (
+        <div className="absolute top-4 right-4 z-10">
+          <Badge variant="danger" size="md">
+            -{productDiscount}%
+          </Badge>
+        </div>
+      )}
 
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden">
-        <Link to={`product/${productItem.id}`}>
+        <Link to={`/product/${productId}`}>
           <img 
             src={productImage} 
             alt={productName}
             className={`w-full h-full object-cover transition-all duration-300 ${
               isHovered ? 'scale-110' : 'scale-100'
             }`}
+            onError={(e) => {
+              e.target.src = '/img/products/product1/1.png';
+            }}
           />
         </Link>
 
@@ -78,7 +96,7 @@ const ProductItem = ({ productItem }) => {
           
           <Tooltip content="Ürün Detayı" position="right">
             <Link 
-              to={`product/${productItem.id}`}
+              to={`/product/${productId}`}
               className="w-10 h-10 rounded-full bg-white text-gray-700 hover:bg-gray-100 shadow-lg flex items-center justify-center transition-all duration-200"
             >
               <i className="bi bi-eye-fill text-sm"></i>
@@ -90,7 +108,7 @@ const ProductItem = ({ productItem }) => {
       {/* Product Info */}
       <div className="p-4">
         <Link 
-          to={`product/${productItem.id}`}
+          to={`/product/${productId}`}
           className="block text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 mb-2 line-clamp-2"
         >
           {productName}
@@ -114,9 +132,11 @@ const ProductItem = ({ productItem }) => {
           <span className="text-lg font-bold text-red-500">
             ₺{productPrice.toLocaleString()}
           </span>
-          <span className="text-sm text-gray-500 line-through">
-            ₺{productOldPrice.toLocaleString()}
-          </span>
+          {productDiscount > 0 && (
+            <span className="text-sm text-gray-500 line-through">
+              ₺{productOldPrice.toLocaleString()}
+            </span>
+          )}
         </div>
       </div>
     </Card>
@@ -126,5 +146,5 @@ const ProductItem = ({ productItem }) => {
 export default ProductItem;
 
 ProductItem.propTypes = {
-  productItem: PropTypes.object,
+  productItem: PropTypes.object.isRequired,
 };

@@ -35,13 +35,13 @@ const productSchema = new mongoose.Schema({
   images: [{
     url: {
       type: String,
-      required: true
+      default: ''
     },
     alt: String
   }],
   mainImage: {
     type: String,
-    required: [true, 'Main image is required']
+    default: ''
   },
   stock: {
     type: Number,
@@ -52,12 +52,16 @@ const productSchema = new mongoose.Schema({
   sku: {
     type: String,
     unique: true,
-    required: [true, 'SKU is required']
+    sparse: true
   },
   brand: {
     type: String,
     trim: true
   },
+  colors: [String],
+  sizes: [String],
+  material: String,
+  care: String,
   tags: [String],
   specifications: [{
     name: String,

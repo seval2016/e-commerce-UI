@@ -49,6 +49,18 @@ const BlogsPage = () => {
 
   const { blogs, addBlog, updateBlog, deleteBlog, categories } = useData();
 
+  // Backend API base URL
+  const API_BASE_URL = "http://localhost:5000";
+
+  // Blog görsel yolunu backend ile birleştir
+  const getBlogImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith("/uploads/")) {
+      return API_BASE_URL + imagePath;
+    }
+    return imagePath;
+  };
+
   const columns = [
     {
       title: "Blog",
@@ -57,16 +69,20 @@ const BlogsPage = () => {
       render: (text, record) => (
         <div style={{ display: "flex", alignItems: "center" }}>
           <Image
-            width={60}
-            height={40}
-            src={record.image}
+            width={50}
+            height={50}
+            src={getBlogImageUrl(record.image)}
             fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-            style={{ borderRadius: 8, marginRight: 30, objectFit: "cover" }}
+            style={{ borderRadius: 5, marginRight: 12, objectFit: 'contain', background: '#f7f7f7' }}
+            preview={false}
           />
           <div>
-            <div style={{ fontWeight: 500, marginBottom: 4 }}>{text}</div>
-            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.4 }}>
-              {record.excerpt}
+            <div style={{ fontWeight: 500 }}>{text}</div>
+            <div style={{ fontSize: 12, color: '#666' }}>
+              {record.excerpt && record.excerpt.length > 50 
+                ? `${record.excerpt.substring(0, 50)}...` 
+                : record.excerpt
+              }
             </div>
           </div>
         </div>
@@ -408,19 +424,32 @@ const BlogsPage = () => {
 
       {/* Blogs Table */}
       <Card>
-        <Table
-          columns={columns}
-          dataSource={tableBlogs}
-          rowKey="id"
-          pagination={{
-            total: tableBlogs.length,
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) =>
-              `${range[0]}-${range[1]} / ${total} blog yazısı`,
-          }}
-        />
+        {tableBlogs.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
+              Henüz blog yazısı eklenmemiş
+            </div>
+            <div style={{ fontSize: 14, color: '#999' }}>
+              İlk blog yazınızı eklemek için "Yeni Blog Yazısı" butonunu kullanın
+            </div>
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={tableBlogs}
+            rowKey="_id"
+            pagination={{
+              total: tableBlogs.length,
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} / ${total} blog yazısı`,
+              position: ['bottomCenter'],
+              size: 'default'
+            }}
+          />
+        )}
       </Card>
 
       {/* Add/Edit Modal */}

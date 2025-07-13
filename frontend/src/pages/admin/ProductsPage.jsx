@@ -17,7 +17,8 @@ import {
   Col,
   Statistic,
   Upload,
-  message
+  message,
+  Divider
 } from 'antd';
 import {
   PlusOutlined,
@@ -28,12 +29,14 @@ import {
   DollarOutlined,
   TagsOutlined,
   UploadOutlined,
-  DeleteOutlined as DeleteIcon
+  EyeOutlined
 } from '@ant-design/icons';
 import { useData } from '../../context/DataContext.jsx';
+import { Link } from 'react-router-dom';
 
 const { Search } = Input;
 const { Option } = Select;
+const { TextArea } = Input;
 
 const ProductsPage = () => {
   const [searchText, setSearchText] = useState('');
@@ -42,14 +45,28 @@ const ProductsPage = () => {
   const [form] = Form.useForm();
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [removedImages, setRemovedImages] = useState([]);
+  const [loading, setLoading] = useState(false);
   
   const { products, categories, addProduct, updateProduct, deleteProduct } = useData();
 
+  // Backend API base URL
+  const API_BASE_URL = "http://localhost:5000";
+
+  // Ürün görsel yolunu backend ile birleştir
+  const getProductImageUrl = (imagePath) => {
+    if (!imagePath || typeof imagePath !== 'string') return null;
+    if (imagePath.startsWith("/uploads/")) {
+      return API_BASE_URL + imagePath;
+    }
+    return imagePath;
+  };
+
   // Filter products based on search
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchText.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchText.toLowerCase())
+    (product.name || '').toLowerCase().includes(searchText.toLowerCase()) ||
+    (product.description || '').toLowerCase().includes(searchText.toLowerCase()) ||
+    (typeof product.category === 'string' ? product.category.toLowerCase() : (product.category?.name || '')).toLowerCase().includes(searchText.toLowerCase())
   );
 
   // Transform products for table
@@ -85,89 +102,43 @@ const ProductsPage = () => {
 
   // Remove uploaded image
   const handleRemoveImage = (index) => {
+    const removedImage = imagePreviews[index];
+    
+    // Eğer bu mevcut bir resimse (backend URL'si varsa), silinecek resimler listesine ekle
+    if (removedImage && removedImage.includes('/uploads/')) {
+      setRemovedImages(prev => [...prev, removedImage]);
+    }
+    
     setImageFiles(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Convert files to base64 for storage
-  const filesToBase64 = (files) => {
-    return Promise.all(
-      files.map(file => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = error => reject(error);
-        });
-      })
-    );
-  };
+
 
   const columns = [
     {
       title: 'Ürün',
       dataIndex: 'name',
       key: 'name',
+      width: 300,
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ 
-            width: 60, 
-            height: 60, 
-            borderRadius: 8, 
-            marginRight: 12,
-            overflow: 'hidden',
-            border: '1px solid #f0f0f0',
-            backgroundColor: '#fafafa',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Image
-              width={60}
-              height={60}
-              src={record.image || record.images?.[0]}
-              fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-              style={{ 
-                objectFit: 'cover',
-                borderRadius: 8
-              }}
-              preview={{
-                mask: <div style={{ color: '#fff', fontSize: 12 }}>Büyüt</div>
-              }}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ 
-              fontWeight: 500, 
-              fontSize: 14,
-              marginBottom: 4,
-              color: '#262626'
-            }}>
-              {text}
-            </div>
-            <div style={{ 
-              fontSize: 12, 
-              color: '#8c8c8c',
-              lineHeight: 1.4,
-              marginBottom: 2
-            }}>
-              {record.description && record.description.length > 50 
+          <Image
+            width={50}
+            height={50}
+            src={getProductImageUrl(record.image || record.images?.[0]?.url || record.mainImage)}
+            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+            style={{ borderRadius: 5, marginRight: 12, objectFit: 'contain', background: '#f7f7f7' }}
+            preview={false}
+          />
+          <div>
+            <div style={{ fontWeight: 500 }}>{text}</div>
+            <div style={{ fontSize: 12, color: '#666' }}>
+              {record.description && typeof record.description === 'string' && record.description.length > 50 
                 ? `${record.description.substring(0, 50)}...` 
-                : record.description
+                : record.description || 'Açıklama yok'
               }
             </div>
-            {record.images && record.images.length > 1 && (
-              <div style={{ 
-                fontSize: 11, 
-                color: '#bfbfbf',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4
-              }}>
-                <i className="bi bi-images" style={{ fontSize: 10 }}></i>
-                {record.images.length} resim
-              </div>
-            )}
           </div>
         </div>
       ),
@@ -176,58 +147,88 @@ const ProductsPage = () => {
       title: 'Kategori',
       dataIndex: 'category',
       key: 'category',
-      render: (category) => <Tag color="blue">{category}</Tag>,
+      width: 120,
+      render: (category) => {
+        if (typeof category === 'object' && category.name) {
+          return <Tag color="blue">{category.name}</Tag>;
+        }
+        return <Tag color="blue">{category || 'Kategori Yok'}</Tag>;
+      },
     },
     {
       title: 'Fiyat',
       dataIndex: 'price',
       key: 'price',
-      render: (price) => `${price.toLocaleString()} ₺`,
-      sorter: (a, b) => a.price - b.price,
+      width: 100,
+      render: (price) => {
+        const numPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
+        return `${numPrice.toLocaleString()} ₺`;
+      },
+      sorter: (a, b) => (a.price || 0) - (b.price || 0),
     },
     {
       title: 'Stok',
       dataIndex: 'stock',
       key: 'stock',
-      render: (stock) => (
-        <Tag color={stock > 0 ? 'green' : 'red'}>
-          {stock > 0 ? `${stock} adet` : 'Stok yok'}
-        </Tag>
-      ),
-      sorter: (a, b) => a.stock - b.stock,
+      width: 100,
+      render: (stock) => {
+        const numStock = typeof stock === 'number' ? stock : parseInt(stock) || 0;
+        return (
+          <Tag color={numStock > 0 ? 'green' : 'red'}>
+            {numStock > 0 ? `${numStock} adet` : 'Stok yok'}
+          </Tag>
+        );
+      },
+      sorter: (a, b) => (a.stock || 0) - (b.stock || 0),
     },
     {
-      title: 'Durum',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'active' ? 'green' : 'red'}>
-          {status === 'active' ? 'Aktif' : 'Pasif'}
-        </Tag>
-      ),
+            title: 'Durum',
+      dataIndex: 'isActive',
+      key: 'isActive',
+      width: 100,
+      render: (isActive) => {
+        return (
+          <Tag color={isActive ? 'green' : 'red'}>
+            {isActive ? 'Aktif' : 'Pasif'}
+          </Tag>
+        );
+      },
     },
     {
       title: 'İşlemler',
       key: 'actions',
+      width: 150,
       render: (_, record) => (
         <Space>
+          <Link to={`/product/${record._id}`}>
+            <Button 
+              type="text" 
+              icon={<EyeOutlined />} 
+              size="small"
+              title="Görüntüle"
+            />
+          </Link>
           <Button 
             type="text" 
             icon={<EditOutlined />} 
             size="small"
             onClick={() => handleEdit(record)}
+            title="Düzenle"
           />
           <Popconfirm
             title="Bu ürünü silmek istediğinizden emin misiniz?"
+            description="Bu işlem geri alınamaz."
             onConfirm={() => handleDelete(record._id)}
             okText="Evet"
             cancelText="Hayır"
+            placement="left"
           >
             <Button 
               type="text" 
               icon={<DeleteOutlined />} 
               size="small" 
               danger
+              title="Sil"
             />
           </Popconfirm>
         </Space>
@@ -243,6 +244,7 @@ const ProductsPage = () => {
     setEditingProduct(null);
     setImageFiles([]);
     setImagePreviews([]);
+    setRemovedImages([]);
     form.resetFields();
     setIsModalVisible(true);
   };
@@ -250,20 +252,62 @@ const ProductsPage = () => {
   const handleEdit = (product) => {
     setEditingProduct(product);
     setImageFiles([]);
-    setImagePreviews(product.images || [product.image] || []);
+    setRemovedImages([]);
+    
+    // Mevcut resimleri al ve backend URL'si ile birleştir
+    const existingImages = [];
+    if (product.images && Array.isArray(product.images)) {
+      product.images.forEach(img => {
+        const url = typeof img === 'string' ? img : img.url;
+        if (url) {
+          existingImages.push(getProductImageUrl(url));
+        }
+      });
+    }
+    if (product.mainImage) {
+      existingImages.push(getProductImageUrl(product.mainImage));
+    }
+    if (product.image && !existingImages.includes(getProductImageUrl(product.image))) {
+      existingImages.push(getProductImageUrl(product.image));
+    }
+    
+    // Tekrarlanan resimleri kaldır
+    const uniqueImages = [...new Set(existingImages)].filter(Boolean);
+    setImagePreviews(uniqueImages);
+    
     form.setFieldsValue({
-      ...product,
-      images: product.images || [product.image] || []
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      stock: product.stock,
+      category: typeof product.category === 'object' ? product.category.name : product.category,
+      sku: product.sku,
+      brand: product.brand,
+      colors: product.colors,
+      sizes: product.sizes,
+      material: product.material,
+      care: product.care,
+      tags: product.tags,
+      status: product.isActive
     });
     setIsModalVisible(true);
   };
 
-  const handleDelete = (id) => {
-    deleteProduct(id);
+  const handleDelete = async (id) => {
+    try {
+      setLoading(true);
+      await deleteProduct(id);
+      message.success('Ürün başarıyla silindi');
+    } catch {
+      message.error('Ürün silinirken hata oluştu');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleModalOk = async () => {
     try {
+      setLoading(true);
       const values = await form.validateFields();
       
       const productData = {
@@ -272,18 +316,22 @@ const ProductsPage = () => {
       };
 
       if (editingProduct) {
-        await updateProduct(editingProduct.id, productData, imageFiles);
+        await updateProduct(editingProduct._id, productData, imageFiles, removedImages);
+        message.success('Ürün başarıyla güncellendi');
       } else {
         await addProduct(productData, imageFiles);
+        message.success('Ürün başarıyla eklendi');
       }
       
       setIsModalVisible(false);
       form.resetFields();
       setImageFiles([]);
       setImagePreviews([]);
-    } catch (error) {
-      console.error('Form submission error:', error);
-      message.error('Ürün kaydedilirken hata oluştu');
+    } catch (err) {
+      console.error('Form submission error:', err);
+      message.error('İşlem sırasında hata oluştu');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -292,6 +340,7 @@ const ProductsPage = () => {
     form.resetFields();
     setImageFiles([]);
     setImagePreviews([]);
+    setRemovedImages([]);
   };
 
   return (
@@ -320,7 +369,7 @@ const ProductsPage = () => {
           <Card>
             <Statistic
               title="Aktif Ürün"
-              value={products.filter(p => p.status === 'active').length}
+              value={products.filter(p => p.isActive).length}
               prefix={<TagsOutlined />}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -330,7 +379,7 @@ const ProductsPage = () => {
           <Card>
             <Statistic
               title="Stokta Olan"
-              value={products.filter(p => p.stock > 0).length}
+              value={products.filter(p => (p.stock || 0) > 0).length}
               prefix={<ShoppingOutlined />}
               valueStyle={{ color: '#722ed1' }}
             />
@@ -351,13 +400,13 @@ const ProductsPage = () => {
 
       {/* Search and Actions */}
       <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <Search
             placeholder="Ürün ara..."
             allowClear
             enterButton={<SearchOutlined />}
             size="large"
-            style={{ width: 300 }}
+            style={{ width: 300, minWidth: 250 }}
             onSearch={handleSearch}
             onChange={(e) => setSearchText(e.target.value)}
           />
@@ -374,19 +423,34 @@ const ProductsPage = () => {
 
       {/* Products Table */}
       <Card>
-        <Table
-          columns={columns}
-          dataSource={tableProducts}
-          rowKey="id"
-          pagination={{
-            total: tableProducts.length,
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => 
-              `${range[0]}-${range[1]} / ${total} ürün`,
-          }}
-        />
+        {tableProducts.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
+              Henüz ürün eklenmemiş
+            </div>
+            <div style={{ fontSize: 14, color: '#999' }}>
+              İlk ürününüzü eklemek için "Yeni Ürün Ekle" butonunu kullanın
+            </div>
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={tableProducts}
+            rowKey="_id"
+            loading={loading}
+            scroll={{ x: 1000 }}
+            pagination={{
+              total: tableProducts.length,
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => 
+                `${range[0]}-${range[1]} / ${total} ürün`,
+              position: ['bottomCenter'],
+              size: 'default'
+            }}
+          />
+        )}
       </Card>
 
       {/* Add/Edit Modal */}
@@ -395,7 +459,10 @@ const ProductsPage = () => {
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        width={700}
+        width={800}
+        confirmLoading={loading}
+        okText={editingProduct ? 'Güncelle' : 'Ekle'}
+        cancelText="İptal"
       >
         <Form
           form={form}
@@ -408,7 +475,7 @@ const ProductsPage = () => {
                 label="Ürün Adı"
                 rules={[{ required: true, message: 'Lütfen ürün adını girin!' }]}
               >
-                <Input />
+                <Input placeholder="Ürün adını girin" />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -419,8 +486,8 @@ const ProductsPage = () => {
               >
                 <Select placeholder="Kategori seçin">
                   {categories.map(cat => (
-                    <Option key={cat.id || cat.value} value={cat.name || cat.value}>
-                      {cat.name || cat.label}
+                    <Option key={cat._id || cat.id} value={cat.name}>
+                      {cat.name}
                     </Option>
                   ))}
                 </Select>
@@ -428,11 +495,146 @@ const ProductsPage = () => {
             </Col>
           </Row>
           
-          {/* Image Upload Section */}
+          <Form.Item
+            name="description"
+            label="Açıklama"
+            rules={[{ required: true, message: 'Lütfen açıklama girin!' }]}
+          >
+            <TextArea rows={3} placeholder="Ürün açıklamasını girin" />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="price"
+                label="Fiyat (₺)"
+                rules={[{ required: true, message: 'Lütfen fiyat girin!' }]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  min={0}
+                  placeholder="0"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="stock"
+                label="Stok"
+                rules={[{ required: true, message: 'Lütfen stok miktarını girin!' }]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={0}
+                  placeholder="0"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="sku"
+                label="SKU"
+              >
+                <Input placeholder="Örn: BE45VGRT" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="brand"
+                label="Marka"
+              >
+                <Input placeholder="Marka adını girin" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="colors"
+                label="Renk Seçenekleri"
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Renk seçin"
+                  style={{ width: '100%' }}
+                >
+                  <Option value="red">Kırmızı</Option>
+                  <Option value="blue">Mavi</Option>
+                  <Option value="green">Yeşil</Option>
+                  <Option value="yellow">Sarı</Option>
+                  <Option value="purple">Mor</Option>
+                  <Option value="pink">Pembe</Option>
+                  <Option value="orange">Turuncu</Option>
+                  <Option value="black">Siyah</Option>
+                  <Option value="white">Beyaz</Option>
+                  <Option value="gray">Gri</Option>
+                  <Option value="brown">Kahverengi</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="sizes"
+                label="Beden Seçenekleri"
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Beden seçin"
+                  style={{ width: '100%' }}
+                >
+                  <Option value="XXS">XXS</Option>
+                  <Option value="XS">XS</Option>
+                  <Option value="S">S</Option>
+                  <Option value="M">M</Option>
+                  <Option value="L">L</Option>
+                  <Option value="XL">XL</Option>
+                  <Option value="XXL">XXL</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="material"
+                label="Malzeme"
+              >
+                <Input placeholder="Örn: %100 Pamuk" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="care"
+                label="Bakım Talimatları"
+              >
+                <Input placeholder="Örn: 30°C'de yıkayın, ütülemeyin" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item
+            name="tags"
+            label="Etiketler"
+          >
+            <Select
+              mode="tags"
+              placeholder="Etiket ekleyin"
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+
+          <Divider>Ürün Resimleri</Divider>
+          
           <Form.Item
             name="images"
             label="Ürün Resimleri"
-            rules={[{ required: true, message: 'Lütfen en az bir ürün resmi yükleyin!' }]}
           >
             <div>
               {/* Image Previews */}
@@ -451,7 +653,7 @@ const ProductsPage = () => {
                         <Button 
                           type="text" 
                           danger 
-                          icon={<DeleteIcon />}
+                          icon={<DeleteOutlined />}
                           onClick={() => handleRemoveImage(index)}
                           size="small"
                           style={{ 
@@ -505,151 +707,6 @@ const ProductsPage = () => {
                 <p>• En az 1, en fazla 6 resim yükleyebilirsiniz</p>
               </div>
             </div>
-          </Form.Item>
-
-          <Form.Item
-            name="description"
-            label="Açıklama"
-            rules={[{ required: true, message: 'Lütfen açıklama girin!' }]}
-          >
-            <Input.TextArea rows={3} />
-          </Form.Item>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="price"
-                label="Fiyat (₺)"
-                rules={[{ required: true, message: 'Lütfen fiyat girin!' }]}
-              >
-                <InputNumber
-                  style={{ width: '100%' }}
-                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                  min={0}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="stock"
-                label="Stok"
-                rules={[{ required: true, message: 'Lütfen stok miktarını girin!' }]}
-              >
-                <InputNumber
-                  style={{ width: '100%' }}
-                  min={0}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="discount"
-                label="İndirim Oranı (%)"
-                initialValue={0}
-              >
-                <InputNumber
-                  style={{ width: '100%' }}
-                  min={0}
-                  max={100}
-                  formatter={value => `${value}%`}
-                  parser={value => value.replace('%', '')}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="sku"
-                label="SKU"
-                rules={[{ required: true, message: 'Lütfen SKU girin!' }]}
-              >
-                <Input placeholder="Örn: BE45VGRT" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="colors"
-                label="Renk Seçenekleri"
-                rules={[{ required: true, message: 'Lütfen en az bir renk seçin!' }]}
-              >
-                <Select
-                  mode="multiple"
-                  placeholder="Renk seçin"
-                  style={{ width: '100%' }}
-                >
-                  <Option value="red">Kırmızı</Option>
-                  <Option value="blue">Mavi</Option>
-                  <Option value="green">Yeşil</Option>
-                  <Option value="yellow">Sarı</Option>
-                  <Option value="purple">Mor</Option>
-                  <Option value="pink">Pembe</Option>
-                  <Option value="orange">Turuncu</Option>
-                  <Option value="black">Siyah</Option>
-                  <Option value="white">Beyaz</Option>
-                  <Option value="gray">Gri</Option>
-                  <Option value="brown">Kahverengi</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="sizes"
-                label="Beden Seçenekleri"
-                rules={[{ required: true, message: 'Lütfen en az bir beden seçin!' }]}
-              >
-                <Select
-                  mode="multiple"
-                  placeholder="Beden seçin"
-                  style={{ width: '100%' }}
-                >
-                  <Option value="XXS">XXS</Option>
-                  <Option value="XS">XS</Option>
-                  <Option value="S">S</Option>
-                  <Option value="M">M</Option>
-                  <Option value="L">L</Option>
-                  <Option value="XL">XL</Option>
-                  <Option value="XXL">XXL</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="material"
-                label="Malzeme"
-                rules={[{ required: true, message: 'Lütfen malzeme bilgisi girin!' }]}
-              >
-                <Input placeholder="Örn: %100 Pamuk" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="care"
-                label="Bakım Talimatları"
-                rules={[{ required: true, message: 'Lütfen bakım talimatları girin!' }]}
-              >
-                <Input placeholder="Örn: 30°C'de yıkayın, ütülemeyin" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item
-            name="tags"
-            label="Etiketler"
-          >
-            <Select
-              mode="tags"
-              placeholder="Etiket ekleyin"
-              style={{ width: '100%' }}
-            />
           </Form.Item>
 
           <Form.Item

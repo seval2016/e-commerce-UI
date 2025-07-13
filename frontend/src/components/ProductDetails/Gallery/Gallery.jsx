@@ -1,175 +1,171 @@
 import { useState, useEffect } from "react";
-import PropTypes from "prop-types";
-import Slider from "react-slick";
 import { useParams } from "react-router-dom";
 import { useData } from "../../../context/DataContext.jsx";
-import Loading from "../../common/Loading";
-
-function PrevBtn({ onClick }) {
-  return (
-    <button
-      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-gray-100 border border-gray-200"
-      onClick={onClick}
-      type="button"
-      aria-label="Önceki görsel"
-    >
-      <i className="bi bi-chevron-left text-gray-600"></i>
-    </button>
-  );
-}
-
-function NextBtn({ onClick }) {
-  return (
-    <button
-      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-gray-100 border border-gray-200"
-      onClick={onClick}
-      type="button"
-      aria-label="Sonraki görsel"
-    >
-      <i className="bi bi-chevron-right text-gray-600"></i>
-    </button>
-  );
-}
-
-NextBtn.propTypes = {
-  onClick: PropTypes.func,
-};
-
-PrevBtn.propTypes = {
-  onClick: PropTypes.func,
-};
 
 const Gallery = () => {
   const { id } = useParams();
   const { products } = useData();
   const [product, setProduct] = useState(null);
-  const [activeImg, setActiveImg] = useState({
-    img: "",
-    imgIndex: 0,
-  });
+  const [activeImage, setActiveImage] = useState(0);
+
+  // Backend API base URL
+  const API_BASE_URL = "http://localhost:5000";
+
+  // Ürün görsel yolunu backend ile birleştir
+  const getProductImageUrl = (imagePath) => {
+    if (!imagePath || typeof imagePath !== 'string') return null;
+    if (imagePath.startsWith("/uploads/")) {
+      return API_BASE_URL + imagePath;
+    }
+    return imagePath;
+  };
 
   useEffect(() => {
-    const foundProduct = products.find((p) => p.id === id);
+    const foundProduct = products.find(p => p._id === id || p.id === id);
     if (foundProduct) {
       setProduct(foundProduct);
-      
-      // Resim yolunu düzelt - başına / ekle
-      const firstImage = foundProduct.image || foundProduct.images?.[0] || '';
-      const correctedImage = firstImage.startsWith('/') ? firstImage : `/${firstImage}`;
-      
-      console.log('Ürün bulundu:', foundProduct.name);
-      console.log('Orijinal resim yolu:', firstImage);
-      console.log('Düzeltilmiş resim yolu:', correctedImage);
-      
-      setActiveImg({
-        img: correctedImage,
-        imgIndex: 0,
-      });
     }
   }, [id, products]);
 
-  const sliderSettings = {
-    dots: false,
-    infinite: false,
-    slidesToShow: 4,
-    slidesToScroll: 1,
-    nextArrow: <NextBtn />,
-    prevArrow: <PrevBtn />,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 3,
-        },
-      },
-      {
-        breakpoint: 640,
-        settings: {
-          slidesToShow: 2,
-        },
-      },
-    ],
-  };
-
   if (!product) {
     return (
-      <div className="space-y-4">
-        <Loading type="skeleton" className="h-80 w-full" />
-        <div className="grid grid-cols-3 gap-2">
-          {[...Array(3)].map((_, i) => (
-            <Loading key={i} type="skeleton" className="h-16 w-full" />
-          ))}
+      <div className="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
+        <div className="text-center">
+          <div className="text-4xl text-gray-400 mb-2">
+            <i className="bi bi-image"></i>
+          </div>
+          <p className="text-gray-500">Resim yükleniyor...</p>
         </div>
       </div>
     );
   }
 
-  // Resimleri al ve yollarını düzelt
-  const productImages = (product.images || [product.image] || []).map(img => 
-    img.startsWith('/') ? img : `/${img}`
-  );
+  // Ürün resimlerini al
+  const getProductImages = () => {
+    const images = [];
+    
+    // Ana resim
+    if (product.image) {
+      images.push(getProductImageUrl(product.image));
+    }
+    
+    // Resimler dizisi
+    if (product.images && Array.isArray(product.images)) {
+      product.images.forEach(img => {
+        const url = typeof img === 'string' ? img : img.url;
+        if (url) {
+          images.push(getProductImageUrl(url));
+        }
+      });
+    }
+    
+    // Main image
+    if (product.mainImage) {
+      images.push(getProductImageUrl(product.mainImage));
+    }
+    
+    // Varsayılan resim
+    if (images.length === 0) {
+      images.push('/img/products/product1/1.png');
+    }
+    
+    // Tekrarlanan resimleri kaldır
+    return [...new Set(images)].filter(Boolean);
+  };
+
+  const productImages = getProductImages();
+
+  const handleThumbnailClick = (index) => {
+    setActiveImage(index);
+  };
+
+  const handlePrevImage = () => {
+    setActiveImage(prev => 
+      prev === 0 ? productImages.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    setActiveImage(prev => 
+      prev === productImages.length - 1 ? 0 : prev + 1
+    );
+  };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Ana görsel */}
-      <div className="relative w-full aspect-square rounded-xl overflow-hidden flex items-center justify-center">
+    <div className="space-y-4">
+      {/* Main Image */}
+      <div className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden">
         <img
-          src={activeImg.img}
-          alt={product.name}
-          className="w-full h-full object-contain transition-all duration-200"
+          src={productImages[activeImage]}
+          alt={`${product.name} - Resim ${activeImage + 1}`}
+          className="w-full h-full object-cover"
           onError={(e) => {
-            console.error('Resim yüklenemedi:', activeImg.img);
-            e.target.style.display = 'none';
-            e.target.nextSibling.style.display = 'flex';
+            e.target.src = '/img/products/product1/1.png';
           }}
         />
-        <div className="absolute inset-0 hidden items-center justify-center text-gray-500">
-          <div className="text-center">
-            <i className="bi bi-image text-4xl mb-2"></i>
-            <p className="text-sm">Resim yüklenemedi</p>
+        
+        {/* Navigation Arrows */}
+        {productImages.length > 1 && (
+          <>
+            <button
+              onClick={handlePrevImage}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200"
+              aria-label="Önceki resim"
+            >
+              <i className="bi bi-chevron-left text-gray-700"></i>
+            </button>
+            
+            <button
+              onClick={handleNextImage}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200"
+              aria-label="Sonraki resim"
+            >
+              <i className="bi bi-chevron-right text-gray-700"></i>
+            </button>
+          </>
+        )}
+        
+        {/* Image Counter */}
+        {productImages.length > 1 && (
+          <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+            {activeImage + 1} / {productImages.length}
           </div>
-        </div>
+        )}
       </div>
-      {/* Küçük görseller */}
+
+      {/* Thumbnails */}
       {productImages.length > 1 && (
-        <div className="relative">
-          <Slider {...sliderSettings}>
-            {productImages.map((itemImg, index) => (
-              <div key={index} className="px-1">
-                <button
-                  onClick={() =>
-                    setActiveImg({
-                      img: itemImg,
-                      imgIndex: index,
-                    })
-                  }
-                  className={`w-full aspect-square rounded-lg overflow-hidden transition-all duration-150 focus:outline-none ${
-                    activeImg.imgIndex === index
-                      ? "ring-2 ring-primary-200 shadow"
-                      : "hover:ring-2 hover:ring-primary-100"
-                  }`}
-                  aria-label={`Ürün görseli ${index + 1}`}
-                  type="button"
-                >
-                  <img
-                    src={itemImg}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      console.error('Küçük resim yüklenemedi:', itemImg);
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                  <div className="absolute inset-0 hidden items-center justify-center text-gray-400">
-                    <i className="bi bi-image text-lg"></i>
-                  </div>
-                </button>
-              </div>
-            ))}
-          </Slider>
+        <div className="grid grid-cols-4 gap-3">
+          {productImages.map((image, index) => (
+            <button
+              key={index}
+              onClick={() => handleThumbnailClick(index)}
+              className={`aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                activeImage === index 
+                  ? 'border-blue-500 ring-2 ring-blue-200' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <img
+                src={image}
+                alt={`${product.name} - Küçük resim ${index + 1}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = '/img/products/product1/1.png';
+                }}
+              />
+            </button>
+          ))}
         </div>
       )}
+
+      {/* Zoom Indicator */}
+      <div className="text-center">
+        <p className="text-sm text-gray-500">
+          <i className="bi bi-zoom-in mr-1"></i>
+          Resme tıklayarak büyütebilirsiniz
+        </p>
+      </div>
     </div>
   );
 };
