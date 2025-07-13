@@ -372,6 +372,8 @@ const CategoriesPage = () => {
               showQuickJumper: true,
               showTotal: (total, range) => 
                 `${range[0]}-${range[1]} / ${total} kategori`,
+              position: ['bottomCenter'],
+              size: 'default'
             }}
           />
         )}
