@@ -13,17 +13,26 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
 
-  // localStorage kullanımını kontrol et (sadece development'ta)
+  // localStorage kullanımını kontrol et ve gereksiz anahtarları temizle (sadece development'ta)
   const _checkStorageUsage = () => {
     if (import.meta.env.DEV) {
       try {
         let totalSize = 0;
+        const keysToKeep = ['cart']; // Sadece bu anahtarları koru
+        
+        // Gereksiz anahtarları temizle
         for (let key in localStorage) {
           if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
-            totalSize += localStorage[key].length;
+            if (!keysToKeep.includes(key)) {
+              console.log(`Gereksiz anahtar temizleniyor: ${key}`);
+              localStorage.removeItem(key);
+            } else {
+              totalSize += localStorage[key].length;
+            }
           }
         }
-        console.log(`localStorage kullanımı: ${totalSize} karakter`);
+        
+        console.log(`localStorage kullanımı: ${totalSize} karakter (sadece cart anahtarı)`);
         return totalSize;
       } catch (error) {
         console.error('Storage kullanımı kontrol edilemedi:', error);
@@ -35,6 +44,15 @@ export const CartProvider = ({ children }) => {
   // Load cart items from localStorage on mount
   useEffect(() => {
     try {
+      // Uygulama başlatıldığında gereksiz localStorage anahtarlarını temizle
+      const keysToKeep = ['cart', 'adminUser'];
+      for (let key in localStorage) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key) && !keysToKeep.includes(key)) {
+          console.log(`Başlangıçta gereksiz anahtar temizleniyor: ${key}`);
+          localStorage.removeItem(key);
+        }
+      }
+      
       // Önce localStorage'dan dene
       let savedCart = localStorage.getItem('cart');
       

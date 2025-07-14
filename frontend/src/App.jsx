@@ -23,17 +23,17 @@ import SupportPage from "./pages/admin/SupportPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 import Layout from "./layouts/Layout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
-import { AdminAuthProvider } from "./context/AdminAuthContext.jsx";
-import { DataProvider } from "./context/DataContext.jsx";
-import { CartProvider } from "./context/CartContext.jsx";
+import { AdminAuthProvider } from "./context/AdminAuthContext";
+import { DataProvider } from "./context/DataContext";
+import { CartProvider } from "./context/CartContext";
 
 
 function App() {
   return (
     <ErrorBoundary>
-      <CartProvider>
-        <DataProvider>
-          <AdminAuthProvider>
+      <AdminAuthProvider>
+        <CartProvider>
+          <DataProvider>
             <Routes>
               {/* Public Routes with Layout */}
               <Route path="/" element={<Layout><HomePage /></Layout>} />
@@ -100,9 +100,9 @@ function App() {
               
               <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
             </Routes>
-          </AdminAuthProvider>
-        </DataProvider>
-      </CartProvider>
+          </DataProvider>
+        </CartProvider>
+      </AdminAuthProvider>
     </ErrorBoundary>
   );
 }

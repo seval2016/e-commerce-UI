@@ -3,29 +3,43 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
+    this.timeout = 30000; // 30 seconds timeout
   }
 
-  // Helper method to get auth token
+  // Helper method to get auth token with enhanced fallback
   getAuthToken() {
-    return localStorage.getItem('token');
-  }
+    // Try different storage keys in order of preference
+    const tokenSources = [
+      'token',
+      'adminUser',
+      'authToken',
+      'userToken'
+    ];
 
-  // Helper method to set auth headers
-  getHeaders() {
-    const headers = {
-      'Content-Type': 'application/json',
-    };
-    
-    const token = this.getAuthToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    for (const source of tokenSources) {
+      const stored = localStorage.getItem(source);
+      if (stored) {
+        try {
+          // If it's a JSON object, extract token
+          if (stored.startsWith('{')) {
+            const data = JSON.parse(stored);
+            if (data.token) return data.token;
+            if (data.accessToken) return data.accessToken;
+          } else {
+            // Direct token string
+            return stored;
+          }
+        } catch (error) {
+          console.debug(`Error parsing ${source}:`, error);
+        }
+      }
     }
-    
-    return headers;
+
+    return null;
   }
 
-  // Helper method to get auth headers for file uploads
-  getUploadHeaders() {
+  // Helper method to build request headers
+  buildHeaders(isUpload = false) {
     const headers = {};
     
     const token = this.getAuthToken();
@@ -33,67 +47,119 @@ class ApiService {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // Don't set Content-Type for FormData - let browser set it automatically
-    // with boundary parameter
+    // Only set Content-Type for non-upload requests
+    if (!isUpload) {
+      headers['Content-Type'] = 'application/json';
+    }
     
     return headers;
   }
 
-  // Generic request method
+  // Enhanced request method with better error handling
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    const isUpload = options.body instanceof FormData;
+    
     const config = {
-      headers: this.getHeaders(),
+      headers: this.buildHeaders(isUpload),
+      timeout: this.timeout,
       ...options,
     };
 
+    console.log(`🌐 API Request: ${config.method || 'GET'} ${endpoint}`, {
+      hasAuth: !!this.getAuthToken(),
+      isUpload,
+      bodyType: config.body ? config.body.constructor.name : 'none'
+    });
+
     try {
-      const response = await fetch(url, config);
-      const data = await response.json();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      
+      const response = await fetch(url, {
+        ...config,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+
+      // Try to parse response as JSON
+      let data;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        data = { message: text, raw: text };
+      }
+
+      console.log(`📡 API Response: ${response.status}`, {
+        success: response.ok,
+        endpoint,
+        hasData: !!data
+      });
 
       if (!response.ok) {
-        // 401 hatalarını sessizce işle
+        // Handle specific error cases
+        const errorMessage = data?.message || data?.error || `HTTP ${response.status}`;
+        
         if (response.status === 401) {
-          throw new Error('Token is not valid');
+          console.warn('Authentication failed - token may be invalid');
+          // Optionally clear invalid tokens
+          // this.clearAuthTokens();
         }
-        throw new Error(data.message || 'API request failed');
+        
+        throw new Error(errorMessage);
       }
 
       return data;
     } catch (error) {
-      // Sadece 401 olmayan hataları logla
-      if (!error.message.includes('Token is not valid')) {
-        console.error('API Error:', error);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout');
       }
+      
+      console.error(`❌ API Error: ${endpoint}`, {
+        message: error.message,
+        stack: error.stack
+      });
+      
       throw error;
     }
   }
 
-  // Upload file method
+  // Specialized upload method
   async uploadFile(endpoint, formData, method = 'POST') {
-    const url = `${this.baseURL}${endpoint}`;
-    const config = {
-      method: method,
-      headers: this.getUploadHeaders(),
-      body: formData,
-    };
+    return this.request(endpoint, {
+      method,
+      body: formData
+    });
+  }
 
-    try {
-      const response = await fetch(url, config);
-      const data = await response.json();
+  // Helper to clear auth tokens
+  clearAuthTokens() {
+    const keys = ['token', 'adminUser', 'authToken', 'userToken'];
+    keys.forEach(key => localStorage.removeItem(key));
+  }
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Upload failed');
+  // Helper to validate FormData
+  validateFormData(formData, requiredFields = []) {
+    console.log('📋 FormData validation:', {
+      required: requiredFields,
+      entries: Array.from(formData.entries()).map(([key, value]) => [
+        key, 
+        value instanceof File ? `File(${value.name})` : value
+      ])
+    });
+
+    for (const field of requiredFields) {
+      if (!formData.has(field)) {
+        throw new Error(`Required field missing: ${field}`);
       }
-
-      return data;
-    } catch (error) {
-      console.error('Upload Error:', error);
-      throw error;
     }
   }
 
-  // Auth endpoints
+  // Authentication endpoints
   async login(email, password) {
     return this.request('/auth/login', {
       method: 'POST',
@@ -119,86 +185,160 @@ class ApiService {
     return this.request('/auth/me');
   }
 
-  // Products endpoints
+  // Enhanced product endpoints with comprehensive CRUD
   async getProducts(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return this.request(`/products?${queryString}`);
+    const endpoint = queryString ? `/products?${queryString}` : '/products';
+    return this.request(endpoint);
   }
 
   async getProduct(id) {
+    if (!id) throw new Error('Product ID is required');
     return this.request(`/products/${id}`);
   }
 
-  // Product operations with file upload
   async createProduct(productData, imageFiles = []) {
+    console.log('🔨 Creating product:', {
+      name: productData.name,
+      category: productData.category,
+      imageCount: imageFiles.length,
+      productDataKeys: Object.keys(productData)
+    });
+
     const formData = new FormData();
     
-    // Add product data
-    Object.keys(productData).forEach(key => {
-      if (typeof productData[key] === 'object') {
-        formData.append(key, JSON.stringify(productData[key]));
+    // Add product data to FormData
+    Object.entries(productData).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '') {
+        return; // Skip empty values
+      }
+      
+      if (Array.isArray(value)) {
+        formData.append(key, JSON.stringify(value));
+      } else if (typeof value === 'object') {
+        formData.append(key, JSON.stringify(value));
       } else {
-        formData.append(key, productData[key]);
+        formData.append(key, String(value));
       }
     });
 
     // Add image files
-    imageFiles.forEach(file => {
-      formData.append('images', file);
+    imageFiles.forEach((file, index) => {
+      if (file instanceof File) {
+        formData.append('images', file);
+        console.log(`📎 Added image ${index + 1}:`, file.name, file.size, 'bytes');
+      }
     });
 
+    // Validate required fields
+    this.validateFormData(formData, ['name', 'description', 'price', 'category']);
+
+    console.log('📤 Sending product creation request...');
     return this.uploadFile('/products', formData);
   }
 
   async updateProduct(id, productData, imageFiles = [], removedImages = []) {
+    if (!id) throw new Error('Product ID is required');
+    
+    console.log('✏️ Updating product:', {
+      id,
+      name: productData.name,
+      imageCount: imageFiles.length,
+      removedCount: removedImages.length
+    });
+
     const formData = new FormData();
     
     // Add product data
-    Object.keys(productData).forEach(key => {
-      if (typeof productData[key] === 'object') {
-        formData.append(key, JSON.stringify(productData[key]));
+    Object.entries(productData).forEach(([key, value]) => {
+      if (value === null || value === undefined) {
+        return; // Skip null/undefined
+      }
+      
+      if (Array.isArray(value)) {
+        formData.append(key, JSON.stringify(value));
+      } else if (typeof value === 'object') {
+        formData.append(key, JSON.stringify(value));
       } else {
-        formData.append(key, productData[key]);
+        formData.append(key, String(value));
       }
     });
 
-    // Add image files
-    imageFiles.forEach(file => {
-      formData.append('images', file);
+    // Add new image files
+    imageFiles.forEach((file, index) => {
+      if (file instanceof File) {
+        formData.append('images', file);
+        console.log(`📎 Added new image ${index + 1}:`, file.name);
+      }
     });
 
     // Add removed images info
     if (removedImages.length > 0) {
       formData.append('removedImages', JSON.stringify(removedImages));
+      console.log('🗑️ Images to remove:', removedImages);
     }
 
     return this.uploadFile(`/products/${id}`, formData, 'PUT');
   }
 
-  // Categories endpoints
+  async deleteProduct(id) {
+    if (!id) throw new Error('Product ID is required');
+    
+    console.log('🗑️ Deleting product:', id);
+    return this.request(`/products/${id}`, { method: 'DELETE' });
+  }
+
+  async toggleProductStatus(id) {
+    if (!id) throw new Error('Product ID is required');
+    
+    return this.request(`/products/${id}/toggle-status`, { method: 'POST' });
+  }
+
+  async getProductsByCategory(categoryId) {
+    if (!categoryId) throw new Error('Category ID is required');
+    
+    return this.request(`/products/category/${categoryId}`);
+  }
+
+  async searchProducts(query, options = {}) {
+    if (!query) throw new Error('Search query is required');
+    
+    const params = new URLSearchParams(options).toString();
+    const endpoint = params ? `/products/search/${encodeURIComponent(query)}?${params}` : `/products/search/${encodeURIComponent(query)}`;
+    
+    return this.request(endpoint);
+  }
+
+  // Enhanced category endpoints
   async getCategories() {
     return this.request('/categories');
   }
 
-  // Category operations
+  async getCategory(id) {
+    if (!id) throw new Error('Category ID is required');
+    return this.request(`/categories/${id}`);
+  }
+
   async createCategory(categoryData, imageFile = null) {
-    // If image file is provided, use FormData
-    if (imageFile) {
+    console.log('🏷️ Creating category:', categoryData.name);
+
+    if (imageFile && imageFile instanceof File) {
       const formData = new FormData();
       
       // Add category data
-      Object.keys(categoryData).forEach(key => {
-        if (key !== 'image') { // Don't add image field to FormData
-          formData.append(key, categoryData[key]);
+      Object.entries(categoryData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && key !== 'image') {
+          formData.append(key, String(value));
         }
       });
 
       // Add image file
       formData.append('image', imageFile);
+      console.log('📎 Added category image:', imageFile.name);
 
       return this.uploadFile('/categories', formData);
     } else {
-      // Use JSON for creation without image
+      // Create without image
       return this.request('/categories', {
         method: 'POST',
         body: JSON.stringify(categoryData)
@@ -207,14 +347,17 @@ class ApiService {
   }
 
   async updateCategory(id, categoryData, imageFile = null) {
-    // If image file is provided, use FormData
-    if (imageFile) {
+    if (!id) throw new Error('Category ID is required');
+    
+    console.log('✏️ Updating category:', id);
+
+    if (imageFile && imageFile instanceof File) {
       const formData = new FormData();
       
       // Add category data
-      Object.keys(categoryData).forEach(key => {
-        if (key !== 'image') { // Don't add image field to FormData
-          formData.append(key, categoryData[key]);
+      Object.entries(categoryData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && key !== 'image') {
+          formData.append(key, String(value));
         }
       });
 
@@ -223,7 +366,7 @@ class ApiService {
 
       return this.uploadFile(`/categories/${id}`, formData, 'PUT');
     } else {
-      // Use JSON for updates without image
+      // Update without image
       return this.request(`/categories/${id}`, {
         method: 'PUT',
         body: JSON.stringify(categoryData)
@@ -232,81 +375,130 @@ class ApiService {
   }
 
   async deleteCategory(id) {
+    if (!id) throw new Error('Category ID is required');
+    
+    console.log('🗑️ Deleting category:', id);
     return this.request(`/categories/${id}`, { method: 'DELETE' });
   }
 
-  // Orders endpoints
-  async getOrders() {
-    return this.request('/orders');
-  }
-
-  // Users endpoints
-  async getUsers() {
-    return this.request('/users');
-  }
-
-  // Blogs endpoints
+  // Blog endpoints
   async getBlogs() {
     return this.request('/blogs');
   }
 
-  // Blog operations with file upload
+  async getBlog(id) {
+    if (!id) throw new Error('Blog ID is required');
+    return this.request(`/blogs/${id}`);
+  }
+
   async createBlog(blogData, imageFile = null) {
-    const formData = new FormData();
-    
-    // Add blog data
-    Object.keys(blogData).forEach(key => {
-      if (typeof blogData[key] === 'object') {
-        formData.append(key, JSON.stringify(blogData[key]));
-      } else {
-        formData.append(key, blogData[key]);
-      }
-    });
+    if (imageFile && imageFile instanceof File) {
+      const formData = new FormData();
+      
+      Object.entries(blogData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData.append(key, String(value));
+        }
+      });
 
-    // Add image file
-    if (imageFile) {
       formData.append('image', imageFile);
+      return this.uploadFile('/blogs', formData);
+    } else {
+      return this.request('/blogs', {
+        method: 'POST',
+        body: JSON.stringify(blogData)
+      });
     }
-
-    return this.uploadFile('/blogs', formData);
   }
 
   async updateBlog(id, blogData, imageFile = null) {
-    const formData = new FormData();
+    if (!id) throw new Error('Blog ID is required');
     
-    // Add blog data
-    Object.keys(blogData).forEach(key => {
-      if (typeof blogData[key] === 'object') {
-        formData.append(key, JSON.stringify(blogData[key]));
-      } else {
-        formData.append(key, blogData[key]);
-      }
-    });
+    if (imageFile && imageFile instanceof File) {
+      const formData = new FormData();
+      
+      Object.entries(blogData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData.append(key, String(value));
+        }
+      });
 
-    // Add image file
-    if (imageFile) {
       formData.append('image', imageFile);
+      return this.uploadFile(`/blogs/${id}`, formData, 'PUT');
+    } else {
+      return this.request(`/blogs/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(blogData)
+      });
     }
-
-    return this.uploadFile(`/blogs/${id}`, formData, 'PUT');
   }
 
   async deleteBlog(id) {
+    if (!id) throw new Error('Blog ID is required');
     return this.request(`/blogs/${id}`, { method: 'DELETE' });
   }
 
-  // Admin endpoints
-  async getDashboardStats() {
-    return this.request('/admin/dashboard');
+  // Order endpoints
+  async getOrders() {
+    return this.request('/orders');
   }
 
-  // Health check
-  async healthCheck() {
-    return this.request('/health');
+  async getOrder(id) {
+    if (!id) throw new Error('Order ID is required');
+    return this.request(`/orders/${id}`);
+  }
+
+  async createOrder(orderData) {
+    return this.request('/orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData)
+    });
+  }
+
+  async updateOrderStatus(id, status) {
+    if (!id) throw new Error('Order ID is required');
+    if (!status) throw new Error('Status is required');
+    
+    return this.request(`/orders/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    });
+  }
+
+  // User management endpoints
+  async getUsers() {
+    return this.request('/users');
+  }
+
+  async getUser(id) {
+    if (!id) throw new Error('User ID is required');
+    return this.request(`/users/${id}`);
+  }
+
+  async updateUser(id, userData) {
+    if (!id) throw new Error('User ID is required');
+    
+    return this.request(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData)
+    });
+  }
+
+  async deleteUser(id) {
+    if (!id) throw new Error('User ID is required');
+    return this.request(`/users/${id}`, { method: 'DELETE' });
+  }
+
+  // Analytics endpoints
+  async getAnalytics() {
+    return this.request('/analytics');
+  }
+
+  async getDashboardStats() {
+    return this.request('/analytics/dashboard');
   }
 }
 
-// Create singleton instance
-const apiService = new ApiService();
-
-export default apiService; 
+// Create and export singleton instance
+const api = new ApiService();
+export default api; 

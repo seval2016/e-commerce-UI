@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { 
   Table, 
   Card, 
@@ -18,7 +18,16 @@ import {
   Statistic,
   Upload,
   message,
-  Divider
+  Divider,
+  Tooltip,
+  Drawer,
+  Descriptions,
+  Badge,
+  Empty,
+  Spin,
+  Alert,
+  Typography,
+  Flex
 } from 'antd';
 import {
   PlusOutlined,
@@ -29,7 +38,14 @@ import {
   DollarOutlined,
   TagsOutlined,
   UploadOutlined,
-  EyeOutlined
+  EyeOutlined,
+  FilterOutlined,
+  ReloadOutlined,
+  ExclamationCircleOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  InfoCircleOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
 import { useData } from '../../context/DataContext.jsx';
 import { Link } from 'react-router-dom';
@@ -37,108 +53,137 @@ import { Link } from 'react-router-dom';
 const { Search } = Input;
 const { Option } = Select;
 const { TextArea } = Input;
+const { Title, Text } = Typography;
 
 const ProductsPage = () => {
+  // Context and state
+  const { 
+    products, 
+    categories, 
+    loading, 
+    errors,
+    stats,
+    addProduct, 
+    updateProduct, 
+    deleteProduct,
+    toggleProductStatus,
+    refreshData
+  } = useData();
+
+  // Local state
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDetailDrawerVisible, setIsDetailDrawerVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [form] = Form.useForm();
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [removedImages, setRemovedImages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
   
-  const { products, categories, addProduct, updateProduct, deleteProduct } = useData();
+  // Filter states
+  const [filters, setFilters] = useState({
+    category: undefined,
+    status: undefined,
+    inStock: undefined,
+    priceRange: undefined
+  });
 
   // Backend API base URL
   const API_BASE_URL = "http://localhost:5000";
 
-  // Ürün görsel yolunu backend ile birleştir
-  const getProductImageUrl = (imagePath) => {
+  // Helper function to get product image URL
+  const getProductImageUrl = useCallback((imagePath) => {
     if (!imagePath || typeof imagePath !== 'string') return null;
-    if (imagePath.startsWith("/uploads/")) {
-      return API_BASE_URL + imagePath;
-    }
-    return imagePath;
-  };
+    if (imagePath.startsWith("http")) return imagePath;
+    if (imagePath.startsWith("/uploads/")) return API_BASE_URL + imagePath;
+    return API_BASE_URL + "/uploads/products/" + imagePath;
+  }, []);
 
-  // Filter products based on search
-  const filteredProducts = products.filter(product =>
-    (product.name || '').toLowerCase().includes(searchText.toLowerCase()) ||
-    (product.description || '').toLowerCase().includes(searchText.toLowerCase()) ||
-    (typeof product.category === 'string' ? product.category.toLowerCase() : (product.category?.name || '')).toLowerCase().includes(searchText.toLowerCase())
-  );
+  // Filtered and searched products
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      // Search filter
+      if (searchText) {
+        const searchLower = searchText.toLowerCase();
+        const searchMatch = 
+          product.name?.toLowerCase().includes(searchLower) ||
+          product.description?.toLowerCase().includes(searchLower) ||
+          product.brand?.toLowerCase().includes(searchLower) ||
+          product.sku?.toLowerCase().includes(searchLower);
+        
+        if (!searchMatch) return false;
+      }
+      
+      // Category filter
+      if (filters.category && filters.category !== 'all') {
+        const productCategoryId = typeof product.category === 'object' 
+          ? product.category._id 
+          : product.category;
+        if (productCategoryId !== filters.category) return false;
+      }
+      
+      // Status filter
+      if (filters.status && filters.status !== 'all') {
+        if (filters.status === 'active' && !product.isActive) return false;
+        if (filters.status === 'inactive' && product.isActive) return false;
+      }
+      
+      // Stock filter
+      if (filters.inStock && filters.inStock !== 'all') {
+        if (filters.inStock === 'in_stock' && product.stock <= 0) return false;
+        if (filters.inStock === 'out_of_stock' && product.stock > 0) return false;
+        if (filters.inStock === 'low_stock' && (product.stock > (product.lowStockThreshold || 5) || product.stock <= 0)) return false;
+      }
+      
+      return true;
+    });
+  }, [products, searchText, filters]);
 
-  // Transform products for table
-  const tableProducts = filteredProducts.map(product => ({
-    ...product,
-    key: product._id
-  }));
-
-  // Handle image upload
-  const handleImageUpload = (file) => {
-    const isImage = file.type.startsWith('image/');
-    if (!isImage) {
-      message.error('Sadece resim dosyaları yükleyebilirsiniz!');
-      return false;
-    }
-
-    const isLt2M = file.size / 1024 / 1024 < 2;
-    if (!isLt2M) {
-      message.error('Resim dosyası 2MB\'dan küçük olmalıdır!');
-      return false;
-    }
-
-    // Create preview URL
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreviews(prev => [...prev, e.target.result]);
-    };
-    reader.readAsDataURL(file);
-
-    setImageFiles(prev => [...prev, file]);
-    return false; // Prevent default upload behavior
-  };
-
-  // Remove uploaded image
-  const handleRemoveImage = (index) => {
-    const removedImage = imagePreviews[index];
-    
-    // Eğer bu mevcut bir resimse (backend URL'si varsa), silinecek resimler listesine ekle
-    if (removedImage && removedImage.includes('/uploads/')) {
-      setRemovedImages(prev => [...prev, removedImage]);
-    }
-    
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-
-
+  // Table columns configuration
   const columns = [
     {
-      title: 'Ürün',
-      dataIndex: 'name',
-      key: 'name',
-      width: 300,
-      render: (text, record) => (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+      title: 'Resim',
+      dataIndex: 'mainImage',
+      key: 'image',
+      width: 80,
+      render: (mainImage, record) => {
+        const imageUrl = mainImage ? getProductImageUrl(mainImage) : null;
+        return (
           <Image
             width={50}
             height={50}
-            src={getProductImageUrl(record.image || record.images?.[0]?.url || record.mainImage)}
-            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-            style={{ borderRadius: 5, marginRight: 12, objectFit: 'contain', background: '#f7f7f7' }}
-            preview={false}
+            src={imageUrl}
+            fallback="/img/products/default.jpg"
+            style={{ borderRadius: 8, objectFit: 'cover' }}
+            preview={{
+              mask: <EyeOutlined />,
+              src: imageUrl
+            }}
           />
-          <div>
-            <div style={{ fontWeight: 500 }}>{text}</div>
-            <div style={{ fontSize: 12, color: '#666' }}>
-              {record.description && typeof record.description === 'string' && record.description.length > 50 
-                ? `${record.description.substring(0, 50)}...` 
-                : record.description || 'Açıklama yok'
-              }
-            </div>
+        );
+      },
+    },
+    {
+      title: 'Ürün Bilgileri',
+      key: 'productInfo',
+      width: 300,
+      render: (_, record) => (
+        <div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>
+            <Link 
+              to={`/product/${record._id}`}
+              style={{ color: '#1890ff', textDecoration: 'none' }}
+            >
+              {record.name}
+            </Link>
+          </div>
+          <div style={{ color: '#666', fontSize: 12, marginBottom: 4 }}>
+            SKU: {record.sku || 'Yok'}
+          </div>
+          <div style={{ color: '#666', fontSize: 12 }}>
+            Marka: {record.brand || 'Belirtilmemiş'}
           </div>
         </div>
       ),
@@ -149,21 +194,35 @@ const ProductsPage = () => {
       key: 'category',
       width: 120,
       render: (category) => {
-        if (typeof category === 'object' && category.name) {
-          return <Tag color="blue">{category.name}</Tag>;
-        }
-        return <Tag color="blue">{category || 'Kategori Yok'}</Tag>;
+        const categoryName = typeof category === 'object' ? category.name : 'Bilinmiyor';
+        return (
+          <Tag color="blue" style={{ marginRight: 0 }}>
+            {categoryName}
+          </Tag>
+        );
       },
     },
     {
       title: 'Fiyat',
       dataIndex: 'price',
       key: 'price',
-      width: 100,
-      render: (price) => {
-        const numPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
-        return `${numPrice.toLocaleString()} ₺`;
-      },
+      width: 120,
+      render: (price, record) => (
+        <div>
+          <div style={{ fontWeight: 600, color: '#1890ff' }}>
+            ₺{(price || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+          </div>
+          {record.originalPrice && record.originalPrice > price && (
+            <div style={{ 
+              fontSize: 12, 
+              color: '#999', 
+              textDecoration: 'line-through' 
+            }}>
+              ₺{record.originalPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+            </div>
+          )}
+        </div>
+      ),
       sorter: (a, b) => (a.price || 0) - (b.price || 0),
     },
     {
@@ -171,116 +230,200 @@ const ProductsPage = () => {
       dataIndex: 'stock',
       key: 'stock',
       width: 100,
-      render: (stock) => {
-        const numStock = typeof stock === 'number' ? stock : parseInt(stock) || 0;
+      render: (stock, record) => {
+        const lowStockThreshold = record.lowStockThreshold || 5;
+        let color = 'green';
+        let icon = <CheckCircleOutlined />;
+        
+        if (stock === 0) {
+          color = 'red';
+          icon = <CloseCircleOutlined />;
+        } else if (stock <= lowStockThreshold) {
+          color = 'orange';
+          icon = <ExclamationCircleOutlined />;
+        }
+        
         return (
-          <Tag color={numStock > 0 ? 'green' : 'red'}>
-            {numStock > 0 ? `${numStock} adet` : 'Stok yok'}
-          </Tag>
+          <Badge count={stock} showZero color={color}>
+            <Tag color={color} icon={icon}>
+              {stock === 0 ? 'Tükendi' : stock <= lowStockThreshold ? 'Az' : 'Yeterli'}
+            </Tag>
+          </Badge>
         );
       },
       sorter: (a, b) => (a.stock || 0) - (b.stock || 0),
     },
     {
-            title: 'Durum',
-      dataIndex: 'isActive',
-      key: 'isActive',
-      width: 100,
-      render: (isActive) => {
+      title: 'Renkler',
+      dataIndex: 'colors',
+      key: 'colors',
+      width: 120,
+      render: (colors) => {
+        if (!colors || !Array.isArray(colors) || colors.length === 0) {
+          return <Text type="secondary">Yok</Text>;
+        }
         return (
-          <Tag color={isActive ? 'green' : 'red'}>
-            {isActive ? 'Aktif' : 'Pasif'}
-          </Tag>
+          <div>
+            {colors.slice(0, 3).map((color, index) => (
+              <Tag key={index} color={color} size="small">
+                {color}
+              </Tag>
+            ))}
+            {colors.length > 3 && (
+              <Tag size="small">+{colors.length - 3}</Tag>
+            )}
+          </div>
         );
       },
+    },
+    {
+      title: 'Bedenler',
+      dataIndex: 'sizes',
+      key: 'sizes',
+      width: 120,
+      render: (sizes) => {
+        if (!sizes || !Array.isArray(sizes) || sizes.length === 0) {
+          return <Text type="secondary">Yok</Text>;
+        }
+        return (
+          <div>
+            {sizes.slice(0, 3).map((size, index) => (
+              <Tag key={index} color="green" size="small">
+                {size}
+              </Tag>
+            ))}
+            {sizes.length > 3 && (
+              <Tag color="green" size="small">+{sizes.length - 3}</Tag>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      title: 'Durum',
+      dataIndex: 'isActive',
+      key: 'status',
+      width: 120,
+      render: (isActive, record) => (
+        <Space direction="vertical" size="small">
+          <Switch
+            checked={isActive}
+            onChange={() => handleToggleStatus(record._id)}
+            checkedChildren="Aktif"
+            unCheckedChildren="Pasif"
+            size="small"
+            loading={loading.products}
+          />
+          <Tag color={isActive ? 'green' : 'red'} size="small">
+            {record.status || (isActive ? 'active' : 'inactive')}
+          </Tag>
+        </Space>
+      ),
     },
     {
       title: 'İşlemler',
       key: 'actions',
       width: 150,
+      fixed: 'right',
       render: (_, record) => (
-        <Space>
-          <Link to={`/product/${record._id}`}>
+        <Space size="small">
+          <Tooltip title="Detayları Görüntüle">
             <Button 
               type="text" 
               icon={<EyeOutlined />} 
               size="small"
-              title="Görüntüle"
+              onClick={() => handleViewDetails(record)}
             />
-          </Link>
-          <Button 
-            type="text" 
-            icon={<EditOutlined />} 
-            size="small"
-            onClick={() => handleEdit(record)}
-            title="Düzenle"
-          />
+          </Tooltip>
+          <Tooltip title="Düzenle">
+            <Button 
+              type="text" 
+              icon={<EditOutlined />} 
+              size="small"
+              onClick={() => handleEdit(record)}
+            />
+          </Tooltip>
           <Popconfirm
-            title="Bu ürünü silmek istediğinizden emin misiniz?"
+            title="Ürünü silmek istediğinizden emin misiniz?"
             description="Bu işlem geri alınamaz."
             onConfirm={() => handleDelete(record._id)}
             okText="Evet"
             cancelText="Hayır"
             placement="left"
           >
-            <Button 
-              type="text" 
-              icon={<DeleteOutlined />} 
-              size="small" 
-              danger
-              title="Sil"
-            />
+            <Tooltip title="Sil">
+              <Button 
+                type="text" 
+                icon={<DeleteOutlined />} 
+                size="small" 
+                danger
+              />
+            </Tooltip>
           </Popconfirm>
         </Space>
       ),
     },
   ];
 
-  const handleSearch = (value) => {
+  // Event handlers
+  const handleSearch = useCallback((value) => {
     setSearchText(value);
-  };
+  }, []);
 
-  const handleAdd = () => {
+  const handleFilterChange = useCallback((key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setFilters({
+      category: undefined,
+      status: undefined,
+      inStock: undefined,
+      priceRange: undefined
+    });
+    setSearchText('');
+  }, []);
+
+  const handleAdd = useCallback(() => {
     setEditingProduct(null);
     setImageFiles([]);
     setImagePreviews([]);
     setRemovedImages([]);
     form.resetFields();
     setIsModalVisible(true);
-  };
+  }, [form]);
 
-  const handleEdit = (product) => {
+  const handleEdit = useCallback((product) => {
     setEditingProduct(product);
     setImageFiles([]);
     setRemovedImages([]);
     
-    // Mevcut resimleri al ve backend URL'si ile birleştir
+    // Prepare existing images
     const existingImages = [];
     if (product.images && Array.isArray(product.images)) {
       product.images.forEach(img => {
         const url = typeof img === 'string' ? img : img.url;
-        if (url) {
-          existingImages.push(getProductImageUrl(url));
-        }
+        if (url) existingImages.push(getProductImageUrl(url));
       });
     }
-    if (product.mainImage) {
+    if (product.mainImage && !existingImages.includes(getProductImageUrl(product.mainImage))) {
       existingImages.push(getProductImageUrl(product.mainImage));
     }
-    if (product.image && !existingImages.includes(getProductImageUrl(product.image))) {
-      existingImages.push(getProductImageUrl(product.image));
-    }
     
-    // Tekrarlanan resimleri kaldır
-    const uniqueImages = [...new Set(existingImages)].filter(Boolean);
-    setImagePreviews(uniqueImages);
+    setImagePreviews([...new Set(existingImages)].filter(Boolean));
+    
+    // Set form values
+    const categoryId = typeof product.category === 'object' ? product.category._id : product.category;
     
     form.setFieldsValue({
       name: product.name,
       description: product.description,
+      shortDescription: product.shortDescription,
       price: product.price,
+      originalPrice: product.originalPrice,
+      discount: product.discount,
       stock: product.stock,
-      category: typeof product.category === 'object' ? product.category.name : product.category,
+      category: categoryId,
       sku: product.sku,
       brand: product.brand,
       colors: product.colors,
@@ -288,167 +431,317 @@ const ProductsPage = () => {
       material: product.material,
       care: product.care,
       tags: product.tags,
-      status: product.isActive
+      status: product.isActive,
+      featured: product.featured,
+      weight: product.weight,
+      metaTitle: product.metaTitle,
+      metaDescription: product.metaDescription
     });
+    
     setIsModalVisible(true);
-  };
+  }, [form, getProductImageUrl]);
 
-  const handleDelete = async (id) => {
+  const handleViewDetails = useCallback((product) => {
+    setSelectedProduct(product);
+    setIsDetailDrawerVisible(true);
+  }, []);
+
+  const handleDelete = useCallback(async (id) => {
     try {
-      setLoading(true);
+      setLocalLoading(true);
       await deleteProduct(id);
-      message.success('Ürün başarıyla silindi');
-    } catch {
-      message.error('Ürün silinirken hata oluştu');
+    } catch (error) {
+      console.error('Delete product error:', error);
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
-  };
+  }, [deleteProduct]);
 
-  const handleModalOk = async () => {
+  const handleToggleStatus = useCallback(async (id) => {
     try {
-      setLoading(true);
+      await toggleProductStatus(id);
+    } catch (error) {
+      console.error('Toggle product status error:', error);
+    }
+  }, [toggleProductStatus]);
+
+  const handleModalOk = useCallback(async () => {
+    try {
+      setLocalLoading(true);
       const values = await form.validateFields();
+      
+      console.log('Form values:', values);
       
       const productData = {
         ...values,
-        status: values.status ? 'active' : 'inactive'
+        status: values.status ? 'active' : 'inactive',
+        isActive: values.status
       };
-
+      
       if (editingProduct) {
+        console.log('Updating product:', editingProduct._id);
         await updateProduct(editingProduct._id, productData, imageFiles, removedImages);
-        message.success('Ürün başarıyla güncellendi');
       } else {
+        console.log('Creating new product');
         await addProduct(productData, imageFiles);
-        message.success('Ürün başarıyla eklendi');
       }
       
-      setIsModalVisible(false);
-      form.resetFields();
-      setImageFiles([]);
-      setImagePreviews([]);
-    } catch (err) {
-      console.error('Form submission error:', err);
-      message.error('İşlem sırasında hata oluştu');
+      handleModalCancel();
+    } catch (error) {
+      console.error('Form submission error:', error);
+      if (error.errorFields) {
+        message.error('Lütfen form hatalarını düzeltin');
+      }
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
-  };
+  }, [form, editingProduct, imageFiles, removedImages, updateProduct, addProduct]);
 
-  const handleModalCancel = () => {
+  const handleModalCancel = useCallback(() => {
     setIsModalVisible(false);
+    setEditingProduct(null);
     form.resetFields();
     setImageFiles([]);
     setImagePreviews([]);
     setRemovedImages([]);
-  };
+  }, [form]);
+
+  // Image upload handlers
+  const handleImageChange = useCallback((info) => {
+    const { fileList } = info;
+    setImageFiles(fileList.map(file => file.originFileObj || file).filter(Boolean));
+    
+    // Generate previews for new files
+    const newPreviews = [];
+    fileList.forEach(file => {
+      if (file.originFileObj) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          newPreviews.push(e.target.result);
+          if (newPreviews.length === fileList.length) {
+            setImagePreviews(prev => [...prev, ...newPreviews]);
+          }
+        };
+        reader.readAsDataURL(file.originFileObj);
+      }
+    });
+  }, []);
+
+  const handleImageRemove = useCallback((file) => {
+    const fileIndex = imageFiles.findIndex(f => f.uid === file.uid);
+    if (fileIndex > -1) {
+      setImageFiles(prev => prev.filter((_, index) => index !== fileIndex));
+      setImagePreviews(prev => prev.filter((_, index) => index !== fileIndex));
+    }
+  }, [imageFiles]);
+
+  // Statistics cards
+  const statisticsCards = useMemo(() => [
+    {
+      title: "Toplam Ürün",
+      value: stats.totalProducts,
+      icon: <ShoppingOutlined />,
+      color: "#1890ff"
+    },
+    {
+      title: "Aktif Ürün",
+      value: stats.activeProducts,
+      icon: <CheckCircleOutlined />,
+      color: "#52c41a"
+    },
+    {
+      title: "Stok Biten",
+      value: stats.outOfStockProducts,
+      icon: <ExclamationCircleOutlined />,
+      color: "#ff4d4f"
+    },
+    {
+      title: "Az Stoklu",
+      value: stats.lowStockProducts,
+      icon: <InfoCircleOutlined />,
+      color: "#faad14"
+    }
+  ], [stats]);
+
+  // Effect to handle errors
+  useEffect(() => {
+    if (errors.products) {
+      message.error(errors.products);
+    }
+  }, [errors.products]);
+
+  // Loading and error states
+  if (loading.products && products.length === 0) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <Spin size="large" tip="Ürünler yükleniyor..." />
+      </div>
+    );
+  }
 
   return (
     <div>
       {/* Page Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, margin: 0 }}>Ürünler</h1>
-        <p style={{ color: '#666', margin: '8px 0 0 0' }}>
-          Mağazanızdaki tüm ürünleri yönetin
-        </p>
+        <Title level={2} style={{ margin: 0 }}>Ürün Yönetimi</Title>
+        <Text type="secondary">
+          Mağazanızdaki tüm ürünleri görüntüleyin, düzenleyin ve yönetin
+        </Text>
       </div>
+
+      {/* Error Alert */}
+      {errors.products && (
+        <Alert
+          message="Hata"
+          description={errors.products}
+          type="error"
+          showIcon
+          closable
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
       {/* Statistics */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Toplam Ürün"
-              value={products.length}
-              prefix={<ShoppingOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Aktif Ürün"
-              value={products.filter(p => p.isActive).length}
-              prefix={<TagsOutlined />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Stokta Olan"
-              value={products.filter(p => (p.stock || 0) > 0).length}
-              prefix={<ShoppingOutlined />}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Toplam Değer"
-              value={products.reduce((sum, p) => sum + ((p.price || 0) * (p.stock || 0)), 0)}
-              prefix={<DollarOutlined />}
-              suffix="₺"
-              valueStyle={{ color: '#fa8c16' }}
-            />
-          </Card>
-        </Col>
+        {statisticsCards.map((stat, index) => (
+          <Col xs={24} sm={12} lg={6} key={index}>
+            <Card>
+              <Statistic
+                title={stat.title}
+                value={stat.value}
+                prefix={React.cloneElement(stat.icon, { style: { color: stat.color } })}
+                valueStyle={{ color: stat.color }}
+              />
+            </Card>
+          </Col>
+        ))}
       </Row>
 
-      {/* Search and Actions */}
+      {/* Filters and Actions */}
       <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-          <Search
-            placeholder="Ürün ara..."
-            allowClear
-            enterButton={<SearchOutlined />}
-            size="large"
-            style={{ width: 300, minWidth: 250 }}
-            onSearch={handleSearch}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            size="large"
-            onClick={handleAdd}
-          >
-            Yeni Ürün Ekle
-          </Button>
-        </div>
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} sm={12} md={8}>
+            <Search
+              placeholder="Ürün adı, SKU, marka ile ara..."
+              allowClear
+              enterButton={<SearchOutlined />}
+              size="large"
+              onSearch={handleSearch}
+              onChange={(e) => !e.target.value && setSearchText('')}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              placeholder="Kategori"
+              allowClear
+              size="large"
+              style={{ width: '100%' }}
+              value={filters.category}
+              onChange={(value) => handleFilterChange('category', value)}
+            >
+              <Option value="all">Tüm Kategoriler</Option>
+              {categories.map(cat => (
+                <Option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={3}>
+            <Select
+              placeholder="Durum"
+              allowClear
+              size="large"
+              style={{ width: '100%' }}
+              value={filters.status}
+              onChange={(value) => handleFilterChange('status', value)}
+            >
+              <Option value="all">Tümü</Option>
+              <Option value="active">Aktif</Option>
+              <Option value="inactive">Pasif</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={3}>
+            <Select
+              placeholder="Stok"
+              allowClear
+              size="large"
+              style={{ width: '100%' }}
+              value={filters.inStock}
+              onChange={(value) => handleFilterChange('inStock', value)}
+            >
+              <Option value="all">Tümü</Option>
+              <Option value="in_stock">Stokta Var</Option>
+              <Option value="low_stock">Az Stoklu</Option>
+              <Option value="out_of_stock">Stok Yok</Option>
+            </Select>
+          </Col>
+          <Col xs={24} md={6}>
+            <Flex gap="small" wrap="wrap">
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                size="large"
+                onClick={handleAdd}
+                loading={localLoading}
+              >
+                Yeni Ürün
+              </Button>
+              <Button
+                icon={<ReloadOutlined />}
+                size="large"
+                onClick={refreshData}
+                loading={loading.products}
+              >
+                Yenile
+              </Button>
+              <Button
+                icon={<FilterOutlined />}
+                size="large"
+                onClick={handleClearFilters}
+              >
+                Filtreleri Temizle
+              </Button>
+            </Flex>
+          </Col>
+        </Row>
       </Card>
 
       {/* Products Table */}
       <Card>
-        {tableProducts.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <div style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
-              Henüz ürün eklenmemiş
-            </div>
-            <div style={{ fontSize: 14, color: '#999' }}>
-              İlk ürününüzü eklemek için "Yeni Ürün Ekle" butonunu kullanın
-            </div>
-          </div>
+        {filteredProducts.length === 0 ? (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              searchText || Object.values(filters).some(f => f && f !== 'all')
+                ? "Filtrelere uygun ürün bulunamadı"
+                : "Henüz ürün eklenmemiş"
+            }
+          >
+            {!searchText && !Object.values(filters).some(f => f && f !== 'all') && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                İlk Ürünü Ekle
+              </Button>
+            )}
+          </Empty>
         ) : (
           <Table
             columns={columns}
-            dataSource={tableProducts}
+            dataSource={filteredProducts}
             rowKey="_id"
-            loading={loading}
-            scroll={{ x: 1000 }}
+            loading={loading.products || localLoading}
+            scroll={{ x: 1400 }}
             pagination={{
-              total: tableProducts.length,
+              current: 1,
               pageSize: 10,
+              total: filteredProducts.length,
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total, range) => 
+              showTotal: (total, range) =>
                 `${range[0]}-${range[1]} / ${total} ürün`,
-              position: ['bottomCenter'],
-              size: 'default'
+              pageSizeOptions: ['10', '20', '50', '100']
             }}
+            size="middle"
           />
         )}
       </Card>
@@ -459,21 +752,27 @@ const ProductsPage = () => {
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        width={800}
-        confirmLoading={loading}
+        width={900}
+        confirmLoading={localLoading}
         okText={editingProduct ? 'Güncelle' : 'Ekle'}
         cancelText="İptal"
+        maskClosable={false}
       >
         <Form
           form={form}
           layout="vertical"
+          scrollToFirstError
         >
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="name"
                 label="Ürün Adı"
-                rules={[{ required: true, message: 'Lütfen ürün adını girin!' }]}
+                rules={[
+                  { required: true, message: 'Ürün adı zorunludur!' },
+                  { min: 2, message: 'Ürün adı en az 2 karakter olmalıdır!' },
+                  { max: 200, message: 'Ürün adı en fazla 200 karakter olabilir!' }
+                ]}
               >
                 <Input placeholder="Ürün adını girin" />
               </Form.Item>
@@ -482,11 +781,11 @@ const ProductsPage = () => {
               <Form.Item
                 name="category"
                 label="Kategori"
-                rules={[{ required: true, message: 'Lütfen kategori seçin!' }]}
+                rules={[{ required: true, message: 'Kategori seçimi zorunludur!' }]}
               >
                 <Select placeholder="Kategori seçin">
                   {categories.map(cat => (
-                    <Option key={cat._id || cat.id} value={cat.name}>
+                    <Option key={cat._id} value={cat._id}>
                       {cat.name}
                     </Option>
                   ))}
@@ -498,37 +797,70 @@ const ProductsPage = () => {
           <Form.Item
             name="description"
             label="Açıklama"
-            rules={[{ required: true, message: 'Lütfen açıklama girin!' }]}
+            rules={[
+              { required: true, message: 'Açıklama zorunludur!' },
+              { min: 10, message: 'Açıklama en az 10 karakter olmalıdır!' }
+            ]}
           >
-            <TextArea rows={3} placeholder="Ürün açıklamasını girin" />
+            <TextArea rows={4} placeholder="Ürün açıklamasını girin" />
+          </Form.Item>
+
+          <Form.Item
+            name="shortDescription"
+            label="Kısa Açıklama"
+            rules={[{ max: 300, message: 'Kısa açıklama en fazla 300 karakter olabilir!' }]}
+          >
+            <TextArea rows={2} placeholder="Kısa açıklama (opsiyonel)" />
           </Form.Item>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="price"
                 label="Fiyat (₺)"
-                rules={[{ required: true, message: 'Lütfen fiyat girin!' }]}
+                rules={[
+                  { required: true, message: 'Fiyat zorunludur!' },
+                  { type: 'number', min: 0, message: 'Fiyat 0 veya daha büyük olmalıdır!' }
+                ]}
               >
                 <InputNumber
                   style={{ width: '100%' }}
-                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  placeholder="0.00"
+                  precision={2}
                   min={0}
-                  placeholder="0"
+                  max={999999}
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
-                name="stock"
-                label="Stok"
-                rules={[{ required: true, message: 'Lütfen stok miktarını girin!' }]}
+                name="originalPrice"
+                label="Orijinal Fiyat (₺)"
+                rules={[{ type: 'number', min: 0, message: 'Orijinal fiyat 0 veya daha büyük olmalıdır!' }]}
               >
                 <InputNumber
                   style={{ width: '100%' }}
+                  placeholder="0.00"
+                  precision={2}
                   min={0}
+                  max={999999}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="stock"
+                label="Stok Miktarı"
+                rules={[
+                  { required: true, message: 'Stok miktarı zorunludur!' },
+                  { type: 'number', min: 0, message: 'Stok miktarı 0 veya daha büyük olmalıdır!' }
+                ]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
                   placeholder="0"
+                  min={0}
+                  max={999999}
                 />
               </Form.Item>
             </Col>
@@ -539,16 +871,18 @@ const ProductsPage = () => {
               <Form.Item
                 name="sku"
                 label="SKU"
+                rules={[{ pattern: /^[A-Z0-9-_]*$/, message: 'SKU sadece büyük harf, rakam, tire ve alt çizgi içerebilir!' }]}
               >
-                <Input placeholder="Örn: BE45VGRT" />
+                <Input placeholder="Örn: PROD-001" style={{ textTransform: 'uppercase' }} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="brand"
                 label="Marka"
+                rules={[{ max: 100, message: 'Marka adı en fazla 100 karakter olabilir!' }]}
               >
-                <Input placeholder="Marka adını girin" />
+                <Input placeholder="Marka adı" />
               </Form.Item>
             </Col>
           </Row>
@@ -562,7 +896,7 @@ const ProductsPage = () => {
                 <Select
                   mode="multiple"
                   placeholder="Renk seçin"
-                  style={{ width: '100%' }}
+                  allowClear
                 >
                   <Option value="red">Kırmızı</Option>
                   <Option value="blue">Mavi</Option>
@@ -586,7 +920,7 @@ const ProductsPage = () => {
                 <Select
                   mode="multiple"
                   placeholder="Beden seçin"
-                  style={{ width: '100%' }}
+                  allowClear
                 >
                   <Option value="XXS">XXS</Option>
                   <Option value="XS">XS</Option>
@@ -595,6 +929,7 @@ const ProductsPage = () => {
                   <Option value="L">L</Option>
                   <Option value="XL">XL</Option>
                   <Option value="XXL">XXL</Option>
+                  <Option value="XXXL">XXXL</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -605,19 +940,35 @@ const ProductsPage = () => {
               <Form.Item
                 name="material"
                 label="Malzeme"
+                rules={[{ max: 500, message: 'Malzeme açıklaması en fazla 500 karakter olabilir!' }]}
               >
                 <Input placeholder="Örn: %100 Pamuk" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
-                name="care"
-                label="Bakım Talimatları"
+                name="weight"
+                label="Ağırlık (kg)"
+                rules={[{ type: 'number', min: 0, message: 'Ağırlık 0 veya daha büyük olmalıdır!' }]}
               >
-                <Input placeholder="Örn: 30°C'de yıkayın, ütülemeyin" />
+                <InputNumber
+                  style={{ width: '100%' }}
+                  placeholder="0.0"
+                  precision={3}
+                  min={0}
+                  max={9999}
+                />
               </Form.Item>
             </Col>
           </Row>
+
+          <Form.Item
+            name="care"
+            label="Bakım Talimatları"
+            rules={[{ max: 1000, message: 'Bakım talimatları en fazla 1000 karakter olabilir!' }]}
+          >
+            <TextArea rows={3} placeholder="Bakım ve yıkama talimatları" />
+          </Form.Item>
 
           <Form.Item
             name="tags"
@@ -626,102 +977,197 @@ const ProductsPage = () => {
             <Select
               mode="tags"
               placeholder="Etiket ekleyin"
-              style={{ width: '100%' }}
+              allowClear
             />
           </Form.Item>
 
-          <Divider>Ürün Resimleri</Divider>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="metaTitle"
+                label="SEO Başlık"
+                rules={[{ max: 60, message: 'SEO başlık en fazla 60 karakter olabilir!' }]}
+              >
+                <Input placeholder="SEO için sayfa başlığı" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="metaDescription"
+                label="SEO Açıklama"
+                rules={[{ max: 160, message: 'SEO açıklama en fazla 160 karakter olabilir!' }]}
+              >
+                <Input placeholder="SEO için sayfa açıklaması" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="status"
+                label="Durum"
+                valuePropName="checked"
+              >
+                <Switch checkedChildren="Aktif" unCheckedChildren="Pasif" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="featured"
+                label="Öne Çıkan"
+                valuePropName="checked"
+              >
+                <Switch checkedChildren="Evet" unCheckedChildren="Hayır" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider>Ürün Görselleri</Divider>
           
-          <Form.Item
-            name="images"
-            label="Ürün Resimleri"
-          >
-            <div>
-              {/* Image Previews */}
-              {imagePreviews.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} style={{ position: 'relative' }}>
-                        <Image
-                          width={120}
-                          height={120}
-                          src={preview}
-                          style={{ borderRadius: 8, objectFit: 'cover' }}
-                          fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-                        />
-                        <Button 
-                          type="text" 
-                          danger 
-                          icon={<DeleteOutlined />}
-                          onClick={() => handleRemoveImage(index)}
-                          size="small"
-                          style={{ 
-                            position: 'absolute', 
-                            top: 4, 
-                            right: 4,
-                            background: 'rgba(255,255,255,0.9)',
-                            border: 'none'
-                          }}
-                        />
-                        {index === 0 && (
-                          <div style={{ 
-                            position: 'absolute', 
-                            bottom: 4, 
-                            left: 4,
-                            background: '#1890ff',
-                            color: 'white',
-                            padding: '2px 6px',
-                            borderRadius: 4,
-                            fontSize: 10
-                          }}>
-                            Ana Resim
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+          <Form.Item label="Ürün Resimleri">
+            <Upload
+              listType="picture-card"
+              fileList={imageFiles}
+              onChange={handleImageChange}
+              onRemove={handleImageRemove}
+              beforeUpload={() => false}
+              multiple
+              accept="image/*"
+              maxCount={10}
+            >
+              {imageFiles.length < 10 && (
+                <div>
+                  <PlusOutlined />
+                  <div style={{ marginTop: 8 }}>Resim Ekle</div>
                 </div>
               )}
-              
-              {/* Upload Button */}
-              <Upload
-                beforeUpload={handleImageUpload}
-                showUploadList={false}
-                accept="image/*"
-                multiple
-              >
-                <Button 
-                  icon={<UploadOutlined />} 
-                  style={{ width: '100%', height: 100 }}
-                  type="dashed"
-                >
-                  {imagePreviews.length > 0 ? 'Daha Fazla Resim Ekle' : 'Resim Yükle'}
-                </Button>
-              </Upload>
-              
-              <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-                <p>• Maksimum dosya boyutu: 2MB</p>
-                <p>• Desteklenen formatlar: JPG, PNG, GIF</p>
-                <p>• İlk yüklenen resim ana resim olarak kullanılır</p>
-                <p>• En az 1, en fazla 6 resim yükleyebilirsiniz</p>
-              </div>
+            </Upload>
+            <div style={{ marginTop: 8, color: '#666', fontSize: 12 }}>
+              En fazla 10 resim yükleyebilirsiniz. İlk resim ana resim olarak kullanılacaktır.
             </div>
           </Form.Item>
 
-          <Form.Item
-            name="status"
-            label="Durum"
-            valuePropName="checked"
-            initialValue={true}
-          >
-            <Switch 
-              checkedChildren="Aktif" 
-              unCheckedChildren="Pasif"
-            />
-          </Form.Item>
+          {imagePreviews.length > 0 && (
+            <Form.Item label="Mevcut Resimler">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {imagePreviews.map((src, index) => (
+                  <div key={index} style={{ position: 'relative' }}>
+                    <Image
+                      width={100}
+                      height={100}
+                      src={src}
+                      style={{ objectFit: 'cover', borderRadius: 8 }}
+                    />
+                    <Button
+                      type="text"
+                      danger
+                      size="small"
+                      icon={<DeleteOutlined />}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        background: 'rgba(255, 255, 255, 0.8)'
+                      }}
+                      onClick={() => {
+                        setRemovedImages(prev => [...prev, src]);
+                        setImagePreviews(prev => prev.filter((_, i) => i !== index));
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </Form.Item>
+          )}
         </Form>
       </Modal>
+
+      {/* Product Detail Drawer */}
+      <Drawer
+        title="Ürün Detayları"
+        placement="right"
+        width={600}
+        open={isDetailDrawerVisible}
+        onClose={() => setIsDetailDrawerVisible(false)}
+      >
+        {selectedProduct && (
+          <div>
+            <Descriptions
+              bordered
+              column={1}
+              size="small"
+            >
+              <Descriptions.Item label="Ürün Adı">
+                {selectedProduct.name}
+              </Descriptions.Item>
+              <Descriptions.Item label="SKU">
+                {selectedProduct.sku || 'Belirtilmemiş'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Kategori">
+                {typeof selectedProduct.category === 'object' 
+                  ? selectedProduct.category.name 
+                  : 'Bilinmiyor'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Marka">
+                {selectedProduct.brand || 'Belirtilmemiş'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Fiyat">
+                ₺{(selectedProduct.price || 0).toLocaleString('tr-TR')}
+              </Descriptions.Item>
+              <Descriptions.Item label="Stok">
+                {selectedProduct.stock || 0} adet
+              </Descriptions.Item>
+              <Descriptions.Item label="Durum">
+                <Tag color={selectedProduct.isActive ? 'green' : 'red'}>
+                  {selectedProduct.isActive ? 'Aktif' : 'Pasif'}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Açıklama">
+                {selectedProduct.description}
+              </Descriptions.Item>
+              {selectedProduct.colors && selectedProduct.colors.length > 0 && (
+                <Descriptions.Item label="Renkler">
+                  {selectedProduct.colors.map((color, index) => (
+                    <Tag key={index} color={color}>
+                      {color}
+                    </Tag>
+                  ))}
+                </Descriptions.Item>
+              )}
+              {selectedProduct.sizes && selectedProduct.sizes.length > 0 && (
+                <Descriptions.Item label="Bedenler">
+                  {selectedProduct.sizes.map((size, index) => (
+                    <Tag key={index}>
+                      {size}
+                    </Tag>
+                  ))}
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+            
+            {selectedProduct.images && selectedProduct.images.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <Title level={5}>Ürün Görselleri</Title>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {selectedProduct.images.map((img, index) => {
+                    const imageUrl = typeof img === 'string' ? img : img.url;
+                    return (
+                      <Image
+                        key={index}
+                        width={100}
+                        height={100}
+                        src={getProductImageUrl(imageUrl)}
+                        style={{ objectFit: 'cover', borderRadius: 8 }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Drawer>
     </div>
   );
 };
