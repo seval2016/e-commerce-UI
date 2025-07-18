@@ -23,7 +23,7 @@ const Sliders = () => {
         )}
 
         {/* Slider Buttons */}
-        <div className="absolute top-1/2 left-4 right-4 flex justify-between items-center z-0">
+        <div className="absolute top-1/2 left-4 right-4 flex justify-between items-center z-20">
           <button 
             onClick={prevSlide}
             className="w-12 h-12 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110"
@@ -39,7 +39,7 @@ const Sliders = () => {
         </div>
 
         {/* Slider Dots */}
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-0">
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
           {sliders.map((_, index) => (
             <button
               key={index}
