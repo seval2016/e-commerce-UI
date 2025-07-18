@@ -114,7 +114,6 @@ export const DataProvider = ({ children }) => {
         const result = await asyncOperation(...args);
         return result;
       } catch (error) {
-        console.error(`${key} operation failed:`, error);
         setErrors(prev => ({ ...prev, [key]: error.message }));
         throw error;
       } finally {
@@ -150,12 +149,10 @@ export const DataProvider = ({ children }) => {
   // Category operations
   const loadCategories = useCallback(
     withLoading('categories', async () => {
-      console.log('📂 Loading categories...');
       const response = await api.getCategories();
       
       if (response.success) {
         setCategories(response.categories || []);
-        console.log('✅ Categories loaded:', response.categories?.length || 0);
         return { success: true };
       } else {
         throw new Error(response.message || 'Kategoriler yüklenemedi');
@@ -166,7 +163,7 @@ export const DataProvider = ({ children }) => {
 
   const addCategory = useCallback(
     withLoading('categories', async (categoryData, imageFile = null) => {
-      console.log('➕ Adding category:', categoryData.name);
+
       const response = await api.createCategory(categoryData, imageFile);
       
       return handleApiResponse(response, 'Kategori başarıyla eklendi', (res) => {
@@ -182,7 +179,7 @@ export const DataProvider = ({ children }) => {
 
   const updateCategory = useCallback(
     withLoading('categories', async (id, updates, imageFile = null) => {
-      console.log('✏️ Updating category:', id);
+
       const response = await api.updateCategory(id, updates, imageFile);
       
       return handleApiResponse(response, 'Kategori başarıyla güncellendi', (res) => {
@@ -200,7 +197,7 @@ export const DataProvider = ({ children }) => {
 
   const deleteCategory = useCallback(
     withLoading('categories', async (id) => {
-      console.log('🗑️ Deleting category:', id);
+
       const response = await api.deleteCategory(id);
       
       return handleApiResponse(response, 'Kategori başarıyla silindi', () => {
@@ -213,12 +210,12 @@ export const DataProvider = ({ children }) => {
   // Product operations
   const loadProducts = useCallback(
     withLoading('products', async (params = {}) => {
-      console.log('📦 Loading products...', params);
+
       const response = await api.getProducts(params);
       
       if (response.success) {
         setProducts(response.products || []);
-        console.log('✅ Products loaded:', response.products?.length || 0);
+
         return { success: true, pagination: response.pagination };
       } else {
         throw new Error(response.message || 'Ürünler yüklenemedi');
@@ -229,11 +226,6 @@ export const DataProvider = ({ children }) => {
 
   const addProduct = useCallback(
     withLoading('products', async (productData, imageFiles = []) => {
-      console.log('➕ Adding product:', productData.name, {
-        category: productData.category,
-        imageCount: imageFiles.length
-      });
-      
       const response = await api.createProduct(productData, imageFiles);
       
       return handleApiResponse(response, 'Ürün başarıyla eklendi', (res) => {
@@ -245,11 +237,6 @@ export const DataProvider = ({ children }) => {
 
   const updateProduct = useCallback(
     withLoading('products', async (id, updates, imageFiles = [], removedImages = []) => {
-      console.log('✏️ Updating product:', id, {
-        newImages: imageFiles.length,
-        removedImages: removedImages.length
-      });
-      
       const response = await api.updateProduct(id, updates, imageFiles, removedImages);
       
       return handleApiResponse(response, 'Ürün başarıyla güncellendi', (res) => {
@@ -263,7 +250,6 @@ export const DataProvider = ({ children }) => {
 
   const deleteProduct = useCallback(
     withLoading('products', async (id) => {
-      console.log('🗑️ Deleting product:', id);
       const response = await api.deleteProduct(id);
       
       return handleApiResponse(response, 'Ürün başarıyla silindi', () => {
@@ -275,7 +261,7 @@ export const DataProvider = ({ children }) => {
 
   const toggleProductStatus = useCallback(
     withLoading('products', async (id) => {
-      console.log('🔄 Toggling product status:', id);
+
       const response = await api.toggleProductStatus(id);
       
       return handleApiResponse(response, null, (res) => {
@@ -291,15 +277,45 @@ export const DataProvider = ({ children }) => {
   // Blog operations
   const loadBlogs = useCallback(
     withLoading('blogs', async () => {
-      console.log('📝 Loading blogs...');
-      const response = await api.getBlogs();
-      
-      if (response.success) {
-        setBlogs(response.blogs || []);
-        console.log('✅ Blogs loaded:', response.blogs?.length || 0);
-        return { success: true };
-      } else {
-        throw new Error(response.message || 'Bloglar yüklenemedi');
+
+      try {
+        // İlk olarak admin endpoint'ini dene
+        let response = await api.getAdminBlogs();
+
+        
+        // Eğer 401 (Unauthorized) alırsak, public endpoint'i dene  
+        if (!response.success && response.status === 401) {
+
+          response = await api.getBlogs();
+
+        }
+        
+        if (response.success) {
+          setBlogs(response.blogs || []);
+
+
+          return { success: true };
+        } else {
+
+          throw new Error(response.message || 'Bloglar yüklenemedi');
+        }
+      } catch (error) {
+
+        // Fallback: public endpoint'i dene
+        try {
+
+          const fallbackResponse = await api.getBlogs();
+
+          
+          if (fallbackResponse.success) {
+            setBlogs(fallbackResponse.blogs || []);
+
+            return { success: true };
+          }
+        } catch{
+          // Fallback error - ignore
+        }
+        throw error;
       }
     }),
     [withLoading]
@@ -307,7 +323,7 @@ export const DataProvider = ({ children }) => {
 
   const addBlog = useCallback(
     withLoading('blogs', async (blogData, imageFile = null) => {
-      console.log('➕ Adding blog:', blogData.title);
+
       const response = await api.createBlog(blogData, imageFile);
       
       return handleApiResponse(response, 'Blog başarıyla eklendi', (res) => {
@@ -319,7 +335,7 @@ export const DataProvider = ({ children }) => {
 
   const updateBlog = useCallback(
     withLoading('blogs', async (id, updates, imageFile = null) => {
-      console.log('✏️ Updating blog:', id);
+
       const response = await api.updateBlog(id, updates, imageFile);
       
       return handleApiResponse(response, 'Blog başarıyla güncellendi', (res) => {
@@ -333,7 +349,7 @@ export const DataProvider = ({ children }) => {
 
   const deleteBlog = useCallback(
     withLoading('blogs', async (id) => {
-      console.log('🗑️ Deleting blog:', id);
+
       const response = await api.deleteBlog(id);
       
       return handleApiResponse(response, 'Blog başarıyla silindi', () => {
@@ -346,12 +362,12 @@ export const DataProvider = ({ children }) => {
   // Order operations
   const loadOrders = useCallback(
     withLoading('orders', async () => {
-      console.log('📋 Loading orders...');
+
       const response = await api.getOrders();
       
       if (response.success) {
         setOrders(response.orders || []);
-        console.log('✅ Orders loaded:', response.orders?.length || 0);
+
         return { success: true };
       } else {
         throw new Error(response.message || 'Siparişler yüklenemedi');
@@ -362,10 +378,10 @@ export const DataProvider = ({ children }) => {
 
   const updateOrderStatus = useCallback(
     withLoading('orders', async (id, status) => {
-      console.log('📋 Updating order status:', id, status);
+
       const response = await api.updateOrderStatus(id, status);
       
-      return handleApiResponse(response, 'Sipariş durumu güncellendi', (res) => {
+      return handleApiResponse(response, 'Sipariş durumu güncellendi', () => {
         setOrders(prev => prev.map(order => 
           order._id === id ? { ...order, status } : order
         ));
@@ -377,12 +393,12 @@ export const DataProvider = ({ children }) => {
   // Customer operations
   const loadCustomers = useCallback(
     withLoading('customers', async () => {
-      console.log('👥 Loading customers...');
+
       const response = await api.getUsers();
       
       if (response.success) {
         setCustomers(response.users || []);
-        console.log('✅ Customers loaded:', response.users?.length || 0);
+
         return { success: true };
       } else {
         throw new Error(response.message || 'Müşteriler yüklenemedi');
@@ -393,7 +409,7 @@ export const DataProvider = ({ children }) => {
 
   // Refresh all data
   const refreshData = useCallback(async () => {
-    console.log('🔄 Refreshing all data...');
+
     
     try {
       await Promise.allSettled([
@@ -403,9 +419,8 @@ export const DataProvider = ({ children }) => {
         loadOrders(),
         loadCustomers()
       ]);
-      console.log('✅ Data refresh completed');
-    } catch (error) {
-      console.error('❌ Data refresh failed:', error);
+
+    } catch{
       message.error('Veriler yeniden yüklenirken hata oluştu');
     }
   }, [loadCategories, loadProducts, loadBlogs, loadOrders, loadCustomers]);
@@ -466,7 +481,7 @@ export const DataProvider = ({ children }) => {
   // Load initial data
   useEffect(() => {
     const initializeData = async () => {
-      console.log('🚀 Initializing DataContext...');
+
       
       try {
         // Load categories first as they're needed for products
@@ -480,9 +495,8 @@ export const DataProvider = ({ children }) => {
           loadCustomers()
         ]);
         
-        console.log('✅ DataContext initialized successfully');
-      } catch (error) {
-        console.error('❌ DataContext initialization failed:', error);
+
+      } catch{
         message.error('Uygulama verisi yüklenirken hata oluştu');
       }
     };

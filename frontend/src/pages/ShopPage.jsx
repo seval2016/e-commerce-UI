@@ -11,7 +11,7 @@ const ShopPage = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
     // Burada API çağrısı yapılabilir
-    console.log(`Sayfa ${page} yüklendi`);
+
   };
 
   return (

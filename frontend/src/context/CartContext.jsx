@@ -24,7 +24,7 @@ export const CartProvider = ({ children }) => {
         for (let key in localStorage) {
           if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
             if (!keysToKeep.includes(key)) {
-              console.log(`Gereksiz anahtar temizleniyor: ${key}`);
+
               localStorage.removeItem(key);
             } else {
               totalSize += localStorage[key].length;
@@ -32,10 +32,10 @@ export const CartProvider = ({ children }) => {
           }
         }
         
-        console.log(`localStorage kullanımı: ${totalSize} karakter (sadece cart anahtarı)`);
+
         return totalSize;
       } catch (error) {
-        console.error('Storage kullanımı kontrol edilemedi:', error);
+
         return 0;
       }
     }
@@ -48,7 +48,7 @@ export const CartProvider = ({ children }) => {
       const keysToKeep = ['cart', 'adminUser'];
       for (let key in localStorage) {
         if (Object.prototype.hasOwnProperty.call(localStorage, key) && !keysToKeep.includes(key)) {
-          console.log(`Başlangıçta gereksiz anahtar temizleniyor: ${key}`);
+
           localStorage.removeItem(key);
         }
       }
@@ -84,7 +84,7 @@ export const CartProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.error('Error loading cart from storage:', error);
+
       setCartItems([]);
     }
   }, []);
@@ -109,18 +109,18 @@ export const CartProvider = ({ children }) => {
       
       const compressedData = JSON.stringify(cartData);
       if (import.meta.env.DEV) {
-        console.log(`Cart veri boyutu: ${compressedData.length} karakter`);
+
       }
       
       // localStorage'a kaydet
       localStorage.setItem('cart', compressedData);
     } catch (error) {
-      console.error('Cart verisi localStorage\'a kaydedilemedi:', error);
+
       
       // Eğer quota exceeded hatası ise, localStorage'ı tamamen temizle ve tekrar dene
       if (error.name === 'QuotaExceededError') {
         try {
-          console.log('localStorage quota aşıldı, tüm veriler temizleniyor...');
+
           
           // Tüm localStorage'ı temizle
           localStorage.clear();
@@ -138,20 +138,20 @@ export const CartProvider = ({ children }) => {
           }));
           
           localStorage.setItem('cart', JSON.stringify(cartData));
-          console.log('Cart verisi başarıyla kaydedildi (localStorage temizlendi)');
+
           
         } catch (retryError) {
-          console.error('localStorage temizlendikten sonra da kaydedilemedi:', retryError);
+
           
           // Son çare: sessionStorage kullan
           try {
-            console.log('SessionStorage\'a geçiliyor...');
+
             sessionStorage.setItem('cart', JSON.stringify(cartItems));
-            console.log('Cart verisi sessionStorage\'a kaydedildi');
+
           } catch (sessionError) {
-            console.error('SessionStorage da başarısız:', sessionError);
+
             // En son çare: memory'de tut (sayfa yenilenince kaybolur)
-            console.warn('Cart verisi sadece memory\'de tutulacak (sayfa yenilenince kaybolur)');
+
           }
         }
       }

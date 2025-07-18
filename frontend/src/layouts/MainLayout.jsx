@@ -10,9 +10,15 @@ const MainLayout = ({ children }) => {
   const [isDialogShow, setIsDialogShow] = useState(false);
 
   useEffect(() => {
-    const dialogStatus = localStorage.getItem("dialog")
-      ? JSON.parse(localStorage.getItem("dialog"))
-      : localStorage.setItem("dialog", JSON.stringify(true));
+    const savedDialogStatus = localStorage.getItem("dialog");
+    let dialogStatus;
+    
+    if (savedDialogStatus) {
+      dialogStatus = JSON.parse(savedDialogStatus);
+    } else {
+      dialogStatus = true; // Default değer
+      localStorage.setItem("dialog", JSON.stringify(dialogStatus));
+    }
 
     setTimeout(() => {
       setIsDialogShow(dialogStatus);

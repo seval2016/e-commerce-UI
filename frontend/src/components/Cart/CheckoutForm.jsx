@@ -41,7 +41,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
     
     // Ödeme yöntemi değiştiğinde konsola log
     if (name === 'paymentMethod') {
-      console.log('Ödeme yöntemi değişti:', value);
+
     }
   };
 
@@ -78,40 +78,40 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
 
   // Kredi kartı validasyonu (geçici olarak devre dışı)
   const _validateCardData = () => {
-    console.log('Kredi kartı validasyonu başladı');
-    console.log('Ödeme yöntemi:', formData.paymentMethod);
-    console.log('Kart verileri:', cardData);
+
+
+
     
     if (formData.paymentMethod === 'creditCard') {
       // Kart numarası kontrolü
       const cardNumber = cardData.cardNumber.replace(/\s/g, '');
-      console.log('Kart numarası (temizlenmiş):', cardNumber);
+
       if (!cardNumber.match(/^\d{16}$/)) {
-        console.log('Kart numarası geçersiz');
+
         message.error("Geçerli bir kart numarası girin!");
         return false;
       }
       
       // Kart sahibi kontrolü
-      console.log('Kart sahibi:', cardData.cardHolder);
+
       if (!cardData.cardHolder.trim()) {
-        console.log('Kart sahibi boş');
+
         message.error("Kart sahibi adını girin!");
         return false;
       }
       
       // Son kullanma tarihi kontrolü
-      console.log('Son kullanma ay/yıl:', cardData.expiryMonth, cardData.expiryYear);
+
       if (!cardData.expiryMonth || !cardData.expiryYear) {
-        console.log('Son kullanma tarihi eksik');
+
         message.error("Son kullanma tarihini girin!");
         return false;
       }
       
       // CVV kontrolü
-      console.log('CVV:', cardData.cvv);
+
       if (!cardData.cvv.match(/^\d{3,4}$/)) {
-        console.log('CVV geçersiz');
+
         message.error("Geçerli bir CVV girin!");
         return false;
       }
@@ -122,19 +122,19 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
       const expiryYear = parseInt(cardData.expiryYear);
       const expiryMonth = parseInt(cardData.expiryYear);
       
-      console.log('Mevcut tarih:', currentMonth, currentYear);
-      console.log('Kart tarihi:', expiryMonth, expiryYear);
+
+
 
       // Test için geçici olarak tarih kontrolünü gevşet (sadece geliştirme aşamasında)
       if (expiryYear < 24 || (expiryYear === 24 && expiryMonth < currentMonth)) {
-        console.log('Kart tarihi geçmiş');
+
         message.error("Kartınızın son kullanma tarihi geçmiş! Lütfen geçerli bir tarih girin.");
         return false;
       }
       
-      console.log('Kredi kartı validasyonu başarılı');
+
     } else {
-      console.log('Kredi kartı seçilmemiş, validasyon atlanıyor');
+
     }
     return true;
   };
@@ -142,9 +142,9 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('Form submit başladı');
-    console.log('Cart items:', cartItems);
-    console.log('Form data:', formData);
+
+
+
     
     if (cartItems.length === 0) {
       message.warning("Sepetiniz boş!");
@@ -163,7 +163,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
     
     const missingFields = requiredFields.filter(({ field }) => !formData[field] || formData[field].trim() === '');
     
-    console.log('Missing fields:', missingFields);
+
     
     if (missingFields.length > 0) {
       const missingLabels = missingFields.map(({ label }) => label).join(', ');
@@ -233,7 +233,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
       }
     }
 
-    console.log('Validasyonlar geçti, sipariş oluşturuluyor...');
+
     setIsSubmitting(true);
 
     try {
@@ -266,7 +266,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
         updatedAt: new Date().toISOString()
       };
 
-      console.log('Oluşturulan sipariş:', order);
+
 
       // Admin paneline sipariş ekle
       addOrder(order);
@@ -302,7 +302,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
       onClose();
       
     } catch (error) {
-      console.error('Sipariş oluşturma hatası:', error);
+
       message.error("Sipariş oluşturulurken bir hata oluştu!");
     } finally {
       setIsSubmitting(false);

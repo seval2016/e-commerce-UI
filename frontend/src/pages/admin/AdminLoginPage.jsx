@@ -72,10 +72,7 @@ const AdminLoginPage = () => {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          initialValues={{
-            email: 'admin@example.com',
-            password: 'admin123'
-          }}
+          autoComplete="off"
         >
           <Form.Item
             name="email"
@@ -89,6 +86,9 @@ const AdminLoginPage = () => {
               prefix={<UserOutlined style={{ color: '#ccc' }} />}
               placeholder="admin@example.com"
               size="large"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
             />
           </Form.Item>
 
@@ -104,6 +104,9 @@ const AdminLoginPage = () => {
               prefix={<LockOutlined style={{ color: '#ccc' }} />}
               placeholder="••••••••"
               size="large"
+              autoComplete="new-password"
+              autoCorrect="off"
+              spellCheck="false"
             />
           </Form.Item>
 

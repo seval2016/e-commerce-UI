@@ -246,17 +246,17 @@ const Header = ({ setIsSearchShow }) => {
                     {
                       label: "Profilim",
                       icon: <i className="bi bi-person"></i>,
-                      onClick: () => console.log("Profil")
+
                     },
                     {
                       label: "Siparişlerim",
                       icon: <i className="bi bi-box"></i>,
-                      onClick: () => console.log("Siparişler")
+
                     },
                     {
                       label: "Favorilerim",
                       icon: <i className="bi bi-heart"></i>,
-                      onClick: () => console.log("Favoriler")
+
                     },
                     { 
                       label: "",

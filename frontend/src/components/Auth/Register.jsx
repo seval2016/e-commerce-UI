@@ -34,7 +34,7 @@ const Register = () => {
         message.error(response.message || "Kayıt başarısız.");
       }
     } catch (error) {
-      console.log("Kayıt hatası:", error);
+
       message.error(error.message || "Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsLoading(false);
@@ -42,7 +42,7 @@ const Register = () => {
   };
 
   return (
-    <form onSubmit={handleRegister} className="space-y-6">
+    <form onSubmit={handleRegister} className="space-y-6" autoComplete="off">
       {/* Name Field */}
       <Input
         type="text"
@@ -54,6 +54,9 @@ const Register = () => {
         placeholder="Ad Soyad"
         size="lg"
         fullWidth
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck="false"
         icon={
           <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -72,6 +75,9 @@ const Register = () => {
         placeholder="ornek@email.com"
         size="lg"
         fullWidth
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck="false"
         icon={
           <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
@@ -90,6 +96,9 @@ const Register = () => {
         placeholder="••••••••"
         size="lg"
         fullWidth
+        autoComplete="new-password"
+        autoCorrect="off"
+        spellCheck="false"
         icon={
           <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />

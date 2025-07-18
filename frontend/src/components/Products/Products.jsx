@@ -39,7 +39,7 @@ PrevBtn.propTypes = {
   onClick: PropTypes.func,
 };
 
-const Products = ({ title = "Öne Çıkan Ürünler", showTitle = true, limit = null }) => {
+const Products = ({ title = "Featured Products", showTitle = true, limit = null }) => {
   const { products } = useData();
   
   // useMemo ile aktif ürünleri hesapla - DataContext güncellendiğinde otomatik yeniden hesaplanır
@@ -89,7 +89,7 @@ const Products = ({ title = "Öne Çıkan Ürünler", showTitle = true, limit = 
 
   if (activeProducts.length === 0) {
     return (
-      <section className="py-12 bg-gray-50">
+      <section className="py-12">
         <div className="container mx-auto px-4">
           {showTitle && (
             <SectionTitle 
@@ -110,7 +110,7 @@ const Products = ({ title = "Öne Çıkan Ürünler", showTitle = true, limit = 
   }
 
   return (
-    <section className="py-12 bg-gray-50">
+    <section className="py-12">
       <div className="container mx-auto px-4">
         {showTitle && (
           <SectionTitle 

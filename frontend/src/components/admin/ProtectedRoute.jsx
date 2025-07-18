@@ -4,10 +4,14 @@ import { Spin } from 'antd';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 
 const ProtectedRoute = ({ children, requiredPermission = null }) => {
-  const { isAdmin, hasPermission, isLoading, logout } = useAdminAuth();
+  const { isAdmin, hasPermission, isLoading, adminUser } = useAdminAuth();
   const location = useLocation();
 
+
+
+  // Loading state'inde bekle
   if (isLoading) {
+
     return (
       <div style={{ 
         display: 'flex', 
@@ -18,26 +22,26 @@ const ProtectedRoute = ({ children, requiredPermission = null }) => {
       }}>
         <div style={{ textAlign: 'center' }}>
           <Spin size="large" />
-          <div style={{ marginTop: 16, color: '#666' }}>Yükleniyor...</div>
+          <div style={{ marginTop: 16, color: '#666' }}>Admin paneli yükleniyor...</div>
         </div>
       </div>
     );
   }
 
+  // Admin olmayan kullanıcıları login'e yönlendir
   if (!isAdmin()) {
-    // Giriş yapmamış kullanıcıyı login sayfasına yönlendir
+
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
+  // Permission kontrolü
   if (requiredPermission && !hasPermission(requiredPermission)) {
-    // Yetkisi olmayan kullanıcıyı dashboard'a yönlendir
+
     return <Navigate to="/admin" replace />;
   }
 
-  // Logout fonksiyonunu children'a geçir
-  const childrenWithLogout = React.cloneElement(children, { logout });
 
-  return childrenWithLogout;
+  return children;
 };
 
 export default ProtectedRoute; 

@@ -178,7 +178,7 @@ const CategoriesPage = () => {
   const handleDelete = async (id) => {
     const result = await deleteCategory(id);
     if (result && !result.success) {
-      console.error('Delete failed:', result.error);
+
     }
   };
 
@@ -242,7 +242,7 @@ const CategoriesPage = () => {
         form.resetFields();
       }
     } catch (error) {
-      console.error('Error in handleModalOk:', error);
+
     }
   };
 

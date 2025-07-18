@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 const Modal = ({ 
-  isOpen, 
+  isOpen = false, 
   onClose, 
   children, 
   size = 'md',
@@ -67,7 +67,7 @@ const Modal = ({
 };
 
 Modal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
+  isOpen: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
   children: PropTypes.node.isRequired,
   size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl', 'full']),

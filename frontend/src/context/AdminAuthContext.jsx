@@ -18,35 +18,60 @@ export const AdminAuthProvider = ({ children }) => {
   useEffect(() => {
     // Sayfa yüklendiğinde localStorage'dan admin bilgilerini kontrol et
     const checkAdminAuth = async () => {
+
       const savedAdmin = localStorage.getItem('adminUser');
+      
       if (savedAdmin) {
         try {
           const adminData = JSON.parse(savedAdmin);
+
+          
           // Token kontrolü yap
           if (adminData && adminData.token) {
+
+            
+            // Önce session'ı restore et, sonra background'da verify et
+            setAdminUser(adminData);
+
+            
             try {
               const response = await api.getCurrentUser();
+
+              
               if (response.success && response.user.role === 'admin') {
+
                 setAdminUser({
                   ...adminData,
-                  ...response.user
+                  ...response.user,
+                  lastVerified: new Date().toISOString()
                 });
               } else {
-                // Sessizce temizle
-                localStorage.removeItem('adminUser');
+
+                // Token geçersiz olsa bile session'ı hemen clear etme
+                // Kullanıcı tekrar login yapabilir
               }
-            } catch {
-              // Token geçersiz, sessizce temizle
-              localStorage.removeItem('adminUser');
+            } catch (error) {
+
+              // Network error veya server down olabilir
+              // Session'ı koru, user experience'ı bozma
+
             }
           } else {
+
             localStorage.removeItem('adminUser');
           }
-        } catch {
+        } catch (error) {
+
           localStorage.removeItem('adminUser');
         }
+      } else {
+
       }
-      setIsLoading(false);
+      
+      // Loading'i biraz delay ile false yap
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
     };
 
     checkAdminAuth();
@@ -56,7 +81,9 @@ export const AdminAuthProvider = ({ children }) => {
     setIsLoading(true);
     
     try {
+
       const response = await api.adminLogin(email, password);
+
       
       if (response.success) {
         const adminData = {
@@ -64,25 +91,37 @@ export const AdminAuthProvider = ({ children }) => {
           email: response.user.email,
           name: response.user.name,
           role: response.user.role,
-          token: response.token,
+          token: response.token || response.accessToken || response.authToken,
           loginTime: new Date().toISOString()
         };
 
+
         setAdminUser(adminData);
+        
+        // Token'ı hem adminUser object'inde hem de ayrı key'de kaydet
         localStorage.setItem('adminUser', JSON.stringify(adminData));
+        localStorage.setItem('token', adminData.token);
+        localStorage.setItem('adminToken', adminData.token);
+        
+        // Verify token was saved correctly
+        const savedData = localStorage.getItem('adminUser');
+        const savedToken = localStorage.getItem('token');
+
+
         
         return {
           success: true,
           message: 'Giriş başarılı!'
         };
       } else {
+
         return {
           success: false,
           message: response.message || 'Giriş başarısız!'
         };
       }
     } catch (error) {
-      console.error('Login error:', error);
+
       return {
         success: false,
         message: error.message || 'Giriş sırasında bir hata oluştu!'
@@ -93,8 +132,18 @@ export const AdminAuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+
     setAdminUser(null);
+    
+    // Tüm authentication key'lerini temizle
     localStorage.removeItem('adminUser');
+    localStorage.removeItem('token');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userToken');
+    
+
   };
 
   const hasPermission = () => {
@@ -104,7 +153,26 @@ export const AdminAuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => {
-    return !!adminUser;
+    // Loading sırasında false dönme, bekle
+    if (isLoading) return false;
+    
+    // AdminUser varsa ve role admin ise true dön
+    if (adminUser && adminUser.role === 'admin') {
+      return true;
+    }
+    
+    // Session restore sırasında localStorage'dan da kontrol et
+    try {
+      const savedAdmin = localStorage.getItem('adminUser');
+      if (savedAdmin) {
+        const adminData = JSON.parse(savedAdmin);
+        return adminData && adminData.role === 'admin' && adminData.token;
+      }
+    } catch (error) {
+      console.debug('isAdmin localStorage check error:', error);
+    }
+    
+    return false;
   };
 
   const value = {

@@ -6,35 +6,39 @@ class ApiService {
     this.timeout = 30000; // 30 seconds timeout
   }
 
-  // Helper method to get auth token with enhanced fallback
+  // Helper method to get authentication token
   getAuthToken() {
-    // Try different storage keys in order of preference
     const tokenSources = [
-      'token',
       'adminUser',
+      'token', 
+      'accessToken',
       'authToken',
       'userToken'
     ];
 
     for (const source of tokenSources) {
       const stored = localStorage.getItem(source);
+      
       if (stored) {
         try {
           // If it's a JSON object, extract token
           if (stored.startsWith('{')) {
             const data = JSON.parse(stored);
-            if (data.token) return data.token;
-            if (data.accessToken) return data.accessToken;
+            if (data.token) {
+              return data.token;
+            }
+            if (data.accessToken) {
+              return data.accessToken;
+            }
           } else {
             // Direct token string
             return stored;
           }
-        } catch (error) {
-          console.debug(`Error parsing ${source}:`, error);
+        } catch {
+          // Error parsing token
         }
       }
     }
-
     return null;
   }
 
@@ -66,11 +70,7 @@ class ApiService {
       ...options,
     };
 
-    console.log(`🌐 API Request: ${config.method || 'GET'} ${endpoint}`, {
-      hasAuth: !!this.getAuthToken(),
-      isUpload,
-      bodyType: config.body ? config.body.constructor.name : 'none'
-    });
+
 
     try {
       const controller = new AbortController();
@@ -94,20 +94,16 @@ class ApiService {
         data = { message: text, raw: text };
       }
 
-      console.log(`📡 API Response: ${response.status}`, {
-        success: response.ok,
-        endpoint,
-        hasData: !!data
-      });
+
 
       if (!response.ok) {
         // Handle specific error cases
         const errorMessage = data?.message || data?.error || `HTTP ${response.status}`;
         
+        // Handle authentication errors more gracefully
         if (response.status === 401) {
-          console.warn('Authentication failed - token may be invalid');
-          // Optionally clear invalid tokens
-          // this.clearAuthTokens();
+          // Don't immediately clear tokens, let AdminAuthContext handle it
+          // The user might just need to refresh their session
         }
         
         throw new Error(errorMessage);
@@ -119,10 +115,7 @@ class ApiService {
         throw new Error('Request timeout');
       }
       
-      console.error(`❌ API Error: ${endpoint}`, {
-        message: error.message,
-        stack: error.stack
-      });
+
       
       throw error;
     }
@@ -144,14 +137,6 @@ class ApiService {
 
   // Helper to validate FormData
   validateFormData(formData, requiredFields = []) {
-    console.log('📋 FormData validation:', {
-      required: requiredFields,
-      entries: Array.from(formData.entries()).map(([key, value]) => [
-        key, 
-        value instanceof File ? `File(${value.name})` : value
-      ])
-    });
-
     for (const field of requiredFields) {
       if (!formData.has(field)) {
         throw new Error(`Required field missing: ${field}`);
@@ -198,13 +183,6 @@ class ApiService {
   }
 
   async createProduct(productData, imageFiles = []) {
-    console.log('🔨 Creating product:', {
-      name: productData.name,
-      category: productData.category,
-      imageCount: imageFiles.length,
-      productDataKeys: Object.keys(productData)
-    });
-
     const formData = new FormData();
     
     // Add product data to FormData
@@ -223,30 +201,22 @@ class ApiService {
     });
 
     // Add image files
-    imageFiles.forEach((file, index) => {
+    imageFiles.forEach((file) => {
       if (file instanceof File) {
         formData.append('images', file);
-        console.log(`📎 Added image ${index + 1}:`, file.name, file.size, 'bytes');
+
       }
     });
 
     // Validate required fields
     this.validateFormData(formData, ['name', 'description', 'price', 'category']);
 
-    console.log('📤 Sending product creation request...');
     return this.uploadFile('/products', formData);
   }
 
   async updateProduct(id, productData, imageFiles = [], removedImages = []) {
     if (!id) throw new Error('Product ID is required');
     
-    console.log('✏️ Updating product:', {
-      id,
-      name: productData.name,
-      imageCount: imageFiles.length,
-      removedCount: removedImages.length
-    });
-
     const formData = new FormData();
     
     // Add product data
@@ -265,17 +235,16 @@ class ApiService {
     });
 
     // Add new image files
-    imageFiles.forEach((file, index) => {
+    imageFiles.forEach((file) => {
       if (file instanceof File) {
         formData.append('images', file);
-        console.log(`📎 Added new image ${index + 1}:`, file.name);
+
       }
     });
 
     // Add removed images info
     if (removedImages.length > 0) {
       formData.append('removedImages', JSON.stringify(removedImages));
-      console.log('🗑️ Images to remove:', removedImages);
     }
 
     return this.uploadFile(`/products/${id}`, formData, 'PUT');
@@ -284,7 +253,6 @@ class ApiService {
   async deleteProduct(id) {
     if (!id) throw new Error('Product ID is required');
     
-    console.log('🗑️ Deleting product:', id);
     return this.request(`/products/${id}`, { method: 'DELETE' });
   }
 
@@ -320,8 +288,6 @@ class ApiService {
   }
 
   async createCategory(categoryData, imageFile = null) {
-    console.log('🏷️ Creating category:', categoryData.name);
-
     if (imageFile && imageFile instanceof File) {
       const formData = new FormData();
       
@@ -334,7 +300,6 @@ class ApiService {
 
       // Add image file
       formData.append('image', imageFile);
-      console.log('📎 Added category image:', imageFile.name);
 
       return this.uploadFile('/categories', formData);
     } else {
@@ -349,8 +314,6 @@ class ApiService {
   async updateCategory(id, categoryData, imageFile = null) {
     if (!id) throw new Error('Category ID is required');
     
-    console.log('✏️ Updating category:', id);
-
     if (imageFile && imageFile instanceof File) {
       const formData = new FormData();
       
@@ -377,13 +340,16 @@ class ApiService {
   async deleteCategory(id) {
     if (!id) throw new Error('Category ID is required');
     
-    console.log('🗑️ Deleting category:', id);
     return this.request(`/categories/${id}`, { method: 'DELETE' });
   }
 
   // Blog endpoints
   async getBlogs() {
     return this.request('/blogs');
+  }
+
+  async getAdminBlogs() {
+    return this.request('/blogs/admin');
   }
 
   async getBlog(id) {
@@ -397,11 +363,16 @@ class ApiService {
       
       Object.entries(blogData).forEach(([key, value]) => {
         if (value !== null && value !== undefined) {
-          formData.append(key, String(value));
+          if (Array.isArray(value)) {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, String(value));
+          }
         }
       });
 
-      formData.append('image', imageFile);
+      formData.append('featuredImage', imageFile); // Use featuredImage field name
+
       return this.uploadFile('/blogs', formData);
     } else {
       return this.request('/blogs', {
@@ -419,11 +390,16 @@ class ApiService {
       
       Object.entries(blogData).forEach(([key, value]) => {
         if (value !== null && value !== undefined) {
-          formData.append(key, String(value));
+          if (Array.isArray(value)) {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, String(value));
+          }
         }
       });
 
-      formData.append('image', imageFile);
+      formData.append('featuredImage', imageFile); // Use featuredImage field name
+
       return this.uploadFile(`/blogs/${id}`, formData, 'PUT');
     } else {
       return this.request(`/blogs/${id}`, {

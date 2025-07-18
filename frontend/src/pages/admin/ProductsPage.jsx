@@ -451,7 +451,7 @@ const ProductsPage = () => {
       setLocalLoading(true);
       await deleteProduct(id);
     } catch (error) {
-      console.error('Delete product error:', error);
+
     } finally {
       setLocalLoading(false);
     }
@@ -461,7 +461,7 @@ const ProductsPage = () => {
     try {
       await toggleProductStatus(id);
     } catch (error) {
-      console.error('Toggle product status error:', error);
+
     }
   }, [toggleProductStatus]);
 
@@ -470,7 +470,7 @@ const ProductsPage = () => {
       setLocalLoading(true);
       const values = await form.validateFields();
       
-      console.log('Form values:', values);
+
       
       const productData = {
         ...values,
@@ -479,16 +479,16 @@ const ProductsPage = () => {
       };
       
       if (editingProduct) {
-        console.log('Updating product:', editingProduct._id);
+
         await updateProduct(editingProduct._id, productData, imageFiles, removedImages);
       } else {
-        console.log('Creating new product');
+
         await addProduct(productData, imageFiles);
       }
       
       handleModalCancel();
     } catch (error) {
-      console.error('Form submission error:', error);
+
       if (error.errorFields) {
         message.error('Lütfen form hatalarını düzeltin');
       }

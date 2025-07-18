@@ -71,7 +71,7 @@ const BlogsPage = () => {
           <Image
             width={50}
             height={50}
-            src={getBlogImageUrl(record.image)}
+            src={getBlogImageUrl(record.featuredImage)}
             fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
             style={{ borderRadius: 5, marginRight: 12, objectFit: 'contain', background: '#f7f7f7' }}
             preview={false}
@@ -92,12 +92,19 @@ const BlogsPage = () => {
       title: "Yazar",
       dataIndex: "author",
       key: "author",
-      render: (author) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <UserOutlined style={{ marginRight: 4 }} />
-          {author}
-        </div>
-      ),
+      render: (author) => {
+        // Handle populated author object or string
+        const authorName = typeof author === 'object' && author?.name 
+          ? author.name 
+          : (typeof author === 'string' ? author : 'Bilinmeyen');
+        
+        return (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <UserOutlined style={{ marginRight: 4 }} />
+            {authorName}
+          </div>
+        );
+      },
     },
     {
       title: "Kategori",
@@ -106,12 +113,49 @@ const BlogsPage = () => {
       render: (category) => <Tag color="blue">{category}</Tag>,
     },
     {
+      title: "Etiketler",
+      dataIndex: "tags", 
+      key: "tags",
+      render: (tags) => {
+
+        
+        // Tags array'i düzelt
+        let tagArray = [];
+        if (tags) {
+          if (Array.isArray(tags)) {
+            tagArray = tags;
+          } else if (typeof tags === 'string') {
+            try {
+              tagArray = JSON.parse(tags);
+            } catch{
+              tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+            }
+          }
+        }
+        
+        return (
+          <div style={{ maxWidth: 120 }}>
+            {tagArray.slice(0, 2).map((tag, index) => (
+              <Tag key={index} color="purple" style={{ marginBottom: 2, fontSize: 11 }}>
+                {tag}
+              </Tag>
+            ))}
+            {tagArray.length > 2 && (
+              <Tag color="default" style={{ fontSize: 11 }}>
+                +{tagArray.length - 2}
+              </Tag>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       title: "Durum",
-      dataIndex: "status",
+      dataIndex: "isPublished",
       key: "status",
-      render: (status) => (
-        <Tag color={status === "published" ? "green" : "orange"}>
-          {status === "published" ? "Yayında" : "Taslak"}
+      render: (isPublished) => (
+        <Tag color={isPublished ? "green" : "orange"}>
+          {isPublished ? "Yayında" : "Taslak"}
         </Tag>
       ),
     },
@@ -128,8 +172,8 @@ const BlogsPage = () => {
     },
     {
       title: "Yayın Tarihi",
-      dataIndex: "publishDate",
-      key: "publishDate",
+      dataIndex: "publishedAt",
+      key: "publishedAt",
       render: (date) => (
         <div style={{ fontSize: 12 }}>
           {date ? new Date(date).toLocaleDateString("tr-TR") : "Yayınlanmadı"}
@@ -171,8 +215,8 @@ const BlogsPage = () => {
       setImagePreview("");
       form.resetFields();
       setIsModalVisible(true);
-    } catch (error) {
-      console.error('Yeni blog ekleme hatası:', error);
+    } catch{
+
       message.error('Yeni blog ekleme sırasında bir hata oluştu. Lütfen tekrar deneyin.');
     }
   };
@@ -184,8 +228,8 @@ const BlogsPage = () => {
       setImagePreview("");
       setEditingBlog(null);
       form.resetFields();
-    } catch (error) {
-      console.error('Modal kapatma hatası:', error);
+    } catch{
+
       setIsModalVisible(false);
       setEditingBlog(null);
     }
@@ -193,42 +237,75 @@ const BlogsPage = () => {
 
   const handleEdit = (blog) => {
     try {
+
+
+      
       setEditingBlog(blog);
       setImageFile(null);
-      setImagePreview(blog.image || "");
-      // Form alanlarını güvenli şekilde doldur
+      setImagePreview(getBlogImageUrl(blog.featuredImage) || "");
+      
+      // Extract author name from populated author object or use string
+      const authorName = typeof blog.author === 'object' && blog.author?.name 
+        ? blog.author.name 
+        : (typeof blog.author === 'string' ? blog.author : '');
+
+      // Tags field'ını düzelt - array olmayan durumları handle et
+      let parsedTags = [];
+      if (blog.tags) {
+        if (Array.isArray(blog.tags)) {
+          parsedTags = blog.tags;
+        } else if (typeof blog.tags === 'string') {
+          try {
+            // JSON string ise parse et
+            parsedTags = JSON.parse(blog.tags);
+          } catch{
+            // Comma separated string ise split et
+            parsedTags = blog.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+          }
+        }
+      }
+      
+
+
+      // Form alanlarını MongoDB yapısına uygun doldur
       const formValues = {
         title: blog.title || '',
         excerpt: blog.excerpt || '',
         content: blog.content || '',
-        author: blog.author || '',
+        author: authorName,
         category: blog.category || '',
-        status: blog.status || 'draft',
-        tags: blog.tags || [],
-        image: blog.image || '',
+        status: blog.isPublished ? 'published' : 'draft',
+        tags: parsedTags,
+        image: blog.featuredImage ? 'existing' : undefined, // Mevcut görsel varsa form'u geçerli yap
       };
-      // publishDate için dayjs kullan
-      if (blog.publishDate) {
-        const date = dayjs(blog.publishDate);
+
+
+
+      // publishedAt tarihini kullan
+      if (blog.publishedAt) {
+        const date = dayjs(blog.publishedAt);
         formValues.publishDate = date.isValid() ? date : null;
       } else {
         formValues.publishDate = null;
       }
+
       setTimeout(() => {
         try {
           form.setFieldsValue(formValues);
         } catch {
+
           Object.keys(formValues).forEach(key => {
             try {
               form.setFieldValue(key, formValues[key]);
-            } catch {
-              // ignore
+            } catch{
+              // ignore individual field errors
             }
           });
         }
       }, 100);
       setIsModalVisible(true);
     } catch {
+
       message.error('Blog düzenleme sırasında bir hata oluştu. Lütfen tekrar deneyin.');
     }
   };
@@ -260,81 +337,84 @@ const BlogsPage = () => {
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview("");
-    form.setFieldsValue({ image: "" });
   };
 
   const handleModalOk = async () => {
     try {
+      // Form validation
       const values = await form.validateFields();
-      let imageBase64 = imagePreview;
-      if (imageFile) {
-        imageBase64 = await fileToBase64(imageFile);
-      }
-      const publishDate = values.publishDate ? values.publishDate.toISOString() : null;
-      const date = publishDate ? new Date(publishDate).toLocaleDateString('en-US', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      }) : null;
-      const slug = values.title
-        .toLowerCase()
-        .replace(/[^a-z0-9 -]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-+|-+$/g, '');
+
+      
+      // Prepare blog data for MongoDB backend
       const blogData = {
-        ...values,
-        image: imageBase64,
-        publishDate,
-        date,
-        slug,
+        title: values.title,
+        content: values.content,
+        excerpt: values.excerpt,
+        category: values.category,
+        author: values.author,
         tags: values.tags || [],
-        updatedAt: new Date().toISOString()
+        isPublished: values.status === 'published'
       };
+
       if (editingBlog) {
-        console.log('Blog güncelleniyor:', blogData); // Debug için
-        updateBlog(editingBlog.id, blogData);
+        const result = await updateBlog(editingBlog._id, blogData, imageFile);
+        if (result.success) {
+          setIsModalVisible(false);
+          setImageFile(null);
+          setImagePreview("");
+          setEditingBlog(null);
+          form.resetFields();
+          message.success('Blog başarıyla güncellendi!');
+        }
       } else {
-        const newBlogData = {
-          ...blogData,
-          views: 0,
-          likes: 0,
-          comments: 0,
-          createdAt: new Date().toISOString()
-        };
-        console.log('Yeni blog ekleniyor:', newBlogData); // Debug için
-        addBlog(newBlogData);
+        const result = await addBlog(blogData, imageFile);
+        if (result.success) {
+          setIsModalVisible(false);
+          setImageFile(null);
+          setImagePreview("");
+          form.resetFields();
+          message.success('Blog başarıyla oluşturuldu!');
+        }
       }
-      setIsModalVisible(false);
-      setImageFile(null);
-      setImagePreview("");
-      setEditingBlog(null);
-      form.resetFields();
     } catch (error) {
-      console.error('Blog kaydetme hatası:', error);
+      // Form validation hatası kontrolü
+      if (error.errorFields && error.errorFields.length > 0) {
+        // İlk hatalı alanın mesajını göster
+        const firstError = error.errorFields[0];
+        const fieldName = firstError.name[0];
+        const errorMessage = firstError.errors[0];
+        
+        message.error(`${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}: ${errorMessage}`);
+        
+        // Hatalı alanı focus et
+        form.scrollToField(fieldName);
+        return;
+      }
+      
+      // API hatası
       message.error('Blog kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-  };
+
 
   const filteredBlogs = blogs.filter(
-    (blog) =>
-      blog.title.toLowerCase().includes(searchText.toLowerCase()) ||
-      blog.author.toLowerCase().includes(searchText.toLowerCase()) ||
-      blog.category.toLowerCase().includes(searchText.toLowerCase())
+    (blog) => {
+      const authorName = typeof blog.author === 'object' && blog.author?.name 
+        ? blog.author.name 
+        : (typeof blog.author === 'string' ? blog.author : '');
+      
+      return (
+        blog.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        authorName.toLowerCase().includes(searchText.toLowerCase()) ||
+        blog.category.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
   );
 
   const tableBlogs = filteredBlogs.map(blog => ({
     ...blog,
-    key: blog.id
+    key: blog._id || blog.id
   }));
 
   return (
@@ -365,7 +445,7 @@ const BlogsPage = () => {
           <Card>
             <Statistic
               title="Yayında"
-              value={blogs.filter((b) => b.status === "published").length}
+              value={blogs.filter((b) => b.isPublished === true).length}
               prefix={<EyeIcon />}
               valueStyle={{ color: "#52c41a" }}
             />
@@ -375,7 +455,7 @@ const BlogsPage = () => {
           <Card>
             <Statistic
               title="Taslak"
-              value={blogs.filter((b) => b.status === "draft").length}
+              value={blogs.filter((b) => b.isPublished === false).length}
               prefix={<EyeInvisibleOutlined />}
               valueStyle={{ color: "#fa8c16" }}
             />
@@ -560,7 +640,21 @@ const BlogsPage = () => {
           <Form.Item
             name="image"
             label="Kapak Görseli"
-            rules={[{ required: true, message: "Lütfen bir görsel yükleyin!" }]}
+            rules={[
+              {
+                validator: () => {
+                  // Yeni blog oluştururken en azından bir görsel gerekli
+                  if (!editingBlog && !imageFile && !imagePreview) {
+                    return Promise.reject(new Error('Lütfen bir kapak görseli yükleyin!'));
+                  }
+                  // Blog düzenlerken mevcut görsel veya yeni görsel yeterli
+                  if (editingBlog && !imageFile && !imagePreview && !editingBlog.featuredImage) {
+                    return Promise.reject(new Error('Lütfen bir kapak görseli yükleyin!'));
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <div>
               {imagePreview && (

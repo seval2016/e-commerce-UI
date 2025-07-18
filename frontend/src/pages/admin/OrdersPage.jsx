@@ -230,7 +230,7 @@ const OrdersPage = () => {
   // PDF indirme fonksiyonu
   const generatePDF = async (order) => {
     try {
-      console.log('PDF oluşturma başladı:', order);
+
       message.loading('PDF oluşturuluyor...', 0);
       
       // PDF oluştur ve Türkçe font yükle
@@ -320,11 +320,11 @@ const OrdersPage = () => {
       
       message.destroy();
       message.success('PDF başarıyla indirildi!');
-      console.log('PDF başarıyla oluşturuldu:', fileName);
+
       
     } catch (error) {
       message.destroy();
-      console.error('PDF oluşturma hatası:', error);
+
       message.error('PDF oluşturulurken bir hata oluştu!');
     }
   };
