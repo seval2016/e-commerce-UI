@@ -437,10 +437,15 @@ class ApiService {
     if (!id) throw new Error('Order ID is required');
     if (!status) throw new Error('Status is required');
     
-    return this.request(`/orders/${id}/status`, {
+    return this.request(`/orders/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ orderStatus: status })
     });
+  }
+
+  async deleteOrder(id) {
+    if (!id) throw new Error('Order ID is required');
+    return this.request(`/orders/${id}`, { method: 'DELETE' });
   }
 
   // User management endpoints

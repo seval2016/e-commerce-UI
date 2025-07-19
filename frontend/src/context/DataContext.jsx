@@ -384,12 +384,15 @@ export const DataProvider = ({ children }) => {
 
   const updateOrderStatus = useCallback(
     withLoading('orders', async (id, status) => {
-
       const response = await api.updateOrderStatus(id, status);
       
       return handleApiResponse(response, 'Sipariş durumu güncellendi', () => {
         setOrders(prev => prev.map(order => 
-          order._id === id ? { ...order, status } : order
+          order._id === id || order.id === id ? { 
+            ...order, 
+            status,
+            updatedAt: new Date().toISOString()
+          } : order
         ));
       });
     }),
@@ -469,13 +472,24 @@ export const DataProvider = ({ children }) => {
   const updateOrder = useCallback(
     withLoading('orders', async (id, updates) => {
       try {
-        // Local state'i güncelle
-        setOrders(prev => prev.map(order => 
-          order._id === id || order.id === id ? { ...order, ...updates, updatedAt: new Date().toISOString() } : order
-        ));
+        // Backend'e güncelleme gönder
+        const response = await api.updateOrderStatus(id, updates.status);
         
-        return { success: true };
+        if (response.success) {
+          // Backend'den başarılı güncellendiyse local state'i de güncelle
+          setOrders(prev => prev.map(order => 
+            order._id === id || order.id === id ? { 
+              ...order, 
+              ...updates, 
+              updatedAt: new Date().toISOString() 
+            } : order
+          ));
+          return { success: true };
+        } else {
+          throw new Error(response.message || 'Sipariş güncellenemedi');
+        }
       } catch (error) {
+        console.error('Error updating order:', error);
         throw new Error('Sipariş güncellenirken hata oluştu: ' + error.message);
       }
     }),
@@ -485,11 +499,18 @@ export const DataProvider = ({ children }) => {
   const deleteOrder = useCallback(
     withLoading('orders', async (id) => {
       try {
-        // Local state'ten kaldır
-        setOrders(prev => prev.filter(order => order._id !== id && order.id !== id));
+        // Backend'den sil
+        const response = await api.deleteOrder(id);
         
-        return { success: true };
+        if (response.success) {
+          // Backend'den başarılı silindiyse local state'ten de kaldır
+          setOrders(prev => prev.filter(order => order._id !== id && order.id !== id));
+          return { success: true };
+        } else {
+          throw new Error(response.message || 'Sipariş silinemedi');
+        }
       } catch (error) {
+        console.error('Error deleting order:', error);
         throw new Error('Sipariş silinirken hata oluştu: ' + error.message);
       }
     }),

@@ -208,12 +208,12 @@ const OrdersPage = () => {
           >
             Görüntüle
           </Button>
-          <Popconfirm
-            title="Bu siparişi silmek istediğinize emin misiniz?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Evet"
-            cancelText="Hayır"
-          >
+                      <Popconfirm
+              title="Bu siparişi silmek istediğinize emin misiniz?"
+              onConfirm={() => handleDelete(record._id || record.id)}
+              okText="Evet"
+              cancelText="Hayır"
+            >
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>
               Sil
             </Button>
@@ -242,9 +242,13 @@ const OrdersPage = () => {
     setSelectedOrder(null);
   };
 
-  const handleStatusChange = (orderId, newStatus) => {
-    updateOrder(orderId, { status: newStatus });
-    message.success("Sipariş durumu güncellendi!");
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      await updateOrder(orderId, { status: newStatus });
+      // Success message is handled by DataContext
+    } catch {
+      message.error("Sipariş durumu güncellenirken hata oluştu!");
+    }
   };
 
   // PDF indirme fonksiyonu
@@ -462,6 +466,7 @@ const OrdersPage = () => {
             <Statistic
               title="Toplam Gelir"
               value={totalRevenue}
+              precision={2}
               prefix={<DollarOutlined />}
               suffix="₺"
               valueStyle={{ color: "#52c41a" }}
@@ -803,11 +808,11 @@ const OrdersPage = () => {
                 <Card title="Sipariş Durumu" size="small">
                   <div style={{ marginBottom: 16 }}>
                     <Text strong>Durum Değiştir:</Text>
-                    <Select
-                      value={selectedOrder.status}
-                      onChange={(value) => handleStatusChange(selectedOrder.id, value)}
-                      style={{ width: '100%', marginTop: 8 }}
-                    >
+                                         <Select
+                       value={selectedOrder.status}
+                       onChange={(value) => handleStatusChange(selectedOrder._id || selectedOrder.id, value)}
+                       style={{ width: '100%', marginTop: 8 }}
+                     >
                       <Option value="pending">Beklemede</Option>
                       <Option value="processing">İşleniyor</Option>
                       <Option value="shipped">Kargoya Verildi</Option>

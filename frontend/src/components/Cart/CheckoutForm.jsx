@@ -41,9 +41,9 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
       [name]: value
     }));
     
-    // Ödeme yöntemi değiştiğinde form alanlarını sıfırla
+    // Ödeme yöntemi değiştiğinde kredi kartı bilgilerini temizle
     if (name === 'paymentMethod') {
-      // Kart bilgilerini temizle
+      // Kredi kartı bilgilerini temizle
       setCardData({
         cardNumber: "",
         cardHolder: "",
@@ -91,7 +91,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
 
 
     
-    if (formData.paymentMethod === 'creditCard') {
+    if (formData.paymentMethod === 'credit_card') {
       // Kart numarası kontrolü
       const cardNumber = cardData.cardNumber.replace(/\s/g, '');
 
@@ -183,7 +183,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
     }
 
     // Kredi kartı validasyonu (sadece kredi kartı seçilmişse)
-    if (formData.paymentMethod === 'creditCard') {
+    if (formData.paymentMethod === 'credit_card') {
       const cardRequiredFields = [
         { field: 'cardNumber', label: 'Kart Numarası' },
         { field: 'cardHolder', label: 'Kart Sahibi' },
@@ -248,7 +248,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
         total: total, // getCartTotal() yerine total kullan
         status: "pending",
         paymentMethod: formData.paymentMethod,
-        paymentInfo: formData.paymentMethod === 'creditCard' ? {
+        paymentInfo: formData.paymentMethod === 'credit_card' ? {
           cardNumber: cardData.cardNumber.replace(/\s/g, '').slice(-4), // Sadece son 4 haneyi sakla
           cardHolder: cardData.cardHolder,
           expiryDate: `${cardData.expiryMonth}/${cardData.expiryYear}`
@@ -453,7 +453,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
               </div>
 
               {/* Kredi Kartı Bilgileri */}
-              {formData.paymentMethod === 'creditCard' && (
+              {formData.paymentMethod === 'credit_card' && (
                 <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                   <h4 className="text-md font-semibold text-gray-900 mb-3">Kredi Kartı Bilgileri</h4>
                   
