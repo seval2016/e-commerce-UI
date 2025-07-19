@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Table, 
   Card, 
@@ -16,8 +16,11 @@ import {
   Statistic,
   Descriptions,
   Progress,
-  Tabs
+  Tabs,
+  Select,
+  Spin
 } from 'antd';
+import api from '../../services/api';
 import {
   SearchOutlined,
   EyeOutlined,
@@ -38,86 +41,31 @@ const CustomersPage = () => {
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
-  // Mock data
-  const customers = [
-    {
-      key: '1',
-      id: 1,
-      name: 'Ahmet Yılmaz',
-      email: 'ahmet@email.com',
-      phone: '0532 123 4567',
-      avatar: '/img/avatars/avatar1.jpg',
-      status: 'active',
-      joinDate: '2023-01-15',
-      totalOrders: 15,
-      totalSpent: 125000,
-      lastOrder: '2024-01-15',
-      address: 'İstanbul, Kadıköy, Örnek Mahallesi No:123',
-      notes: 'Sadık müşteri, hızlı ödeme yapar'
-    },
-    {
-      key: '2',
-      id: 2,
-      name: 'Fatma Demir',
-      email: 'fatma@email.com',
-      phone: '0533 456 7890',
-      avatar: '/img/avatars/avatar2.jpg',
-      status: 'active',
-      joinDate: '2023-03-20',
-      totalOrders: 8,
-      totalSpent: 45000,
-      lastOrder: '2024-01-10',
-      address: 'Ankara, Çankaya, Test Sokak No:45',
-      notes: 'Yeni müşteri, memnun'
-    },
-    {
-      key: '3',
-      id: 3,
-      name: 'Mehmet Kaya',
-      email: 'mehmet@email.com',
-      phone: '0534 789 1234',
-      avatar: null,
-      status: 'active',
-      joinDate: '2022-11-10',
-      totalOrders: 25,
-      totalSpent: 180000,
-      lastOrder: '2024-01-14',
-      address: 'İzmir, Konak, Deneme Caddesi No:67',
-      notes: 'VIP müşteri, yüksek bütçeli'
-    },
-    {
-      key: '4',
-      id: 4,
-      name: 'Ayşe Özkan',
-      email: 'ayse@email.com',
-      phone: '0535 321 6543',
-      avatar: null,
-      status: 'inactive',
-      joinDate: '2023-06-05',
-      totalOrders: 3,
-      totalSpent: 12000,
-      lastOrder: '2023-12-20',
-      address: 'Bursa, Nilüfer, Örnek Mahallesi No:89',
-      notes: 'Uzun süredir sipariş vermiyor'
-    },
-    {
-      key: '5',
-      id: 5,
-      name: 'Ali Veli',
-      email: 'ali@email.com',
-      phone: '0536 654 3210',
-      avatar: null,
-      status: 'active',
-      joinDate: '2024-01-01',
-      totalOrders: 1,
-      totalSpent: 35000,
-      lastOrder: '2024-01-16',
-      address: 'Antalya, Muratpaşa, Yeni Sokak No:12',
-      notes: 'Yeni müşteri'
+  // Fetch customers from API
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.request('/users');
+      if (response.success) {
+        setCustomers(response.users);
+      }
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      message.error('Müşteriler yüklenirken hata oluştu');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+
 
   const columns = [
     {
@@ -153,12 +101,22 @@ const CustomersPage = () => {
       ),
     },
     {
+      title: 'Rol',
+      dataIndex: 'role',
+      key: 'role',
+      render: (role) => (
+        <Tag color={role === 'admin' ? 'gold' : 'blue'}>
+          {role === 'admin' ? 'Admin' : 'Müşteri'}
+        </Tag>
+      ),
+    },
+    {
       title: 'Durum',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'active' ? 'green' : 'red'}>
-          {status === 'active' ? 'Aktif' : 'Pasif'}
+      dataIndex: 'isActive',
+      key: 'isActive',
+      render: (isActive) => (
+        <Tag color={isActive ? 'green' : 'red'}>
+          {isActive ? 'Aktif' : 'Pasif'}
         </Tag>
       ),
     },
@@ -167,9 +125,9 @@ const CustomersPage = () => {
       dataIndex: 'totalOrders',
       key: 'totalOrders',
       render: (orders) => (
-        <Tag color="blue">{orders} sipariş</Tag>
+        <Tag color="blue">{orders || 0} sipariş</Tag>
       ),
-      sorter: (a, b) => a.totalOrders - b.totalOrders,
+      sorter: (a, b) => (a.totalOrders || 0) - (b.totalOrders || 0),
     },
     {
       title: 'Toplam Harcama',
@@ -177,10 +135,10 @@ const CustomersPage = () => {
       key: 'totalSpent',
       render: (spent) => (
         <div style={{ fontWeight: 500, color: '#52c41a' }}>
-          {spent.toLocaleString()} ₺
+          {(spent || 0).toLocaleString()} ₺
         </div>
       ),
-      sorter: (a, b) => a.totalSpent - b.totalSpent,
+      sorter: (a, b) => (a.totalSpent || 0) - (b.totalSpent || 0),
     },
     {
       title: 'Son Sipariş',
@@ -188,7 +146,7 @@ const CustomersPage = () => {
       key: 'lastOrder',
       render: (date) => (
         <div style={{ fontSize: 12 }}>
-          {date ? new Date(date).toLocaleDateString('tr-TR') : 'Yok'}
+          {date ? new Date(date).toLocaleDateString('tr-TR') : 'Henüz sipariş yok'}
         </div>
       ),
     },
@@ -205,7 +163,7 @@ const CustomersPage = () => {
           />
           <Popconfirm
             title="Bu müşteriyi silmek istediğinizden emin misiniz?"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDelete(record._id)}
             okText="Evet"
             cancelText="Hayır"
           >
@@ -232,20 +190,121 @@ const CustomersPage = () => {
 
   const handleEdit = (customer) => {
     setSelectedCustomer(customer);
-    form.setFieldsValue(customer);
+    form.setFieldsValue({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone || '',
+      address: typeof customer.address === 'string' ? customer.address : 
+               customer.address ? `${customer.address.street || ''} ${customer.address.city || ''}` : '',
+      notes: customer.notes || '',
+      status: customer.isActive ? 'active' : 'inactive',
+      role: customer.role || 'user'
+    });
     setIsModalVisible(true);
   };
 
-  const handleDelete = () => {
-    message.success('Müşteri başarıyla silindi');
+  const handleAddCustomer = () => {
+    setSelectedCustomer(null);
+    form.resetFields();
+    form.setFieldsValue({
+      status: 'active',
+      role: 'user'
+    });
+    setIsModalVisible(true);
   };
 
-  const handleModalOk = () => {
-    form.validateFields().then(() => {
-      message.success('Müşteri bilgileri güncellendi');
-      setIsModalVisible(false);
-      form.resetFields();
-    });
+  const handleDelete = async (userId) => {
+    try {
+      setLoading(true);
+      const response = await api.request(`/users/${userId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.success) {
+        message.success('Müşteri başarıyla silindi');
+        await fetchCustomers(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      message.error('Müşteri silinirken hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      setLoading(true);
+      
+      if (selectedCustomer) {
+        // Update existing customer
+        const response = await api.request(`/users/${selectedCustomer._id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: values.name,
+            email: values.email,
+            phone: values.phone,
+            address: values.address,
+            notes: values.notes,
+            isActive: values.status === 'active'
+          })
+        });
+        
+        // Update role separately if changed
+        if (values.role !== selectedCustomer.role) {
+          await api.request(`/users/${selectedCustomer._id}/role`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              role: values.role
+            })
+          });
+        }
+        
+        if (response.success) {
+          message.success('Müşteri bilgileri güncellendi');
+          setIsModalVisible(false);
+          form.resetFields();
+          await fetchCustomers(); // Refresh the list
+        }
+      } else {
+        // Create new customer
+        const response = await api.request('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: values.name,
+            email: values.email,
+            password: values.password || 'defaultpassword123', // Default password
+            phone: values.phone,
+            address: values.address,
+            notes: values.notes,
+            isActive: values.status === 'active'
+          })
+        });
+        
+        if (response.success && values.role === 'admin') {
+          // Make user admin if needed
+          await api.request(`/users/${response.user.id}/role`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              role: 'admin'
+            })
+          });
+        }
+        
+        if (response.success) {
+          message.success('Yeni müşteri oluşturuldu');
+          setIsModalVisible(false);
+          form.resetFields();
+          await fetchCustomers(); // Refresh the list
+        }
+      }
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      message.error('İşlem sırasında hata oluştu');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredCustomers = customers.filter(customer =>
@@ -287,7 +346,7 @@ const CustomersPage = () => {
           <Card>
             <Statistic
               title="Aktif Müşteri"
-              value={customers.filter(c => c.status === 'active').length}
+              value={customers.filter(c => c.isActive).length}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -297,7 +356,7 @@ const CustomersPage = () => {
           <Card>
             <Statistic
               title="Toplam Sipariş"
-              value={customers.reduce((sum, c) => sum + c.totalOrders, 0)}
+              value={customers.reduce((sum, c) => sum + (c.totalOrders || 0), 0)}
               prefix={<ShoppingCartOutlined />}
               valueStyle={{ color: '#722ed1' }}
             />
@@ -307,7 +366,7 @@ const CustomersPage = () => {
           <Card>
             <Statistic
               title="Toplam Gelir"
-              value={customers.reduce((sum, c) => sum + c.totalSpent, 0)}
+              value={customers.reduce((sum, c) => sum + (c.totalSpent || 0), 0)}
               prefix={<DollarOutlined />}
               suffix="₺"
               valueStyle={{ color: '#fa8c16' }}
@@ -316,49 +375,65 @@ const CustomersPage = () => {
         </Col>
       </Row>
 
-      {/* Search */}
+      {/* Search and Add */}
       <Card style={{ marginBottom: 16 }}>
-        <Search
-          placeholder="Müşteri adı, email veya telefon ile ara..."
-          allowClear
-          enterButton={<SearchOutlined />}
-          size="large"
-          style={{ width: 400 }}
-          onSearch={handleSearch}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
+        <Row justify="space-between" align="middle">
+          <Col>
+            <Search
+              placeholder="Müşteri adı, email veya telefon ile ara..."
+              allowClear
+              enterButton={<SearchOutlined />}
+              size="large"
+              style={{ width: 400 }}
+              onSearch={handleSearch}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          </Col>
+          <Col>
+            <Button 
+              type="primary" 
+              icon={<UserOutlined />}
+              size="large"
+              onClick={() => handleAddCustomer()}
+            >
+              Yeni Müşteri Ekle
+            </Button>
+          </Col>
+        </Row>
       </Card>
 
       {/* Customers Table */}
       <Card>
-        <Table
-          columns={columns}
-          dataSource={filteredCustomers}
-          rowKey="id"
-          pagination={{
-            total: filteredCustomers.length,
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => 
-              `${range[0]}-${range[1]} / ${total} müşteri`,
-          }}
-        />
+        <Spin spinning={loading}>
+          <Table
+            columns={columns}
+            dataSource={filteredCustomers}
+            rowKey="_id"
+            pagination={{
+              total: filteredCustomers.length,
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => 
+                `${range[0]}-${range[1]} / ${total} müşteri`,
+            }}
+          />
+        </Spin>
       </Card>
 
       {/* Customer Details Modal */}
       <Modal
-        title={`Müşteri Detayları - ${selectedCustomer?.name}`}
+        title={selectedCustomer ? `Müşteri Detayları - ${selectedCustomer.name}` : 'Yeni Müşteri Ekle'}
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={() => setIsModalVisible(false)}
         width={800}
-        footer={selectedCustomer && [
+        footer={[
           <Button key="cancel" onClick={() => setIsModalVisible(false)}>
-            Kapat
+            İptal
           </Button>,
-          <Button key="submit" type="primary" onClick={handleModalOk}>
-            Güncelle
+          <Button key="submit" type="primary" onClick={handleModalOk} loading={loading}>
+            {selectedCustomer ? 'Güncelle' : 'Ekle'}
           </Button>
         ]}
       >
@@ -390,13 +465,16 @@ const CustomersPage = () => {
                     <PhoneOutlined style={{ marginRight: 4 }} />
                     {selectedCustomer.phone}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Adres">{selectedCustomer.address}</Descriptions.Item>
+                  <Descriptions.Item label="Adres">
+                    {typeof selectedCustomer.address === 'string' ? selectedCustomer.address : 
+                     selectedCustomer.address ? `${selectedCustomer.address.street || ''} ${selectedCustomer.address.city || ''}` : 'Adres belirtilmemiş'}
+                  </Descriptions.Item>
                   <Descriptions.Item label="Kayıt Tarihi">
-                    {new Date(selectedCustomer.joinDate).toLocaleDateString('tr-TR')}
+                    {new Date(selectedCustomer.createdAt).toLocaleDateString('tr-TR')}
                   </Descriptions.Item>
                   <Descriptions.Item label="Durum">
-                    <Tag color={selectedCustomer.status === 'active' ? 'green' : 'red'}>
-                      {selectedCustomer.status === 'active' ? 'Aktif' : 'Pasif'}
+                    <Tag color={selectedCustomer.isActive ? 'green' : 'red'}>
+                      {selectedCustomer.isActive ? 'Aktif' : 'Pasif'}
                     </Tag>
                   </Descriptions.Item>
                 </Descriptions>
@@ -408,7 +486,7 @@ const CustomersPage = () => {
                 <Card size="small">
                   <Statistic
                     title="Toplam Sipariş"
-                    value={selectedCustomer.totalOrders}
+                    value={selectedCustomer.totalOrders || 0}
                     prefix={<ShoppingCartOutlined />}
                     valueStyle={{ color: '#1890ff' }}
                   />
@@ -418,7 +496,7 @@ const CustomersPage = () => {
                 <Card size="small">
                   <Statistic
                     title="Toplam Harcama"
-                    value={selectedCustomer.totalSpent}
+                    value={selectedCustomer.totalSpent || 0}
                     prefix={<DollarOutlined />}
                     suffix="₺"
                     valueStyle={{ color: '#52c41a' }}
@@ -429,7 +507,7 @@ const CustomersPage = () => {
                 <Card size="small">
                   <Statistic
                     title="Ortalama Sipariş"
-                    value={selectedCustomer.totalOrders > 0 ? Math.round(selectedCustomer.totalSpent / selectedCustomer.totalOrders) : 0}
+                    value={(selectedCustomer.totalOrders || 0) > 0 ? Math.round((selectedCustomer.totalSpent || 0) / (selectedCustomer.totalOrders || 1)) : 0}
                     prefix={<DollarOutlined />}
                     suffix="₺"
                     valueStyle={{ color: '#722ed1' }}
@@ -456,13 +534,34 @@ const CustomersPage = () => {
                   </Form.Item>
                 </Col>
               </Row>
+              {!selectedCustomer && (
+                <Row gutter={16}>
+                  <Col span={24}>
+                    <Form.Item 
+                      name="password" 
+                      label="Şifre" 
+                      rules={[{ required: true, min: 6, message: 'Şifre en az 6 karakter olmalı' }]}
+                    >
+                      <Input.Password placeholder="Yeni müşteri için şifre" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              )}
               <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item name="phone" label="Telefon" rules={[{ required: true }]}>
+                <Col span={8}>
+                  <Form.Item name="phone" label="Telefon">
                     <Input />
                   </Form.Item>
                 </Col>
-                <Col span={12}>
+                <Col span={8}>
+                  <Form.Item name="role" label="Rol" rules={[{ required: true }]}>
+                    <Select>
+                      <Select.Option value="user">Müşteri</Select.Option>
+                      <Select.Option value="admin">Admin</Select.Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
                   <Form.Item name="status" label="Durum">
                     <Select>
                       <Select.Option value="active">Aktif</Select.Option>

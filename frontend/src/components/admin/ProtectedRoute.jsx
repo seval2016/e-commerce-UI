@@ -7,11 +7,8 @@ const ProtectedRoute = ({ children, requiredPermission = null }) => {
   const { isAdmin, hasPermission, isLoading, adminUser } = useAdminAuth();
   const location = useLocation();
 
-
-
   // Loading state'inde bekle
   if (isLoading) {
-
     return (
       <div style={{ 
         display: 'flex', 
@@ -30,7 +27,6 @@ const ProtectedRoute = ({ children, requiredPermission = null }) => {
 
   // Admin olmayan kullanıcıları login'e yönlendir
   if (!isAdmin()) {
-
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 

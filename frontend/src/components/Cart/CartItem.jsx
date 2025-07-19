@@ -4,6 +4,16 @@ import { useCart } from "../../context/CartContext.jsx";
 const CartItem = ({ cartItem }) => {
   const { removeFromCart, updateQuantity } = useCart();
 
+  // Ürün resim yolunu backend ile birleştir (mevcut sepet ürünleri için)
+  const getProductImageUrl = (imagePath) => {
+    if (!imagePath || typeof imagePath !== 'string') return '/img/products/product1/1.png';
+    if (imagePath.startsWith("/uploads/")) {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      return API_BASE_URL + imagePath;
+    }
+    return imagePath;
+  };
+
   const handleQuantityChange = (e) => {
     const newQuantity = parseInt(e.target.value);
     updateQuantity(cartItem.cartItemId, newQuantity);
@@ -25,9 +35,12 @@ const CartItem = ({ cartItem }) => {
       <td className="p-4 relative">
         <div className="relative">
           <img 
-            src={cartItem.image} 
+            src={getProductImageUrl(cartItem.image)} 
             alt={cartItem.name} 
             className="w-16 h-16 object-cover rounded-md"
+            onError={(e) => {
+              e.target.src = '/img/products/product1/1.png';
+            }}
           />
           <button
             onClick={() => removeFromCart(cartItem.cartItemId)}

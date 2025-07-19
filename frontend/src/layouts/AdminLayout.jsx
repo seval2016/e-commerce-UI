@@ -16,13 +16,15 @@ import {
   CustomerServiceOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useAdminAuth } from '../context/AdminAuthContext';
 
 const { Header, Sider, Content } = Layout;
 
-const AdminLayout = ({ logout }) => {
+const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAdminAuth();
 
   const menuItems = [
     {

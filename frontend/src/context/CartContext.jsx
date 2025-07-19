@@ -18,7 +18,7 @@ export const CartProvider = ({ children }) => {
     if (import.meta.env.DEV) {
       try {
         let totalSize = 0;
-        const keysToKeep = ['cart']; // Sadece bu anahtarları koru
+        const keysToKeep = ['cart', 'adminUser', 'token', 'adminToken', 'authToken', 'accessToken']; // Bu anahtarları koru
         
         // Gereksiz anahtarları temizle
         for (let key in localStorage) {
@@ -34,18 +34,18 @@ export const CartProvider = ({ children }) => {
         
 
         return totalSize;
-      } catch (error) {
+      } catch{
 
         return 0;
       }
     }
   };
 
-  // Load cart items from localStorage on mount
+  // Sayfa yüklendiğinde localStorage'dan sepet öğelerini yükle
   useEffect(() => {
     try {
       // Uygulama başlatıldığında gereksiz localStorage anahtarlarını temizle
-      const keysToKeep = ['cart', 'adminUser'];
+      const keysToKeep = ['cart', 'adminUser', 'token', 'adminToken', 'authToken', 'accessToken'];
       for (let key in localStorage) {
         if (Object.prototype.hasOwnProperty.call(localStorage, key) && !keysToKeep.includes(key)) {
 
@@ -56,7 +56,7 @@ export const CartProvider = ({ children }) => {
       // Önce localStorage'dan dene
       let savedCart = localStorage.getItem('cart');
       
-      // Eğer localStorage'da yoksa sessionStorage'dan dene
+      // localStorage'da yoksa sessionStorage'dan dene
       if (!savedCart) {
         savedCart = sessionStorage.getItem('cart');
       }
@@ -64,9 +64,9 @@ export const CartProvider = ({ children }) => {
       if (savedCart) {
         const parsedData = JSON.parse(savedCart);
         
-        // Eğer sıkıştırılmış veri ise (kısa property isimleri varsa)
+        // Sıkıştırılmış veri ise (kısa property isimleri varsa)
         if (parsedData.length > 0 && parsedData[0].i) {
-          // Sıkıştırılmış veriyi aç
+          // Sıkıştırılmış veriyi genişlet
           const expandedData = parsedData.map(item => ({
             id: item.i,
             cartItemId: item.c,
@@ -83,34 +83,31 @@ export const CartProvider = ({ children }) => {
           setCartItems(parsedData);
         }
       }
-    } catch (error) {
+    } catch{
 
       setCartItems([]);
     }
   }, []);
 
-  // Save cart items to localStorage whenever cart changes
+  // Sepet değiştiğinde localStorage'a kaydet
   useEffect(() => {
     try {
-      // Storage kullanımını kontrol et
+      // Depolama kullanımını kontrol et
       _checkStorageUsage();
       
       // Veriyi sıkıştır ve optimize et
       const cartData = cartItems.map(item => ({
         i: item.id, // id
-        c: item.cartItemId, // cartItemId
-        n: item.name, // name
-        p: item.price, // price
-        img: item.image, // image
-        q: item.quantity, // quantity
-        s: item.selectedSize, // selectedSize
-        cl: item.selectedColor // selectedColor
+        c: item.cartItemId, // sepet öğe id'si
+        n: item.name, // ad
+        p: item.price, // fiyat
+        img: item.image, // resim
+        q: item.quantity, // miktar
+        s: item.selectedSize, // seçilen beden
+        cl: item.selectedColor // seçilen renk
       }));
       
       const compressedData = JSON.stringify(cartData);
-      if (import.meta.env.DEV) {
-
-      }
       
       // localStorage'a kaydet
       localStorage.setItem('cart', compressedData);
@@ -140,7 +137,7 @@ export const CartProvider = ({ children }) => {
           localStorage.setItem('cart', JSON.stringify(cartData));
 
           
-        } catch (retryError) {
+        } catch {
 
           
           // Son çare: sessionStorage kullan
@@ -148,7 +145,7 @@ export const CartProvider = ({ children }) => {
 
             sessionStorage.setItem('cart', JSON.stringify(cartItems));
 
-          } catch (sessionError) {
+          } catch {
 
             // En son çare: memory'de tut (sayfa yenilenince kaybolur)
 
@@ -161,6 +158,16 @@ export const CartProvider = ({ children }) => {
   // Generate unique cart item ID based on product ID, size, and color
   const generateCartItemId = (productId, size, color) => {
     return `${productId}-${size}-${color}`;
+  };
+
+  // Ürün resim yolunu backend ile birleştir
+  const getProductImageUrl = (imagePath) => {
+    if (!imagePath || typeof imagePath !== 'string') return '/img/products/product1/1.png';
+    if (imagePath.startsWith("/uploads/")) {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      return API_BASE_URL + imagePath;
+    }
+    return imagePath;
   };
 
   const addToCart = (product, selectedSize = null, selectedColor = null, quantity = 1) => {
@@ -186,12 +193,17 @@ export const CartProvider = ({ children }) => {
       } else {
         // Eğer bu kombinasyon sepette yoksa, yeni ürün ekle
         const cartItemId = generateCartItemId(productId, selectedSize, selectedColor);
+        
+        // Resim yolunu backend URL'si ile birleştir
+        const rawImage = product.image || product.images?.[0]?.url || product.mainImage || product.img?.singleImage;
+        const productImage = getProductImageUrl(rawImage);
+        
         const newItem = {
           id: productId,
           cartItemId: cartItemId,
           name: product.name || product.title || 'Ürün Adı',
           price: typeof product.price === 'number' ? product.price : (product.price?.newPrice || 0),
-          image: product.image || product.images?.[0]?.url || product.mainImage || product.img?.singleImage || '/img/products/product1/1.png',
+          image: productImage,
           quantity: quantity,
           selectedSize: selectedSize,
           selectedColor: selectedColor

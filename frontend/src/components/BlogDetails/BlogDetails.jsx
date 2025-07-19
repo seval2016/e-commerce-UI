@@ -1,9 +1,10 @@
 import { useParams } from "react-router-dom";
+import { useEffect } from "react";
 import Reviews from "../Reviews/Reviews";
 import Badge from "../common/Badge";
 import { useData } from "../../context/DataContext.jsx";
 
-// Backend API base URL
+// Backend API taban URL'si
 const API_BASE_URL = "http://localhost:5000";
 
 // Blog görsel yolunu backend ile birleştir
@@ -16,11 +17,33 @@ const getBlogImageUrl = (imagePath) => {
 };
 
 const BlogDetails = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const { blogs } = useData();
+
+  // Bileşen yüklendiğinde veya slug değiştiğinde sayfanın üstüne kaydır
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [slug]);
   
-  // Find blog by slug
-  const blog = blogs.find(b => b.slug === id);
+  // Slug'a göre blog bul - bulamazsa id ile de dene
+  let blog = blogs.find(b => b.slug === slug);
+  
+  // Slug ile bulamazsa id ile dene
+  if (!blog) {
+    blog = blogs.find(b => b._id === slug || b.id === slug);
+  }
+  
+  // Hala bulamazsa title'dan slug oluşturup dene
+  if (!blog) {
+    blog = blogs.find(b => {
+      const generatedSlug = b.title?.toLowerCase()
+        .replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      return generatedSlug === slug;
+    });
+  }
 
   
   if (!blog) {
@@ -42,14 +65,31 @@ const BlogDetails = () => {
         <article className="bg-white rounded-3xl shadow-lg overflow-hidden">
           {/* Featured Image */}
           <figure className="relative">
-            <img 
-              src={getBlogImageUrl(blog.image)} 
-              alt={blog.title} 
-              className="w-full h-64 md:h-96 object-cover"
-            />
+            {(() => {
+              const blogImagePath = blog.featuredImage || blog.image || blog.img || null;
+              const blogImageUrl = getBlogImageUrl(blogImagePath);
+              
+              return blogImageUrl ? (
+                <img 
+                  src={blogImageUrl}
+                  alt={blog.title} 
+                  className="w-full h-64 md:h-96 object-cover"
+                  onError={(e) => {
+                    e.target.src = '/img/blogs/blog1.jpg';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-64 md:h-96 bg-gray-200 flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <i className="bi bi-image text-5xl mb-3"></i>
+                    <p>Blog Resmi Yok</p>
+                  </div>
+                </div>
+              );
+            })()}
             <div className="absolute top-6 left-6">
               <Badge variant="primary" size="lg">
-                {blog.category}
+                {blog.category?.name || blog.category || 'Kategori'}
               </Badge>
             </div>
           </figure>
@@ -80,7 +120,9 @@ const BlogDetails = () => {
                   <div className="flex gap-2">
                     {blog.tags.map((tag, index) => (
                       <span key={index}>
-                        <a href="#" className="hover:text-blue-600 transition-colors">{tag}</a>
+                        <a href="#" className="hover:text-blue-600 transition-colors">
+                          {tag?.name || tag}
+                        </a>
                         {index < blog.tags.length - 1 && <span>,</span>}
                       </span>
                     ))}
@@ -108,7 +150,7 @@ const BlogDetails = () => {
                   <i className="bi bi-person text-2xl text-gray-500"></i>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{blog.author}</h3>
+                  <h3 className="font-semibold text-gray-900">{blog.author?.name || blog.author || 'Anonim'}</h3>
                   <p className="text-sm text-gray-600">Blog Yazarı</p>
                 </div>
               </div>

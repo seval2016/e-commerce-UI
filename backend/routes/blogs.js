@@ -5,6 +5,56 @@ const auth = require('../middleware/auth');
 const { uploadBlog } = require('../middleware/upload');
 const router = express.Router();
 
+// @route   GET /api/blogs/admin
+// @desc    Get all blogs for admin (including unpublished)
+// @access  Private (Admin)
+router.get('/admin', auth, async (req, res) => {
+  try {
+    const blogs = await Blog.find()
+      .populate('author', 'name email')
+      .sort('-createdAt');
+    
+    res.json({
+      success: true,
+      blogs
+    });
+  } catch (error) {
+    console.error('Admin blogs fetch error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error' 
+    });
+  }
+});
+
+// @route   GET /api/blogs/:id
+// @desc    Get single blog by ID
+// @access  Public
+router.get('/:id', async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id)
+      .populate('author', 'name');
+    
+    if (!blog) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Blog not found' 
+      });
+    }
+
+    res.json({
+      success: true,
+      blog
+    });
+  } catch (error) {
+    console.error('Blog fetch error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error' 
+    });
+  }
+});
+
 // @route   GET /api/blogs
 // @desc    Get all published blogs
 // @access  Public
@@ -19,8 +69,11 @@ router.get('/', async (req, res) => {
       blogs
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Blogs fetch error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error' 
+    });
   }
 });
 
@@ -163,28 +216,6 @@ router.put('/:id', auth, uploadBlog.single('featuredImage'), async (req, res) =>
     });
   } catch (error) {
     console.error('Blog update error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error' 
-    });
-  }
-});
-
-// @route   GET /api/blogs/admin
-// @desc    Get all blogs for admin (including unpublished)
-// @access  Private (Admin)
-router.get('/admin', auth, async (req, res) => {
-  try {
-    const blogs = await Blog.find()
-      .populate('author', 'name email')
-      .sort('-createdAt');
-    
-    res.json({
-      success: true,
-      blogs
-    });
-  } catch (error) {
-    console.error('Admin blogs fetch error:', error);
     res.status(500).json({ 
       success: false,
       message: 'Server error' 

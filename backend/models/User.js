@@ -41,6 +41,22 @@ const userSchema = new mongoose.Schema({
     zipCode: String,
     country: String
   },
+  notes: {
+    type: String,
+    default: ''
+  },
+  totalOrders: {
+    type: Number,
+    default: 0
+  },
+  totalSpent: {
+    type: Number,
+    default: 0
+  },
+  lastOrder: {
+    type: Date,
+    default: null
+  },
   isEmailVerified: {
     type: Boolean,
     default: false
@@ -75,8 +91,13 @@ userSchema.methods.comparePassword = async function(enteredPassword) {
 // Generate JWT token
 userSchema.methods.getSignedJwtToken = function() {
   const jwt = require('jsonwebtoken');
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
+  return jwt.sign({ 
+    id: this._id,
+    userId: this._id, // Backward compatibility
+    email: this.email,
+    role: this.role 
+  }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 };
 

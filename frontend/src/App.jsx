@@ -7,6 +7,9 @@ import CartPage from "./pages/CartPage";
 import AuthPage from "./pages/AuthPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import BlogDetailsPage from "./pages/BlogDetailsPage";
+import ProfilePage from "./pages/ProfilePage";
+import UserOrdersPage from "./pages/OrdersPage";
+import FavoritesPage from "./pages/FavoritesPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import TestPage from "./pages/TestPage";
 import ErrorBoundary from "./components/common/ErrorBoundary";
@@ -23,6 +26,7 @@ import SupportPage from "./pages/admin/SupportPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 import Layout from "./layouts/Layout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
+import ScrollToTop from "./components/common/ScrollToTop";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { DataProvider } from "./context/DataContext";
 import { CartProvider } from "./context/CartContext";
@@ -34,6 +38,7 @@ function App() {
       <AdminAuthProvider>
         <CartProvider>
           <DataProvider>
+            <ScrollToTop />
             <Routes>
               {/* Public Routes with Layout */}
               <Route path="/" element={<Layout><HomePage /></Layout>} />
@@ -43,7 +48,10 @@ function App() {
               <Route path="/cart" element={<Layout><CartPage /></Layout>} />
               <Route path="/auth" element={<Layout><AuthPage /></Layout>} />
               <Route path="/product/:id" element={<Layout><ProductDetailsPage /></Layout>} />
-              <Route path="/blog/:id" element={<Layout><BlogDetailsPage /></Layout>} />
+              <Route path="/blog/:slug" element={<Layout><BlogDetailsPage /></Layout>} />
+              <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
+              <Route path="/orders" element={<Layout><UserOrdersPage /></Layout>} />
+              <Route path="/favorites" element={<Layout><FavoritesPage /></Layout>} />
               <Route path="/test" element={<Layout><TestPage /></Layout>} />
               
               {/* Admin Login Route */}

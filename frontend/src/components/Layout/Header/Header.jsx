@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Proptypes from "prop-types";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useAdminAuth } from "../../../context/AdminAuthContext.jsx";
 import MobileMenu from "./MobileMenu";
@@ -8,10 +8,11 @@ import Dropdown from "../../common/Dropdown";
 import { images } from "../../../utils/imageImports";
 
 const Header = ({ setIsSearchShow }) => {
-  const { getCartCount } = useCart();
-  const { isAdmin } = useAdminAuth();
+  const { getCartCount, clearCart } = useCart();
+  const { isAdmin, logout } = useAdminAuth();
   const user = localStorage.getItem("user");
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -246,17 +247,23 @@ const Header = ({ setIsSearchShow }) => {
                     {
                       label: "Profilim",
                       icon: <i className="bi bi-person"></i>,
-
+                      onClick: () => {
+                        navigate("/profile");
+                      }
                     },
                     {
                       label: "Siparişlerim",
                       icon: <i className="bi bi-box"></i>,
-
+                      onClick: () => {
+                        navigate("/orders");
+                      }
                     },
                     {
                       label: "Favorilerim",
                       icon: <i className="bi bi-heart"></i>,
-
+                      onClick: () => {
+                        navigate("/favorites");
+                      }
                     },
                     { 
                       label: "",
@@ -267,7 +274,19 @@ const Header = ({ setIsSearchShow }) => {
                       icon: <i className="bi bi-box-arrow-right"></i>,
                       onClick: () => {
                         if (window.confirm("Çıkış yapmak istediğinize emin misiniz?")) {
+                          // Tüm kimlik doğrulama verilerini temizle
                           localStorage.removeItem("user");
+                          localStorage.removeItem("token");
+                          localStorage.removeItem("adminUser");
+                          localStorage.removeItem("authToken");
+                          
+                          // Sepet verilerini temizle
+                          clearCart();
+                          
+                          // AdminAuthContext'ten logout fonksiyonunu kullan
+                          logout();
+                          
+                          // Ana sayfaya yönlendir
                           window.location.href = "/";
                         }
                       }

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../common/Button";
 import Input from "../common/Input";
+import api from "../../services/api";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -11,7 +12,6 @@ const Login = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const apiUrl = import.meta.env.VITE_API_BASE_URL;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -22,29 +22,26 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await fetch(`${apiUrl}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("user", JSON.stringify(data));
+      const response = await api.login(formData.email, formData.password);
+      
+      if (response.success) {
+        // Store user data and token
+        localStorage.setItem("user", JSON.stringify(response.user));
+        localStorage.setItem("token", response.token);
+        
         message.success("Giriş başarılı.");
-        if (data.role === "admin") {
+        
+        if (response.user.role === "admin") {
           window.location.href = "/admin";
         } else {
           navigate("/");
         }
       } else {
-        message.error("Giriş başarısız.");
+        message.error(response.message || "Giriş başarısız.");
       }
     } catch (error) {
-
-      message.error("Bir hata oluştu. Lütfen tekrar deneyin.");
+      console.error('Login error:', error);
+      message.error(error.message || "Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsLoading(false);
     }

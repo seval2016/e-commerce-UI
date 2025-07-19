@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 class ApiService {
   constructor() {
@@ -61,8 +61,10 @@ class ApiService {
 
   // Enhanced request method with better error handling
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = `${this.baseURL}/api${endpoint}`;
     const isUpload = options.body instanceof FormData;
+    
+    console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
     
     const config = {
       headers: this.buildHeaders(isUpload),

@@ -2,16 +2,16 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import { message } from 'antd';
 import api from '../services/api.js';
 
-// Create context with default values
+// Context'i varsayılan değerlerle oluştur
 const DataContext = createContext({
-  // Data states
+  // Veri durumları
   products: [],
   categories: [],
   blogs: [],
   orders: [],
   customers: [],
   
-  // Loading states
+  // Yükleme durumları
   loading: {
     products: false,
     categories: false,
@@ -20,7 +20,7 @@ const DataContext = createContext({
     customers: false
   },
   
-  // Error states
+  // Hata durumları
   errors: {
     products: null,
     categories: null,
@@ -29,37 +29,37 @@ const DataContext = createContext({
     customers: null
   },
   
-  // Category operations
+  // Kategori işlemleri
   loadCategories: () => Promise.resolve(),
   addCategory: () => Promise.resolve(),
   updateCategory: () => Promise.resolve(),
   deleteCategory: () => Promise.resolve(),
   
-  // Product operations
+  // Ürün işlemleri
   loadProducts: () => Promise.resolve(),
   addProduct: () => Promise.resolve(),
   updateProduct: () => Promise.resolve(),
   deleteProduct: () => Promise.resolve(),
   toggleProductStatus: () => Promise.resolve(),
   
-  // Blog operations
+  // Blog işlemleri
   loadBlogs: () => Promise.resolve(),
   addBlog: () => Promise.resolve(),
   updateBlog: () => Promise.resolve(),
   deleteBlog: () => Promise.resolve(),
   
-  // Order operations
+  // Sipariş işlemleri
   loadOrders: () => Promise.resolve(),
   updateOrderStatus: () => Promise.resolve(),
   
-  // Customer operations
+  // Müşteri işlemleri
   loadCustomers: () => Promise.resolve(),
   
-  // Utility functions
+  // Yardımcı fonksiyonlar
   refreshData: () => Promise.resolve(),
   clearErrors: () => {},
   
-  // Statistics
+  // İstatistikler
   stats: {
     totalProducts: 0,
     activeProducts: 0,
@@ -70,7 +70,7 @@ const DataContext = createContext({
   }
 });
 
-// Custom hook to use the context
+// Context'i kullanmak için özel hook
 export const useData = () => {
   const context = useContext(DataContext);
   if (!context) {
@@ -79,9 +79,9 @@ export const useData = () => {
   return context;
 };
 
-// Data Provider Component
+// Veri Sağlayıcı Bileşeni
 export const DataProvider = ({ children }) => {
-  // State management
+  // Durum yönetimi
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [blogs, setBlogs] = useState([]);
@@ -277,44 +277,20 @@ export const DataProvider = ({ children }) => {
   // Blog operations
   const loadBlogs = useCallback(
     withLoading('blogs', async () => {
-
       try {
-        // İlk olarak admin endpoint'ini dene
-        let response = await api.getAdminBlogs();
-
-        
-        // Eğer 401 (Unauthorized) alırsak, public endpoint'i dene  
-        if (!response.success && response.status === 401) {
-
-          response = await api.getBlogs();
-
-        }
+        // Ana sayfa için direkt public endpoint kullan
+        const response = await api.getBlogs();
         
         if (response.success) {
           setBlogs(response.blogs || []);
-
-
           return { success: true };
         } else {
-
           throw new Error(response.message || 'Bloglar yüklenemedi');
         }
       } catch (error) {
-
-        // Fallback: public endpoint'i dene
-        try {
-
-          const fallbackResponse = await api.getBlogs();
-
-          
-          if (fallbackResponse.success) {
-            setBlogs(fallbackResponse.blogs || []);
-
-            return { success: true };
-          }
-        } catch{
-          // Fallback error - ignore
-        }
+        console.error('Blog yükleme hatası:', error);
+        // Hata durumunda boş array set et
+        setBlogs([]);
         throw error;
       }
     }),
@@ -438,7 +414,7 @@ export const DataProvider = ({ children }) => {
       activeCategories: categories.filter(c => c.isActive).length,
       
       totalBlogs: blogs.length,
-      publishedBlogs: blogs.filter(b => b.status === 'published').length,
+      publishedBlogs: blogs.filter(b => b.status === 'published' || b.isPublished === true).length,
       
       totalOrders: orders.length,
       pendingOrders: orders.filter(o => o.status === 'pending').length,

@@ -6,8 +6,8 @@ import SectionTitle from "../common/SectionTitle";
 
 function NextBtn({ onClick }) {
   return (
-    <button 
-      className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 border border-gray-200 transition-colors" 
+    <button
+      className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 border border-gray-200 transition-colors"
       onClick={onClick}
       type="button"
       aria-label="Sonraki kategoriler"
@@ -23,8 +23,8 @@ NextBtn.propTypes = {
 
 function PrevBtn({ onClick }) {
   return (
-    <button 
-      className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 border border-gray-200 transition-colors" 
+    <button
+      className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 border border-gray-200 transition-colors"
       onClick={onClick}
       type="button"
       aria-label="Önceki kategoriler"
@@ -42,8 +42,8 @@ const Categories = () => {
   const { categories, loading } = useData();
 
   // Sadece aktif kategorileri filtrele
-  const activeCategories = categories.filter(category => 
-    category.isActive === true || category.status === 'active'
+  const activeCategories = categories.filter(
+    (category) => category.isActive === true || category.status === "active"
   );
 
   // Loading durumunda boş array döndür
@@ -72,30 +72,30 @@ const Categories = () => {
     prevArrow: <PrevBtn />,
     autoplaySpeed: 3000,
     autoplay: activeCategories.length > 4,
-            responsive: [
-          {
-            breakpoint: 992,
-            settings: {
-              slidesToShow: Math.max(1, Math.min(2, activeCategories.length)),
-            },
-          },
-          {
-            breakpoint: 520,
-            settings: {
-              slidesToShow: 1,
-            },
-          },
-        ],
+    responsive: [
+      {
+        breakpoint: 992,
+        settings: {
+          slidesToShow: Math.max(1, Math.min(2, activeCategories.length)),
+        },
+      },
+      {
+        breakpoint: 520,
+        settings: {
+          slidesToShow: 1,
+        },
+      },
+    ],
   };
 
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4 max-w-7xl">
-        <SectionTitle 
+        <SectionTitle
           title="All Categories"
           subtitle="Summer Collection New Modern Design"
         />
-        
+
         <div className="relative">
           <Slider {...sliderSettings}>
             {activeCategories.map((category) => (

@@ -117,32 +117,39 @@ const BlogsPage = () => {
       dataIndex: "tags", 
       key: "tags",
       render: (tags) => {
-
-        
         // Tags array'i düzelt
         let tagArray = [];
         if (tags) {
           if (Array.isArray(tags)) {
-            tagArray = tags;
+            tagArray = tags.map(tag => String(tag).trim()).filter(tag => tag);
           } else if (typeof tags === 'string') {
             try {
-              tagArray = JSON.parse(tags);
+              const parsed = JSON.parse(tags);
+              if (Array.isArray(parsed)) {
+                tagArray = parsed.map(tag => String(tag).trim()).filter(tag => tag);
+              } else {
+                tagArray = [String(parsed).trim()].filter(tag => tag);
+              }
             } catch{
               tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
             }
           }
         }
         
+        if (tagArray.length === 0) {
+          return <span style={{ color: '#999', fontSize: 12 }}>Etiket yok</span>;
+        }
+        
         return (
-          <div style={{ maxWidth: 120 }}>
-            {tagArray.slice(0, 2).map((tag, index) => (
+          <div style={{ maxWidth: 150 }}>
+            {tagArray.slice(0, 3).map((tag, index) => (
               <Tag key={index} color="purple" style={{ marginBottom: 2, fontSize: 11 }}>
                 {tag}
               </Tag>
             ))}
-            {tagArray.length > 2 && (
+            {tagArray.length > 3 && (
               <Tag color="default" style={{ fontSize: 11 }}>
-                +{tagArray.length - 2}
+                +{tagArray.length - 3}
               </Tag>
             )}
           </div>
@@ -251,13 +258,20 @@ const BlogsPage = () => {
 
       // Tags field'ını düzelt - array olmayan durumları handle et
       let parsedTags = [];
+      
       if (blog.tags) {
         if (Array.isArray(blog.tags)) {
-          parsedTags = blog.tags;
+          // Array içindeki her elemanın string olduğundan emin ol
+          parsedTags = blog.tags.map(tag => String(tag).trim()).filter(tag => tag);
         } else if (typeof blog.tags === 'string') {
           try {
             // JSON string ise parse et
-            parsedTags = JSON.parse(blog.tags);
+            const parsed = JSON.parse(blog.tags);
+            if (Array.isArray(parsed)) {
+              parsedTags = parsed.map(tag => String(tag).trim()).filter(tag => tag);
+            } else {
+              parsedTags = [String(parsed).trim()].filter(tag => tag);
+            }
           } catch{
             // Comma separated string ise split et
             parsedTags = blog.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
@@ -267,6 +281,9 @@ const BlogsPage = () => {
       
 
 
+      // Etiketleri Select component için düzgün formata çevir
+      const cleanTags = parsedTags.filter(tag => tag && tag.trim()).map(tag => tag.trim());
+
       // Form alanlarını MongoDB yapısına uygun doldur
       const formValues = {
         title: blog.title || '',
@@ -275,7 +292,7 @@ const BlogsPage = () => {
         author: authorName,
         category: blog.category || '',
         status: blog.isPublished ? 'published' : 'draft',
-        tags: parsedTags,
+        tags: cleanTags, // Temizlenmiş etiketler
         image: blog.featuredImage ? 'existing' : undefined, // Mevcut görsel varsa form'u geçerli yap
       };
 
@@ -618,7 +635,54 @@ const BlogsPage = () => {
           </Form.Item>
 
           <Form.Item name="tags" label="Etiketler">
-            <Select mode="tags" placeholder="Etiket ekleyin">
+            <Select 
+              mode="tags" 
+              placeholder="Etiket ekleyin (Enter ile ayırın)"
+              tokenSeparators={[',', ' ']}
+              style={{ width: '100%' }}
+              maxTagTextLength={20}
+              maxTagCount={10}
+              showSearch
+              filterOption={false}
+              notFoundContent={null}
+              tagRender={(props) => {
+                const { label, value, closable, onClose } = props;
+                // Etiket değerini string olarak al (array formatını önlemek için)
+                const displayValue = typeof value === 'string' ? value : String(value);
+                const displayLabel = typeof label === 'string' ? label : String(label);
+                
+                return (
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      background: '#f0f0f0',
+                      border: '1px solid #d9d9d9',
+                      borderRadius: '4px',
+                      padding: '2px 8px',
+                      margin: '2px',
+                      fontSize: '12px',
+                    }}
+                  >
+                    {displayLabel || displayValue}
+                    {closable && (
+                      <span
+                        style={{
+                          marginLeft: '4px',
+                          cursor: 'pointer',
+                          color: '#999',
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onClose();
+                        }}
+                      >
+                        ×
+                      </span>
+                    )}
+                  </span>
+                );
+              }}
+            >
               <Option value="fashion">Fashion</Option>
               <Option value="lifestyle">Lifestyle</Option>
               <Option value="technology">Technology</Option>

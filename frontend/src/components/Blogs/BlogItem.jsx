@@ -15,15 +15,31 @@ const getBlogImageUrl = (imagePath) => {
 };
 
 const BlogItem = ({ blog }) => {
+  // Blog resim field'ını al - farklı fieldları deneme
+  const blogImagePath = blog.featuredImage || blog.image || blog.img || null;
+  const blogImageUrl = getBlogImageUrl(blogImagePath);
+
   return (
     <Card className="overflow-hidden group h-full" padding="p-0">
       {/* Blog Image */}
       <Link to={`/blog/${blog.slug}`} className="block relative overflow-hidden">
-        <img 
-          src={getBlogImageUrl(blog.image)} 
-          alt={blog.title} 
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+        {blogImageUrl ? (
+          <img 
+            src={blogImageUrl}
+            alt={blog.title} 
+            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.target.src = '/img/blogs/blog1.jpg'; // Fallback resim
+            }}
+          />
+        ) : (
+          <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+            <div className="text-center text-gray-500">
+              <i className="bi bi-image text-4xl mb-2"></i>
+              <p className="text-sm">Resim Yok</p>
+            </div>
+          </div>
+        )}
         <div className="absolute top-4 left-4">
           <Badge variant="primary" size="lg">
             {blog.category}
