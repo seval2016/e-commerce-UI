@@ -163,7 +163,12 @@ export const DataProvider = ({ children }) => {
       const response = await api.getCategories();
       
       if (response.success) {
-        setCategories(response.categories || []);
+        // Backend'den gelen kategorilerde isActive'den status'a dönüşüm yap
+        const categoriesWithStatus = (response.categories || []).map(category => ({
+          ...category,
+          status: category.isActive ? 'active' : 'inactive'
+        }));
+        setCategories(categoriesWithStatus);
         return { success: true };
       } else {
         throw new Error(response.message || 'Kategoriler yüklenemedi');

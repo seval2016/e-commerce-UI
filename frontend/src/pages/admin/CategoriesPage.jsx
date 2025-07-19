@@ -61,6 +61,9 @@ const CategoriesPage = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [slugError, setSlugError] = useState("");
   
+  // Switch'in durumunu takip et
+  const statusValue = Form.useWatch('status', form);
+  
   const { categories, addCategory, updateCategory, deleteCategory } = useData();
 
   // Filter categories based on search
@@ -176,9 +179,10 @@ const CategoriesPage = () => {
   };
 
   const handleDelete = async (id) => {
-    const result = await deleteCategory(id);
-    if (result && !result.success) {
-
+    try {
+      await deleteCategory(id);
+    } catch (error) {
+      console.error('Kategori silme hatası:', error);
     }
   };
 
@@ -242,7 +246,7 @@ const CategoriesPage = () => {
         form.resetFields();
       }
     } catch (error) {
-
+      console.error('Modal işlem hatası:', error);
     }
   };
 
@@ -480,7 +484,10 @@ const CategoriesPage = () => {
             <Switch 
               checkedChildren="Aktif" 
               unCheckedChildren="Pasif"
-              style={{ background: '#1890ff' }}
+              style={{ 
+                backgroundColor: statusValue ? '#52c41a' : '#d9d9d9',
+                borderColor: statusValue ? '#52c41a' : '#d9d9d9'
+              }}
             />
           </Form.Item>
 
