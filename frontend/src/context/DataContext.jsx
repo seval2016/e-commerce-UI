@@ -50,6 +50,7 @@ const DataContext = createContext({
   
   // Sipariş işlemleri
   loadOrders: () => Promise.resolve(),
+  addOrder: () => Promise.resolve(),
   updateOrderStatus: () => Promise.resolve(),
   
   // Müşteri işlemleri
@@ -366,6 +367,28 @@ export const DataProvider = ({ children }) => {
     [withLoading, handleApiResponse]
   );
 
+  const addOrder = useCallback(
+    withLoading('orders', async (orderData) => {
+      try {
+        // Frontend'de sipariş oluştur - backend'e göndermeye gerek yok
+        const newOrder = {
+          _id: orderData.id,
+          ...orderData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Local state'e ekle
+        setOrders(prev => [newOrder, ...prev]);
+        
+        return { success: true, order: newOrder };
+      } catch (error) {
+        throw new Error('Sipariş oluşturulurken hata oluştu: ' + error.message);
+      }
+    }),
+    [withLoading]
+  );
+
   // Customer operations
   const loadCustomers = useCallback(
     withLoading('customers', async () => {
@@ -515,6 +538,7 @@ export const DataProvider = ({ children }) => {
     
     // Order operations
     loadOrders,
+    addOrder,
     updateOrderStatus,
     
     // Customer operations

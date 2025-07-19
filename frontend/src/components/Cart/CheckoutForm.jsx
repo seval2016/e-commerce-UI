@@ -31,6 +31,8 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -39,9 +41,16 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
       [name]: value
     }));
     
-    // Ödeme yöntemi değiştiğinde konsola log
+    // Ödeme yöntemi değiştiğinde form alanlarını sıfırla
     if (name === 'paymentMethod') {
-
+      // Kart bilgilerini temizle
+      setCardData({
+        cardNumber: "",
+        cardHolder: "",
+        expiryMonth: "",
+        expiryYear: "",
+        cvv: ""
+      });
     }
   };
 
@@ -116,25 +125,8 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
         return false;
       }
 
-      // Son kullanma tarihi geçerlilik kontrolü
-      const currentYear = new Date().getFullYear() % 100;
-      const currentMonth = new Date().getMonth() + 1;
-      const expiryYear = parseInt(cardData.expiryYear);
-      const expiryMonth = parseInt(cardData.expiryYear);
-      
-
-
-
-      // Test için geçici olarak tarih kontrolünü gevşet (sadece geliştirme aşamasında)
-      if (expiryYear < 24 || (expiryYear === 24 && expiryMonth < currentMonth)) {
-
-        message.error("Kartınızın son kullanma tarihi geçmiş! Lütfen geçerli bir tarih girin.");
-        return false;
-      }
-      
-
-    } else {
-
+      // Son kullanma tarihi kontrolü (geçici olarak devre dışı)
+      // Gerçek implementasyon handleSubmit fonksiyonunda yapılıyor
     }
     return true;
   };
@@ -221,7 +213,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
         return;
       }
 
-      // Son kullanma tarihi kontrolü
+      // Son kullanma tarihi kontrolü - kartın son kullanma tarihini kontrol et
       const currentYear = new Date().getFullYear() % 100;
       const currentMonth = new Date().getMonth() + 1;
       const expiryYear = parseInt(cardData.expiryYear);
@@ -274,35 +266,20 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
       // Sepeti temizle
       clearCart();
       
-      // Başarı mesajı - sipariş numarası ile birlikte
-      message.success({
-        content: (
-          <div>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-              ✅ Siparişiniz başarıyla oluşturuldu!
-            </div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
-              Sipariş Numarası: <strong>{order.orderNumber}</strong>
-            </div>
-            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-              Toplam Tutar: <strong>₺{total.toLocaleString()}</strong>
-            </div>
-            <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>
-              Siparişiniz admin panelinde görüntülenebilir.
-            </div>
-          </div>
-        ),
-        duration: 5, // 5 saniye göster
-        style: {
-          marginTop: '20px',
-        }
+      // Success modal verilerini set et
+      setOrderSuccess({
+        orderNumber: order.orderNumber,
+        total: total,
+        customerName: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        phone: formData.phone
       });
       
-      // Formu kapat
-      onClose();
+      // Success modal'ını göster
+      setShowSuccessModal(true);
       
     } catch (error) {
-
+      console.error('Sipariş oluşturma hatası:', error);
       message.error("Sipariş oluşturulurken bir hata oluştu!");
     } finally {
       setIsSubmitting(false);
@@ -621,6 +598,73 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
           </div>
         </form>
       </div>
+
+      {/* Sipariş Başarı Modal'ı */}
+      {showSuccessModal && orderSuccess && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 text-center">
+            {/* Başarı İkonu */}
+            <div className="mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Başlık */}
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              Siparişiniz Başarıyla Oluşturuldu!
+            </h3>
+
+            {/* Sipariş Detayları */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4 text-left">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Sipariş Numarası:</span>
+                  <span className="font-semibold">{orderSuccess.orderNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Müşteri:</span>
+                  <span className="font-semibold">{orderSuccess.customerName}</span>
+                </div>
+                {orderSuccess.email && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">E-posta:</span>
+                    <span className="font-semibold">{orderSuccess.email}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Telefon:</span>
+                  <span className="font-semibold">{orderSuccess.phone}</span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span className="text-gray-600">Toplam Tutar:</span>
+                  <span className="font-bold text-green-600">₺{orderSuccess.total.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bilgi Mesajı */}
+            <p className="text-gray-600 text-sm mb-6">
+              Siparişiniz admin panelinde görüntülenebilir ve en kısa sürede işleme alınacaktır.
+            </p>
+
+            {/* Buton */}
+            <Button
+              onClick={() => {
+                setShowSuccessModal(false);
+                setOrderSuccess(null);
+                onClose();
+              }}
+              className="w-full"
+              variant="primary"
+            >
+              Tamam
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
