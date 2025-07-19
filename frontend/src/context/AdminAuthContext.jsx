@@ -16,11 +16,11 @@ export const AdminAuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Sayfa yüklendiğinde localStorage'dan admin bilgilerini kontrol et
+    // Sayfa yüklendiğinde sessionStorage'dan admin bilgilerini kontrol et
     const checkAdminAuth = async () => {
       try {
-        const savedAdmin = localStorage.getItem('adminUser');
-        const savedToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+        const savedAdmin = sessionStorage.getItem('adminUser');
+        const savedToken = sessionStorage.getItem('token') || sessionStorage.getItem('adminToken');
         
         if (savedAdmin && savedToken) {
           const adminData = JSON.parse(savedAdmin);
@@ -48,17 +48,17 @@ export const AdminAuthProvider = ({ children }) => {
             }, 100);
           } else {
             // Geçersiz admin data
-            localStorage.removeItem('adminUser');
-            localStorage.removeItem('token');
-            localStorage.removeItem('adminToken');
+            sessionStorage.removeItem('adminUser');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('adminToken');
           }
         }
       } catch (error) {
         console.error('Admin auth check error:', error);
-        // Hata durumunda localStorage'ı temizle
-        localStorage.removeItem('adminUser');
-        localStorage.removeItem('token');
-        localStorage.removeItem('adminToken');
+        // Hata durumunda sessionStorage'ı temizle
+        sessionStorage.removeItem('adminUser');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('adminToken');
       }
       
       // Loading'i hemen false yap
@@ -89,10 +89,10 @@ export const AdminAuthProvider = ({ children }) => {
 
         setAdminUser(adminData);
         
-        // Token'ı hem adminUser object'inde hem de ayrı key'de kaydet
-        localStorage.setItem('adminUser', JSON.stringify(adminData));
-        localStorage.setItem('token', adminData.token);
-        localStorage.setItem('adminToken', adminData.token);
+        // Token'ı hem adminUser object'inde hem de ayrı key'de kaydet (sessionStorage)
+        sessionStorage.setItem('adminUser', JSON.stringify(adminData));
+        sessionStorage.setItem('token', adminData.token);
+        sessionStorage.setItem('adminToken', adminData.token);
         
         return {
           success: true,
@@ -120,13 +120,17 @@ export const AdminAuthProvider = ({ children }) => {
 
     setAdminUser(null);
     
-    // Tüm authentication key'lerini temizle
+    // Tüm authentication key'lerini temizle (sessionStorage)
+    sessionStorage.removeItem('adminUser');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('adminToken');
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('userToken');
+    // Eski localStorage key'lerini de temizle (geçiş için)
     localStorage.removeItem('adminUser');
     localStorage.removeItem('token');
     localStorage.removeItem('adminToken');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userToken');
     
 
   };
@@ -143,17 +147,17 @@ export const AdminAuthProvider = ({ children }) => {
       return true;
     }
     
-    // Loading sırasında da localStorage'dan kontrol et
+    // Loading sırasında da sessionStorage'dan kontrol et
     try {
-      const savedAdmin = localStorage.getItem('adminUser');
-      const savedToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      const savedAdmin = sessionStorage.getItem('adminUser');
+      const savedToken = sessionStorage.getItem('token') || sessionStorage.getItem('adminToken');
       
       if (savedAdmin && savedToken) {
         const adminData = JSON.parse(savedAdmin);
         return adminData && adminData.role === 'admin' && adminData.token;
       }
     } catch (error) {
-      console.debug('isAdmin localStorage check error:', error);
+      console.debug('isAdmin sessionStorage check error:', error);
     }
     
     return false;

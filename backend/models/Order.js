@@ -3,18 +3,24 @@ const mongoose = require('mongoose');
 const orderSchema = new mongoose.Schema({
   orderNumber: {
     type: String,
-    required: true,
-    unique: true
+    unique: true,
+    default: function() {
+      return 'ORD-' + Date.now();
+    }
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false  // Anonim siparişler için optional
   },
   items: [{
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Product',
+      required: false  // Optional for data integrity
+    },
+    name: {
+      type: String,
       required: true
     },
     quantity: {
@@ -27,7 +33,8 @@ const orderSchema = new mongoose.Schema({
       required: true
     },
     selectedSize: String,
-    selectedColor: String
+    selectedColor: String,
+    image: String
   }],
   shippingAddress: {
     firstName: String,

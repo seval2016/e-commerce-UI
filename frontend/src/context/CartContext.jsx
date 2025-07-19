@@ -157,7 +157,9 @@ export const CartProvider = ({ children }) => {
 
   // Generate unique cart item ID based on product ID, size, and color
   const generateCartItemId = (productId, size, color) => {
-    return `${productId}-${size}-${color}`;
+    const safeSize = size || 'no-size';
+    const safeColor = color || 'no-color';
+    return `${productId}-${safeSize}-${safeColor}`;
   };
 
   // Ürün resim yolunu backend ile birleştir

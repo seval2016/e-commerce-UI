@@ -51,6 +51,8 @@ const DataContext = createContext({
   // Sipariş işlemleri
   loadOrders: () => Promise.resolve(),
   addOrder: () => Promise.resolve(),
+  updateOrder: () => Promise.resolve(),
+  deleteOrder: () => Promise.resolve(),
   updateOrderStatus: () => Promise.resolve(),
   
   // Müşteri işlemleri
@@ -86,7 +88,15 @@ export const DataProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [blogs, setBlogs] = useState([]);
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState(() => {
+    try {
+      const savedOrders = localStorage.getItem('orders');
+      return savedOrders ? JSON.parse(savedOrders) : [];
+    } catch (error) {
+      console.error('Error loading orders from localStorage:', error);
+      return [];
+    }
+  });
   const [customers, setCustomers] = useState([]);
   
   const [loading, setLoading] = useState({
@@ -339,15 +349,34 @@ export const DataProvider = ({ children }) => {
   // Order operations
   const loadOrders = useCallback(
     withLoading('orders', async () => {
-
-      const response = await api.getOrders();
-      
-      if (response.success) {
-        setOrders(response.orders || []);
-
-        return { success: true };
-      } else {
-        throw new Error(response.message || 'Siparişler yüklenemedi');
+      try {
+        // Backend'den siparişleri çek
+        const response = await api.getOrders();
+        
+        if (response.success) {
+          setOrders(response.orders || []);
+          // Eski localStorage verilerini temizle
+          localStorage.removeItem('orders');
+          return { success: true };
+        } else {
+          throw new Error(response.message || 'Siparişler yüklenemedi');
+        }
+      } catch (error) {
+        console.error('Orders loading error:', error);
+        
+        // Backend'e erişilemezse localStorage'dan yükle (fallback)
+        try {
+          const savedOrders = localStorage.getItem('orders');
+          if (savedOrders) {
+            const localOrders = JSON.parse(savedOrders);
+            setOrders(localOrders);
+            return { success: true, warning: 'Siparişler yerel depodan yüklendi' };
+          }
+        } catch (localError) {
+          console.error('localStorage parse error:', localError);
+        }
+        
+        throw error;
       }
     }),
     [withLoading]
@@ -370,20 +399,98 @@ export const DataProvider = ({ children }) => {
   const addOrder = useCallback(
     withLoading('orders', async (orderData) => {
       try {
-        // Frontend'de sipariş oluştur - backend'e göndermeye gerek yok
-        const newOrder = {
+        // Backend'e sipariş gönder
+        const response = await api.createOrder({
+          items: orderData.products.map(product => ({
+            product: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: product.quantity,
+            size: product.selectedSize,
+            color: product.selectedColor,
+            image: product.image
+          })),
+          shippingAddress: {
+            firstName: orderData.customerInfo.firstName,
+            lastName: orderData.customerInfo.lastName,
+            email: orderData.customerInfo.email,
+            phone: orderData.customerInfo.phone,
+            address: orderData.customerInfo.address,
+            city: orderData.customerInfo.city,
+            postalCode: orderData.customerInfo.postalCode,
+            country: orderData.customerInfo.country
+          },
+          billingAddress: {
+            firstName: orderData.customerInfo.firstName,
+            lastName: orderData.customerInfo.lastName,
+            email: orderData.customerInfo.email,
+            phone: orderData.customerInfo.phone,
+            address: orderData.customerInfo.address,
+            city: orderData.customerInfo.city,
+            postalCode: orderData.customerInfo.postalCode,
+            country: orderData.customerInfo.country
+          },
+          paymentMethod: orderData.paymentMethod,
+          notes: orderData.notes
+        });
+
+        if (response.success) {
+          // Backend'den gelen sipariş verisini state'e ekle
+          setOrders(prev => [response.order, ...prev]);
+          
+          return { success: true, order: response.order };
+        } else {
+          throw new Error(response.message || 'Sipariş oluşturulamadı');
+        }
+      } catch (error) {
+        console.error('Error adding order:', error);
+        
+        // Backend hatası varsa fallback olarak local state'e kaydet
+        const fallbackOrder = {
           _id: orderData.id,
           ...orderData,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
+
+        setOrders(prev => [fallbackOrder, ...prev]);
         
-        // Local state'e ekle
-        setOrders(prev => [newOrder, ...prev]);
+        // Warning message ile kullanıcıya bilgi ver
+        return { 
+          success: true, 
+          order: fallbackOrder, 
+          warning: 'Sipariş oluşturuldu ancak sunucuya kaydedilemedi' 
+        };
+      }
+    }),
+    [withLoading]
+  );
+
+  const updateOrder = useCallback(
+    withLoading('orders', async (id, updates) => {
+      try {
+        // Local state'i güncelle
+        setOrders(prev => prev.map(order => 
+          order._id === id || order.id === id ? { ...order, ...updates, updatedAt: new Date().toISOString() } : order
+        ));
         
-        return { success: true, order: newOrder };
+        return { success: true };
       } catch (error) {
-        throw new Error('Sipariş oluşturulurken hata oluştu: ' + error.message);
+        throw new Error('Sipariş güncellenirken hata oluştu: ' + error.message);
+      }
+    }),
+    [withLoading]
+  );
+
+  const deleteOrder = useCallback(
+    withLoading('orders', async (id) => {
+      try {
+        // Local state'ten kaldır
+        setOrders(prev => prev.filter(order => order._id !== id && order.id !== id));
+        
+        return { success: true };
+      } catch (error) {
+        throw new Error('Sipariş silinirken hata oluştu: ' + error.message);
       }
     }),
     [withLoading]
@@ -477,6 +584,15 @@ export const DataProvider = ({ children }) => {
     };
   }, [orders, customers, products]);
 
+  // Save orders to localStorage whenever orders change
+  useEffect(() => {
+    try {
+      localStorage.setItem('orders', JSON.stringify(orders));
+    } catch (error) {
+      console.error('Error saving orders to localStorage:', error);
+    }
+  }, [orders]);
+
   // Load initial data
   useEffect(() => {
     const initializeData = async () => {
@@ -539,6 +655,8 @@ export const DataProvider = ({ children }) => {
     // Order operations
     loadOrders,
     addOrder,
+    updateOrder,
+    deleteOrder,
     updateOrderStatus,
     
     // Customer operations

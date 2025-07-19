@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Order = require('../models/Order');
+const auth = require('../middleware/auth');
 const router = express.Router();
 
 // @route   GET /api/orders
@@ -25,8 +26,26 @@ router.get('/', async (req, res) => {
 
 // @route   POST /api/orders
 // @desc    Create a new order
-// @access  Private
+// @access  Public (supports both authenticated and anonymous orders)
 router.post('/', [
+  // Optional auth middleware - don't fail if no token
+  (req, res, next) => {
+    const token = req.header('x-auth-token') || req.header('Authorization')?.replace('Bearer ', '');
+    if (token) {
+      // If token exists, try to authenticate
+      auth(req, res, (err) => {
+        if (err) {
+          // If auth fails, continue as anonymous user
+          req.user = null;
+        }
+        next();
+      });
+    } else {
+      // No token, continue as anonymous user
+      req.user = null;
+      next();
+    }
+  },
   body('items', 'Order items are required').isArray({ min: 1 }),
   body('shippingAddress', 'Shipping address is required').not().isEmpty(),
   body('paymentMethod', 'Payment method is required').not().isEmpty()
@@ -39,15 +58,26 @@ router.post('/', [
 
     const { items, shippingAddress, billingAddress, paymentMethod, notes } = req.body;
 
+    // Process items and ensure product IDs are valid ObjectIds
+    const processedItems = items.map(item => ({
+      product: item.product,
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      selectedSize: item.size,
+      selectedColor: item.color,
+      image: item.image
+    }));
+
     // Calculate totals
-    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = processedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const tax = subtotal * 0.18; // 18% tax
     const shippingCost = subtotal > 500 ? 0 : 29.99; // Free shipping over 500
     const total = subtotal + tax + shippingCost;
 
     const order = new Order({
-      user: req.user.id, // Will be set by auth middleware
-      items,
+      user: req.user ? req.user.id : null, // Optional user for anonymous orders
+      items: processedItems,
       shippingAddress,
       billingAddress: billingAddress || shippingAddress,
       paymentMethod,

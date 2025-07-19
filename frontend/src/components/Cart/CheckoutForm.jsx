@@ -18,7 +18,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
     city: "",
     postalCode: "",
     country: "Türkiye",
-    paymentMethod: "cashOnDelivery", // Varsayılan olarak kapıda ödeme
+    paymentMethod: "cash_on_delivery", // Varsayılan olarak kapıda ödeme
     notes: ""
   });
 
@@ -261,22 +261,33 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
 
 
       // Admin paneline sipariş ekle
-      addOrder(order);
+      const orderResult = await addOrder(order);
       
-      // Sepeti temizle
-      clearCart();
-      
-      // Success modal verilerini set et
-      setOrderSuccess({
-        orderNumber: order.orderNumber,
-        total: total,
-        customerName: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        phone: formData.phone
-      });
-      
-      // Success modal'ını göster
-      setShowSuccessModal(true);
+      if (orderResult.success) {
+        // Sepeti temizle
+        clearCart();
+        
+        // Success modal verilerini set et
+        setOrderSuccess({
+          orderNumber: order.orderNumber,
+          total: total,
+          customerName: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          phone: formData.phone
+        });
+        
+        // Warning varsa göster
+        if (orderResult.warning) {
+          message.warning(orderResult.warning);
+        } else {
+          message.success("Siparişiniz başarıyla oluşturuldu!");
+        }
+        
+        // Success modal'ını göster
+        setShowSuccessModal(true);
+      } else {
+        throw new Error('Sipariş oluşturulamadı');
+      }
       
     } catch (error) {
       console.error('Sipariş oluşturma hatası:', error);
@@ -434,9 +445,10 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
-                  <option value="creditCard">Kredi Kartı</option>
-                  <option value="bankTransfer">Banka Havalesi</option>
-                  <option value="cashOnDelivery">Kapıda Ödeme</option>
+                  <option value="credit_card">Kredi Kartı</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="bank_transfer">Banka Havalesi</option>
+                  <option value="cash_on_delivery">Kapıda Ödeme</option>
                 </select>
               </div>
 

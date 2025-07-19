@@ -148,7 +148,7 @@ const ProductsPage = () => {
       dataIndex: 'mainImage',
       key: 'image',
       width: 80,
-      render: (mainImage, record) => {
+      render: (mainImage) => {
         const imageUrl = mainImage ? getProductImageUrl(mainImage) : null;
         return (
           <Image
@@ -194,7 +194,7 @@ const ProductsPage = () => {
       key: 'category',
       width: 120,
       render: (category) => {
-        const categoryName = typeof category === 'object' ? category.name : 'Bilinmiyor';
+        const categoryName = category && typeof category === 'object' ? category.name : 'Bilinmiyor';
         return (
           <Tag color="blue" style={{ marginRight: 0 }}>
             {categoryName}
@@ -450,8 +450,8 @@ const ProductsPage = () => {
     try {
       setLocalLoading(true);
       await deleteProduct(id);
-    } catch (error) {
-
+    } catch {
+      // Error is handled by the deleteProduct function
     } finally {
       setLocalLoading(false);
     }
@@ -460,8 +460,8 @@ const ProductsPage = () => {
   const handleToggleStatus = useCallback(async (id) => {
     try {
       await toggleProductStatus(id);
-    } catch (error) {
-
+    } catch {
+      // Error is handled by the toggleProductStatus function
     }
   }, [toggleProductStatus]);
 
@@ -470,8 +470,6 @@ const ProductsPage = () => {
       setLocalLoading(true);
       const values = await form.validateFields();
       
-
-      
       const productData = {
         ...values,
         status: values.status ? 'active' : 'inactive',
@@ -479,10 +477,8 @@ const ProductsPage = () => {
       };
       
       if (editingProduct) {
-
         await updateProduct(editingProduct._id, productData, imageFiles, removedImages);
       } else {
-
         await addProduct(productData, imageFiles);
       }
       

@@ -41,7 +41,7 @@ const CartTable = () => {
         </thead>
         <tbody className="divide-y divide-gray-200">
           {cartItems.map((item) => (
-            <CartItem cartItem={item} key={item.id} />
+            <CartItem cartItem={item} key={item.cartItemId} />
           ))}
         </tbody>
       </table>
