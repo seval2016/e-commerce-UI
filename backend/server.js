@@ -95,6 +95,7 @@ app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/blogs', require('./routes/blogs'));
+app.use('/api/support', require('./routes/support'));
 app.use('/api/admin', require('./routes/admin'));
 
 // API root endpoint
@@ -110,6 +111,7 @@ app.get('/api', (req, res) => {
       orders: '/api/orders',
       users: '/api/users',
       blogs: '/api/blogs',
+      support: '/api/support',
       admin: '/api/admin',
       health: '/api/health'
     },

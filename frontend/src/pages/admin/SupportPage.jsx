@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Table, 
   Card, 
@@ -34,6 +34,7 @@ import {
   StarOutlined,
   PlusOutlined
 } from '@ant-design/icons';
+import { useData } from '../../context/DataContext.jsx';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -44,87 +45,63 @@ const SupportPage = () => {
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [filters, setFilters] = useState({
+    status: 'all',
+    priority: 'all',
+    category: 'all'
+  });
   const [form] = Form.useForm();
+  
+  const { 
+    supportTickets, 
+    loading, 
+    loadSupport, 
+    updateSupportTicket, 
+    deleteSupportTicket,
+    addSupportResponse 
+  } = useData();
 
-  // Mock data
-  const tickets = [
-    {
-      key: '1',
-      id: 'TKT-001',
-      customer: {
-        name: 'Ahmet Yılmaz',
-        email: 'ahmet@email.com',
-        avatar: '/img/avatars/avatar1.jpg'
-      },
-      subject: 'Sipariş takip sorunu',
-      message: 'Siparişimi takip edemiyorum, yardım edebilir misiniz?',
-      priority: 'high',
-      status: 'open',
-      category: 'siparis',
-      createdAt: '2024-01-15 14:30',
-      updatedAt: '2024-01-15 16:45',
-      assignedTo: 'Destek Ekibi',
-      rating: 5,
-      responseTime: '2 saat'
-    },
-    {
-      key: '2',
-      id: 'TKT-002',
-      customer: {
-        name: 'Fatma Demir',
-        email: 'fatma@email.com',
-        avatar: '/img/avatars/avatar2.jpg'
-      },
-      subject: 'Ürün iadesi',
-      message: 'Aldığım ürünü iade etmek istiyorum, nasıl yapabilirim?',
-      priority: 'medium',
-      status: 'in_progress',
-      category: 'iade',
-      createdAt: '2024-01-14 10:15',
-      updatedAt: '2024-01-15 09:30',
-      assignedTo: 'Müşteri Hizmetleri',
-      rating: null,
-      responseTime: '23 saat'
-    },
-    {
-      key: '3',
-      id: 'TKT-003',
-      customer: {
-        name: 'Mehmet Kaya',
-        email: 'mehmet@email.com',
-        avatar: null
-      },
-      subject: 'Teknik sorun',
-      message: 'Sitenizde ödeme yaparken hata alıyorum',
-      priority: 'high',
-      status: 'resolved',
-      category: 'teknik',
-      createdAt: '2024-01-13 16:20',
-      updatedAt: '2024-01-14 11:15',
-      assignedTo: 'Teknik Destek',
-      rating: 4,
-      responseTime: '19 saat'
-    },
-    {
-      key: '4',
-      id: 'TKT-004',
-      customer: {
-        name: 'Ayşe Özkan',
-        email: 'ayse@email.com',
-        avatar: null
-      },
-      subject: 'Kargo sorunu',
-      message: 'Kargom nerede, takip edemiyorum',
-      priority: 'low',
-      status: 'closed',
-      category: 'kargo',
-      createdAt: '2024-01-12 09:45',
-      updatedAt: '2024-01-13 14:20',
-      assignedTo: 'Lojistik',
-      rating: 3,
-      responseTime: '29 saat'
+  // Component yüklendiğinde destek taleplerini getir
+  useEffect(() => {
+    loadSupport();
+  }, [loadSupport]);
+
+  // Filtrelenmiş ticket listesi
+  const filteredTickets = supportTickets.filter(ticket => {
+    // Arama filtresi
+    if (searchText) {
+      const searchLower = searchText.toLowerCase();
+      const searchMatch = 
+        ticket.ticketId?.toLowerCase().includes(searchLower) ||
+        ticket.subject?.toLowerCase().includes(searchLower) ||
+        ticket.customer?.name?.toLowerCase().includes(searchLower) ||
+        ticket.customer?.email?.toLowerCase().includes(searchLower);
+      
+      if (!searchMatch) return false;
     }
-  ];
+    
+    // Durum filtresi
+    if (filters.status && filters.status !== 'all') {
+      if (ticket.status !== filters.status) return false;
+    }
+    
+    // Öncelik filtresi  
+    if (filters.priority && filters.priority !== 'all') {
+      if (ticket.priority !== filters.priority) return false;
+    }
+    
+    // Kategori filtresi
+    if (filters.category && filters.category !== 'all') {
+      if (ticket.category !== filters.category) return false;
+    }
+    
+    return true;
+  });
+
+  const tableTickets = filteredTickets.map(ticket => ({
+    ...ticket,
+    key: ticket._id
+  }));
 
   const priorityConfig = {
     high: { color: 'red', text: 'Yüksek', icon: <ExclamationCircleOutlined /> },
@@ -150,11 +127,11 @@ const SupportPage = () => {
   const columns = [
     {
       title: 'Destek Talebi',
-      dataIndex: 'id',
-      key: 'id',
-      render: (id, record) => (
+      dataIndex: 'ticketId',
+      key: 'ticketId',
+      render: (ticketId, record) => (
         <div>
-          <div style={{ fontWeight: 500 }}>{id}</div>
+          <div style={{ fontWeight: 500 }}>{ticketId}</div>
           <div style={{ fontSize: 12, color: '#666' }}>{record.subject}</div>
         </div>
       ),
@@ -253,7 +230,7 @@ const SupportPage = () => {
           />
           <Popconfirm
             title="Bu destek talebini silmek istediğinizden emin misiniz?"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDelete(record._id)}
             okText="Evet"
             cancelText="Hayır"
           >
@@ -273,11 +250,6 @@ const SupportPage = () => {
     setSearchText(value);
   };
 
-  const handleView = (ticket) => {
-    setSelectedTicket(ticket);
-    setIsModalVisible(true);
-  };
-
   const handleEdit = (ticket) => {
     setSelectedTicket(ticket);
     form.setFieldsValue({
@@ -289,23 +261,49 @@ const SupportPage = () => {
     setIsModalVisible(true);
   };
 
-  const handleDelete = (id) => {
-    message.success('Destek talebi başarıyla silindi');
+  const handleDelete = async (id) => {
+    try {
+      await deleteSupportTicket(id);
+      message.success('Destek talebi başarıyla silindi');
+    } catch (error) {
+      message.error('Destek talebi silinirken hata oluştu');
+      console.error('Delete error:', error);
+    }
   };
 
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      
+      // Güncelleme verilerini hazırla
+      const updates = {
+        status: values.status,
+        priority: values.priority,
+        assignedTo: values.assignedTo
+      };
+
+      // Ticket'ı güncelle
+      await updateSupportTicket(selectedTicket._id, updates);
+      
+      // Eğer yanıt varsa, yanıt ekle
+      if (values.response && values.response.trim()) {
+        await addSupportResponse(selectedTicket._id, {
+          message: values.response,
+          isInternal: false
+        });
+      }
+
       message.success('Destek talebi güncellendi');
       setIsModalVisible(false);
+      setSelectedTicket(null);
       form.resetFields();
-    });
+    } catch (error) {
+      message.error('Destek talebi güncellenirken hata oluştu');
+      console.error('Update error:', error);
+    }
   };
 
-  const filteredTickets = tickets.filter(ticket =>
-    ticket.id.toLowerCase().includes(searchText.toLowerCase()) ||
-    ticket.customer.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    ticket.subject.toLowerCase().includes(searchText.toLowerCase())
-  );
+
 
   return (
     <div>
@@ -323,7 +321,7 @@ const SupportPage = () => {
           <Card>
             <Statistic
               title="Toplam Talep"
-              value={tickets.length}
+              value={supportTickets.length}
               prefix={<MessageOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
@@ -333,7 +331,7 @@ const SupportPage = () => {
           <Card>
             <Statistic
               title="Açık Talepler"
-              value={tickets.filter(t => t.status === 'open').length}
+              value={supportTickets.filter(t => t.status === 'open').length}
               prefix={<ExclamationCircleOutlined />}
               valueStyle={{ color: '#ff4d4f' }}
             />
@@ -343,7 +341,7 @@ const SupportPage = () => {
           <Card>
             <Statistic
               title="İşlenen Talepler"
-              value={tickets.filter(t => t.status === 'in_progress').length}
+              value={supportTickets.filter(t => t.status === 'in_progress').length}
               prefix={<ClockCircleOutlined />}
               valueStyle={{ color: '#fa8c16' }}
             />
@@ -353,7 +351,7 @@ const SupportPage = () => {
           <Card>
             <Statistic
               title="Çözülen Talepler"
-              value={tickets.filter(t => t.status === 'resolved').length}
+              value={supportTickets.filter(t => t.status === 'resolved').length}
               prefix={<CheckCircleOutlined />}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -373,13 +371,44 @@ const SupportPage = () => {
             onSearch={handleSearch}
             onChange={(e) => setSearchText(e.target.value)}
           />
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            size="large"
-          >
-            Yeni FAQ Ekle
-          </Button>
+          <Space>
+            <Select
+              value={filters.status}
+              onChange={(value) => setFilters(prev => ({...prev, status: value}))}
+              style={{ width: 120 }}
+              placeholder="Durum"
+            >
+              <Option value="all">Tümü</Option>
+              <Option value="open">Açık</Option>
+              <Option value="in_progress">İşleniyor</Option>
+              <Option value="resolved">Çözüldü</Option>
+              <Option value="closed">Kapalı</Option>
+            </Select>
+            <Select
+              value={filters.priority}
+              onChange={(value) => setFilters(prev => ({...prev, priority: value}))}
+              style={{ width: 120 }}
+              placeholder="Öncelik"
+            >
+              <Option value="all">Tümü</Option>
+              <Option value="high">Yüksek</Option>
+              <Option value="medium">Orta</Option>
+              <Option value="low">Düşük</Option>
+            </Select>
+            <Select
+              value={filters.category}
+              onChange={(value) => setFilters(prev => ({...prev, category: value}))}
+              style={{ width: 120 }}
+              placeholder="Kategori"
+            >
+              <Option value="all">Tümü</Option>
+              <Option value="siparis">Sipariş</Option>
+              <Option value="iade">İade</Option>
+              <Option value="teknik">Teknik</Option>
+              <Option value="kargo">Kargo</Option>
+              <Option value="genel">Genel</Option>
+            </Select>
+          </Space>
         </div>
       </Card>
 
@@ -389,10 +418,10 @@ const SupportPage = () => {
           <TabPane tab="Tüm Talepler" key="all">
             <Table
               columns={columns}
-              dataSource={filteredTickets}
-              rowKey="id"
+              dataSource={tableTickets}
+              rowKey="_id"
               pagination={{
-                total: filteredTickets.length,
+                total: tableTickets.length,
                 pageSize: 10,
                 showSizeChanger: true,
                 showQuickJumper: true,
@@ -404,24 +433,24 @@ const SupportPage = () => {
           <TabPane tab="Açık Talepler" key="open">
             <Table
               columns={columns}
-              dataSource={filteredTickets.filter(t => t.status === 'open')}
-              rowKey="id"
+              dataSource={tableTickets.filter(t => t.status === 'open')}
+              rowKey="_id"
               pagination={false}
             />
           </TabPane>
           <TabPane tab="İşlenen Talepler" key="in_progress">
             <Table
               columns={columns}
-              dataSource={filteredTickets.filter(t => t.status === 'in_progress')}
-              rowKey="id"
+              dataSource={tableTickets.filter(t => t.status === 'in_progress')}
+              rowKey="_id"
               pagination={false}
             />
           </TabPane>
           <TabPane tab="Çözülen Talepler" key="resolved">
             <Table
               columns={columns}
-              dataSource={filteredTickets.filter(t => t.status === 'resolved')}
-              rowKey="id"
+              dataSource={tableTickets.filter(t => t.status === 'resolved')}
+              rowKey="_id"
               pagination={false}
             />
           </TabPane>
@@ -430,7 +459,7 @@ const SupportPage = () => {
 
       {/* Ticket Details Modal */}
       <Modal
-        title={`Destek Talebi - ${selectedTicket?.id}`}
+        title={`Destek Talebi - ${selectedTicket?.ticketId}`}
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={() => setIsModalVisible(false)}
@@ -439,8 +468,8 @@ const SupportPage = () => {
           <Button key="cancel" onClick={() => setIsModalVisible(false)}>
             Kapat
           </Button>,
-          <Button key="submit" type="primary" onClick={handleModalOk}>
-            Yanıtla
+          <Button key="submit" type="primary" onClick={handleModalOk} loading={loading.support}>
+            Güncelle
           </Button>
         ]}
       >
@@ -461,7 +490,7 @@ const SupportPage = () => {
               </Col>
               <Col span={12}>
                 <Descriptions title="Talep Bilgileri" column={1} size="small">
-                  <Descriptions.Item label="Talep ID">{selectedTicket.id}</Descriptions.Item>
+                  <Descriptions.Item label="Talep ID">{selectedTicket.ticketId}</Descriptions.Item>
                   <Descriptions.Item label="Oluşturulma Tarihi">
                     {new Date(selectedTicket.createdAt).toLocaleString('tr-TR')}
                   </Descriptions.Item>

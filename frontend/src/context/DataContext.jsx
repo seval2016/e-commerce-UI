@@ -58,6 +58,13 @@ const DataContext = createContext({
   // Müşteri işlemleri
   loadCustomers: () => Promise.resolve(),
   
+  // Destek işlemleri
+  loadSupport: () => Promise.resolve(),
+  addSupportTicket: () => Promise.resolve(),
+  updateSupportTicket: () => Promise.resolve(),
+  deleteSupportTicket: () => Promise.resolve(),
+  addSupportResponse: () => Promise.resolve(),
+  
   // Yardımcı fonksiyonlar
   refreshData: () => Promise.resolve(),
   clearErrors: () => {},
@@ -98,13 +105,15 @@ export const DataProvider = ({ children }) => {
     }
   });
   const [customers, setCustomers] = useState([]);
+  const [supportTickets, setSupportTickets] = useState([]);
   
   const [loading, setLoading] = useState({
     products: false,
     categories: false,
     blogs: false,
     orders: false,
-    customers: false
+    customers: false,
+    support: false
   });
   
   const [errors, setErrors] = useState({
@@ -112,7 +121,8 @@ export const DataProvider = ({ children }) => {
     categories: null,
     blogs: null,
     orders: null,
-    customers: null
+    customers: null,
+    support: null
   });
 
   // Helper function to handle loading states
@@ -153,7 +163,8 @@ export const DataProvider = ({ children }) => {
       categories: null,
       blogs: null,
       orders: null,
-      customers: null
+      customers: null,
+      support: null
     });
   }, []);
 
@@ -539,6 +550,69 @@ export const DataProvider = ({ children }) => {
     [withLoading]
   );
 
+  // Support operations
+  const loadSupport = useCallback(
+    withLoading('support', async (params = {}) => {
+      const response = await api.getSupport(params);
+      
+      if (response.success) {
+        setSupportTickets(response.tickets || []);
+        return { success: true, pagination: response.pagination };
+      } else {
+        throw new Error(response.message || 'Destek talepleri yüklenemedi');
+      }
+    }),
+    [withLoading]
+  );
+
+  const addSupportTicket = useCallback(
+    withLoading('support', async (ticketData) => {
+      const response = await api.createSupportTicket(ticketData);
+      
+      return handleApiResponse(response, 'Destek talebi başarıyla oluşturuldu', (res) => {
+        setSupportTickets(prev => [res.ticket, ...prev]);
+      });
+    }),
+    [withLoading, handleApiResponse]
+  );
+
+  const updateSupportTicket = useCallback(
+    withLoading('support', async (id, updates) => {
+      const response = await api.updateSupportTicket(id, updates);
+      
+      return handleApiResponse(response, 'Destek talebi güncellendi', (res) => {
+        setSupportTickets(prev => prev.map(ticket => 
+          ticket._id === id ? res.ticket : ticket
+        ));
+      });
+    }),
+    [withLoading, handleApiResponse]
+  );
+
+  const deleteSupportTicket = useCallback(
+    withLoading('support', async (id) => {
+      const response = await api.deleteSupportTicket(id);
+      
+      return handleApiResponse(response, 'Destek talebi silindi', () => {
+        setSupportTickets(prev => prev.filter(ticket => ticket._id !== id));
+      });
+    }),
+    [withLoading, handleApiResponse]
+  );
+
+  const addSupportResponse = useCallback(
+    withLoading('support', async (id, responseData) => {
+      const response = await api.addSupportResponse(id, responseData);
+      
+      return handleApiResponse(response, 'Yanıt eklendi', (res) => {
+        setSupportTickets(prev => prev.map(ticket => 
+          ticket._id === id ? res.ticket : ticket
+        ));
+      });
+    }),
+    [withLoading, handleApiResponse]
+  );
+
   // Refresh all data
   const refreshData = useCallback(async () => {
 
@@ -549,13 +623,14 @@ export const DataProvider = ({ children }) => {
         loadProducts(),
         loadBlogs(),
         loadOrders(),
-        loadCustomers()
+        loadCustomers(),
+        loadSupport()
       ]);
 
     } catch{
       message.error('Veriler yeniden yüklenirken hata oluştu');
     }
-  }, [loadCategories, loadProducts, loadBlogs, loadOrders, loadCustomers]);
+  }, [loadCategories, loadProducts, loadBlogs, loadOrders, loadCustomers, loadSupport]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -688,18 +763,27 @@ export const DataProvider = ({ children }) => {
     // Customer operations
     loadCustomers,
     
+    // Support operations
+    supportTickets,
+    loadSupport,
+    addSupportTicket,
+    updateSupportTicket,
+    deleteSupportTicket,
+    addSupportResponse,
+    
     // Utilities
     refreshData,
     clearErrors,
     getAnalytics
   }), [
-    products, categories, blogs, orders, customers,
+    products, categories, blogs, orders, customers, supportTickets,
     loading, errors, stats,
     loadCategories, addCategory, updateCategory, deleteCategory,
     loadProducts, addProduct, updateProduct, deleteProduct, toggleProductStatus,
     loadBlogs, addBlog, updateBlog, deleteBlog,
     loadOrders, updateOrderStatus,
     loadCustomers,
+    loadSupport, addSupportTicket, updateSupportTicket, deleteSupportTicket, addSupportResponse,
     refreshData, clearErrors, getAnalytics
   ]);
 

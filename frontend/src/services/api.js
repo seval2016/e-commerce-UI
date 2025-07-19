@@ -480,6 +480,50 @@ class ApiService {
   async getDashboardStats() {
     return this.request('/analytics/dashboard');
   }
+
+  // Support endpoints
+  async getSupport(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/support?${queryString}` : '/support';
+    return this.request(endpoint);
+  }
+
+  async getSupportTicket(id) {
+    if (!id) throw new Error('Support ticket ID is required');
+    return this.request(`/support/${id}`);
+  }
+
+  async createSupportTicket(ticketData) {
+    return this.request('/support', {
+      method: 'POST',
+      body: JSON.stringify(ticketData)
+    });
+  }
+
+  async updateSupportTicket(id, updates) {
+    if (!id) throw new Error('Support ticket ID is required');
+    return this.request(`/support/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates)
+    });
+  }
+
+  async deleteSupportTicket(id) {
+    if (!id) throw new Error('Support ticket ID is required');
+    return this.request(`/support/${id}`, { method: 'DELETE' });
+  }
+
+  async addSupportResponse(id, responseData) {
+    if (!id) throw new Error('Support ticket ID is required');
+    return this.request(`/support/${id}/response`, {
+      method: 'POST',
+      body: JSON.stringify(responseData)
+    });
+  }
+
+  async getSupportStats() {
+    return this.request('/support/stats/overview');
+  }
 }
 
 // Create and export singleton instance
