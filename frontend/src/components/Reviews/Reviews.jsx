@@ -3,36 +3,39 @@ import ReviewForm from "./ReviewForm";
 import ReviewItem from "./ReviewItem";
 import PropTypes from "prop-types";
 
-const Reviews = ({ blog }) => {
+const Reviews = ({ blog, product }) => {
   const [reviews, setReviews] = useState([]);
+  const [target, setTarget] = useState(null);
 
   useEffect(() => {
-    if (blog && blog.reviews) {
-      // Sadece onaylanmış yorumları filtrele ve sırala
-      const approvedReviews = blog.reviews
-        .filter(review => review.isApproved)
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setReviews(approvedReviews);
+    const currentTarget = blog || product;
+    if (currentTarget) {
+      setTarget(currentTarget);
+      if (currentTarget.reviews) {
+        const approvedReviews = currentTarget.reviews
+          .filter(review => review.isApproved)
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setReviews(approvedReviews);
+      }
     }
-  }, [blog]);
+  }, [blog, product]);
 
   const handleReviewSubmit = (newReview) => {
-    // Yeni yorumu listeye eklemiyoruz, çünkü onaya düşecek.
-    // Bunun yerine kullanıcıya bir bildirim gösterebiliriz.
-    // Bu mantık zaten ReviewForm içinde hallediliyor.
-    // Belki burada bir state tutulup "Yorumunuz başarıyla gönderildi..." mesajı gösterilebilir.
+    // Bu fonksiyon artık kullanılmıyor, form gönderimi sonrası bildirim
+    // ReviewForm içinde hallediliyor.
   };
 
-  if (!blog) {
-    return null; // Blog verisi henüz gelmediyse bir şey gösterme
+  if (!target) {
+    return null;
   }
 
   const reviewCount = reviews.length;
+  const targetType = product ? 'product' : 'blog';
 
   return (
     <div className="tab-panel-reviews">
       <h3 className="text-xl font-semibold mb-6">
-        {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'} for {blog.title}
+        {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'} for {target.title || target.name}
       </h3>
       <div className="comments">
         {reviewCount > 0 ? (
@@ -47,7 +50,11 @@ const Reviews = ({ blog }) => {
       </div>
       <div className="review-form-wrapper mt-8">
         <h2 className="text-lg font-medium mb-5 pb-4 border-b border-gray-200">Add a review</h2>
-        <ReviewForm blogId={blog._id} onReviewSubmit={handleReviewSubmit} />
+        <ReviewForm 
+          targetId={target._id} 
+          targetType={targetType}
+          onReviewSubmit={handleReviewSubmit} 
+        />
       </div>
     </div>
   );
@@ -57,4 +64,5 @@ export default Reviews;
 
 Reviews.propTypes = {
   blog: PropTypes.object,
+  product: PropTypes.object,
 };

@@ -601,4 +601,136 @@ router.get('/search/:query', async (req, res) => {
   }
 });
 
+// --- REVIEW ENDPOINTS ---
+
+// @route   POST /api/products/:id/reviews
+// @desc    Add a review to a product
+// @access  Public
+router.post(
+  '/:id/reviews',
+  [
+    body('rating', 'Rating is required').isFloat({ min: 1, max: 5 }),
+    body('text', 'Review text is required').not().isEmpty(),
+    body('name', 'Name is required').not().isEmpty(),
+    body('email', 'A valid email is required').isEmail(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { rating, text, name, email } = req.body;
+
+    try {
+      const product = await Product.findById(req.params.id);
+      if (!product) {
+        return res.status(404).json({ success: false, message: 'Product not found' });
+      }
+
+      const newReview = {
+        rating: Number(rating),
+        text,
+        name,
+        email,
+        // user: req.user ? req.user.id : undefined, // Uncomment if you want to link to logged-in users
+      };
+
+      product.reviews.push(newReview);
+      
+      // Recalculate average rating
+      const totalRating = product.reviews.reduce((acc, item) => item.rating + acc, 0);
+      product.averageRating = totalRating / product.reviews.length;
+
+      await product.save();
+
+      res.status(201).json({
+        success: true,
+        message: 'Review submitted and awaiting approval.',
+        review: product.reviews[product.reviews.length - 1],
+      });
+    } catch (error) {
+      console.error('Add product review error:', error);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  }
+);
+
+
+// @route   PUT /api/products/:productId/reviews/:reviewId/approve
+// @desc    Approve a product review
+// @access  Private (Admin)
+router.put('/:productId/reviews/:reviewId/approve', auth, async (req, res) => {
+    try {
+      const product = await Product.findById(req.params.productId);
+      if (!product) return res.status(404).json({ message: 'Product not found' });
+
+      const review = product.reviews.id(req.params.reviewId);
+      if (!review) return res.status(404).json({ message: 'Review not found' });
+
+      review.isApproved = true;
+      await product.save();
+      res.json({ success: true, message: 'Review approved' });
+    } catch (error) {
+      res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
+// @route   DELETE /api/products/:productId/reviews/:reviewId
+// @desc    Delete a product review
+// @access  Private (Admin)
+router.delete('/:productId/reviews/:reviewId', auth, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.productId);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    const review = product.reviews.id(req.params.reviewId);
+    if (!review) return res.status(404).json({ message: 'Review not found' });
+
+    review.deleteOne();
+    await product.save();
+    res.json({ success: true, message: 'Review deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+// @route   GET /api/products/reviews/pending
+// @desc    Get all pending reviews for products
+// @access  Private (Admin)
+router.get('/reviews/pending', auth, async (req, res) => {
+  try {
+    // Find products that have at least one unapproved review
+    const productsWithPendingReviews = await Product.find({ 'reviews.isApproved': false })
+      .select('name slug reviews')
+      .populate('reviews.user', 'name email');
+
+    if (!productsWithPendingReviews || productsWithPendingReviews.length === 0) {
+      return res.json({ success: true, pendingReviews: [] });
+    }
+
+    // Extract only the pending reviews and add product info to them
+    const pendingReviews = productsWithPendingReviews.flatMap(product => 
+      product.reviews
+        .filter(review => !review.isApproved)
+        .map(review => ({
+          productId: product._id,
+          productName: product.name,
+          productSlug: product.slug,
+          reviewId: review._id,
+          ...review.toObject() // Get all fields from the review sub-document
+        }))
+    );
+    
+    res.json({ success: true, pendingReviews });
+
+  } catch (error) {
+    console.error('Fetch pending product reviews error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
 module.exports = router; 

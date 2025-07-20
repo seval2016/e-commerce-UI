@@ -94,7 +94,7 @@ const ProductTabs = () => {
     { 
       id: "reviews", 
       label: "Değerlendirmeler",
-      content: <Reviews productId={product._id || product.id} />
+      content: <Reviews product={product} />
     }
   ];
 

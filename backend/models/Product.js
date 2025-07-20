@@ -1,5 +1,39 @@
 const mongoose = require('mongoose');
 
+// Blog modelinden yeniden kullanılan şema
+const reviewSchema = new mongoose.Schema({
+  text: {
+    type: String,
+    required: [true, 'Review text is required'],
+    trim: true,
+  },
+  rating: {
+    type: Number,
+    required: [true, 'Rating is required'],
+    min: 1,
+    max: 5,
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false, // Allow guest reviews
+  },
+  name: {
+    type: String,
+    required: [true, 'Reviewer name is required'],
+  },
+  email: {
+    type: String,
+    required: [true, 'Reviewer email is required'],
+  },
+  isApproved: {
+    type: Boolean,
+    default: false,
+  },
+}, {
+  timestamps: true,
+});
+
 const productSchema = new mongoose.Schema({
   // Basic product information
   name: {
@@ -313,6 +347,15 @@ const productSchema = new mongoose.Schema({
       4: { type: Number, default: 0 },
       5: { type: Number, default: 0 }
     }
+  },
+
+  // Reviews and ratings
+  reviews: [reviewSchema],
+  averageRating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5
   },
 
   // Sales and analytics

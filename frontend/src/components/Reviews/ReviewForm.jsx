@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 const API_BASE_URL = "http://localhost:5000";
 
-const ReviewForm = ({ blogId, onReviewSubmit }) => {
+const ReviewForm = ({ targetId, targetType, onReviewSubmit }) => {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [name, setName] = useState("");
@@ -23,8 +23,12 @@ const ReviewForm = ({ blogId, onReviewSubmit }) => {
     setError(null);
     setSuccess(null);
 
+    const endpoint = targetType === 'product'
+      ? `${API_BASE_URL}/api/products/${targetId}/reviews`
+      : `${API_BASE_URL}/api/blogs/${targetId}/reviews`;
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/blogs/${blogId}/reviews`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -139,7 +143,8 @@ const ReviewForm = ({ blogId, onReviewSubmit }) => {
 };
 
 ReviewForm.propTypes = {
-  blogId: PropTypes.string.isRequired,
+  targetId: PropTypes.string.isRequired,
+  targetType: PropTypes.oneOf(['blog', 'product']).isRequired,
   onReviewSubmit: PropTypes.func,
 };
 

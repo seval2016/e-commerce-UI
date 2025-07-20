@@ -4,7 +4,7 @@ import { Spin } from 'antd';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 
 const ProtectedRoute = ({ children, requiredPermission = null }) => {
-  const { isAdmin, hasPermission, isLoading, adminUser } = useAdminAuth();
+  const { isAdmin, hasPermission, isLoading } = useAdminAuth();
   const location = useLocation();
 
   // Loading state'inde bekle
