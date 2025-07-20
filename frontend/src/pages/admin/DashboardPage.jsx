@@ -342,7 +342,7 @@ const DashboardPage = () => {
       {/* Charts and Tables Row */}
       <Row gutter={[16, 16]}>
         {/* Recent Orders */}
-        <Col xs={24} lg={16}>
+        <Col xs={24} xl={16}>
           <Card 
             title="Son Siparişler" 
             extra={<Button type="link" onClick={handleViewAllOrders}>Tümünü Gör</Button>}
@@ -354,6 +354,7 @@ const DashboardPage = () => {
                 rowKey="orderId"
                 pagination={false}
                 size="small"
+                scroll={{ x: 'max-content' }} // Mobil'de yatay kaydırma ekle
               />
             ) : (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: '#666' }}>
@@ -365,7 +366,7 @@ const DashboardPage = () => {
         </Col>
 
         {/* Top Products */}
-        <Col xs={24} lg={8}>
+        <Col xs={24} xl={8}>
           <Card 
             title="En Çok Satan Ürünler"
             extra={<Button type="link" onClick={() => navigate('/admin/products')}>Tümünü Gör</Button>}

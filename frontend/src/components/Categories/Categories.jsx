@@ -60,27 +60,36 @@ const Categories = () => {
     );
   }
 
-  const slidesToShow = Math.max(1, Math.min(4, activeCategories.length));
-  const slidesToScroll = Math.max(1, Math.min(1, activeCategories.length));
-
   const sliderSettings = {
     dots: false,
     infinite: activeCategories.length > 4,
-    slidesToShow,
-    slidesToScroll,
+    slidesToShow: Math.min(4, activeCategories.length),
+    slidesToScroll: 1,
     nextArrow: <NextBtn />,
     prevArrow: <PrevBtn />,
     autoplaySpeed: 3000,
     autoplay: activeCategories.length > 4,
     responsive: [
       {
-        breakpoint: 992,
+        breakpoint: 1200,
         settings: {
-          slidesToShow: Math.max(1, Math.min(2, activeCategories.length)),
+          slidesToShow: Math.min(3, activeCategories.length),
         },
       },
       {
-        breakpoint: 520,
+        breakpoint: 992,
+        settings: {
+          slidesToShow: Math.min(2, activeCategories.length),
+        },
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: Math.min(2, activeCategories.length),
+        },
+      },
+      {
+        breakpoint: 576,
         settings: {
           slidesToShow: 1,
         },

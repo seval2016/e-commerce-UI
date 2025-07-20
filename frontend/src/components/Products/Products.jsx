@@ -71,6 +71,13 @@ const Products = ({ title = "Featured Products", showTitle = true, limit = null 
         },
       },
       {
+        breakpoint: 992,
+        settings: {
+          slidesToShow: 2,
+          infinite: activeProducts.length > 2,
+        },
+      },
+      {
         breakpoint: 768,
         settings: {
           slidesToShow: 2,
@@ -78,7 +85,7 @@ const Products = ({ title = "Featured Products", showTitle = true, limit = null 
         },
       },
       {
-        breakpoint: 480,
+        breakpoint: 576,
         settings: {
           slidesToShow: 1,
           infinite: activeProducts.length > 1,

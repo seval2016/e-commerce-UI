@@ -14,8 +14,7 @@ import {
   Col,
   Statistic,
   Image,
-  Upload,
-  message
+  Upload
 } from 'antd';
 import {
   PlusOutlined,
@@ -27,6 +26,7 @@ import {
   UploadOutlined
 } from '@ant-design/icons';
 import { useData } from '../../context/DataContext.jsx';
+import useEntityData from '../../hooks/useEntityData.js';
 
 const { Search } = Input;
 
@@ -53,7 +53,7 @@ const getCategoryImageUrl = (imagePath) => {
 };
 
 const CategoriesPage = () => {
-  const [searchText, setSearchText] = useState('');
+  const { filteredData: categories, handleSearch, setSearchText, handleDelete } = useEntityData('categories');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [form] = Form.useForm();
@@ -64,16 +64,11 @@ const CategoriesPage = () => {
   // Switch'in durumunu takip et
   const statusValue = Form.useWatch('status', form);
   
-  const { categories, addCategory, updateCategory, deleteCategory } = useData();
-
-  // Filter categories based on search
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    category.description.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // addCategory ve updateCategory fonksiyonlarını context'ten alıyoruz
+  const { categories: allCategories, addCategory, updateCategory } = useData();
 
   // Transform categories for table
-  const tableCategories = filteredCategories.map(category => ({
+  const tableCategories = categories.map(category => ({
     ...category,
     key: category._id
   }));
@@ -155,10 +150,6 @@ const CategoriesPage = () => {
     },
   ];
 
-  const handleSearch = (value) => {
-    setSearchText(value);
-  };
-
   const handleAdd = () => {
     setEditingCategory(null);
     setImageFile(null);
@@ -178,18 +169,10 @@ const CategoriesPage = () => {
     setIsModalVisible(true);
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await deleteCategory(id);
-    } catch (error) {
-      console.error('Kategori silme hatası:', error);
-    }
-  };
-
   const handleImageUpload = (file) => {
     const isImage = file.type.startsWith('image/');
     if (!isImage) {
-      message.error('Sadece resim dosyaları yükleyebilirsiniz!');
+      // message.error('Sadece resim dosyaları yükleyebilirsiniz!');
       return false;
     }
     
@@ -197,14 +180,12 @@ const CategoriesPage = () => {
     const maxSizeMB = 2;
     
     if (fileSizeMB > maxSizeMB) {
-      message.error(`Resim dosyası ${maxSizeMB}MB'dan büyük olamaz! (Mevcut: ${fileSizeMB.toFixed(1)}MB)`);
+      // message.error(`Resim dosyası ${maxSizeMB}MB'dan büyük olamaz!`);
       return false;
     }
     
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target.result);
-    };
+    reader.onload = (e) => setImagePreview(e.target.result);
     reader.readAsDataURL(file);
     setImageFile(file);
     return false;
@@ -216,6 +197,16 @@ const CategoriesPage = () => {
     form.setFieldsValue({ image: '' });
   };
 
+  const getUniqueSlug = (baseSlug, allCats) => {
+    let slug = baseSlug;
+    let counter = 1;
+    while (allCats.some((cat) => cat.slug === slug)) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    return slug;
+  };
+
   // handleModalOk fonksiyonunda kategori eklenmeden önce slug'ı tekrar benzersizleştir
   const handleModalOk = async () => {
     try {
@@ -223,19 +214,14 @@ const CategoriesPage = () => {
       const categoryData = {
         name: values.name,
         description: values.description,
-        slug: getUniqueSlug(generateSlug(values.name)),
+        slug: getUniqueSlug(generateSlug(values.name), allCategories),
         status: values.status ? 'active' : 'inactive'
       };
       
       let result;
       if (editingCategory) {
-        // Güncelleme işlemi - imageFile varsa onu gönder, yoksa mevcut resmi kullan
         result = await updateCategory(editingCategory._id, categoryData, imageFile);
-        if (result.success) {
-          setEditingCategory(null);
-        }
       } else {
-        // Yeni kategori ekleme - imageFile varsa onu gönder
         result = await addCategory(categoryData, imageFile);
       }
       
@@ -250,22 +236,11 @@ const CategoriesPage = () => {
     }
   };
 
-  // Slug benzersizliğini kontrol eden fonksiyon
-  const getUniqueSlug = (baseSlug) => {
-    let slug = baseSlug;
-    let counter = 1;
-    while (categories.some((cat) => cat.slug === slug)) {
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-    return slug;
-  };
-
   // Formda isim değiştiğinde slug'ı otomatik üret
   const handleNameChange = (e) => {
     const name = e.target.value;
     const baseSlug = generateSlug(name);
-    const uniqueSlug = getUniqueSlug(baseSlug);
+    const uniqueSlug = getUniqueSlug(baseSlug, allCategories);
     form.setFieldsValue({ slug: uniqueSlug });
     setSlugError("");
   };

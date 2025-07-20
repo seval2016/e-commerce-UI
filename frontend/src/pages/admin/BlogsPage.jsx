@@ -33,6 +33,7 @@ import {
   PictureOutlined,
 } from "@ant-design/icons";
 import { useData } from "../../context/DataContext.jsx";
+import useEntityData from "../../hooks/useEntityData.js";
 import dayjs from "dayjs";
 
 const { Search } = Input;
@@ -40,14 +41,14 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const BlogsPage = () => {
-  const [searchText, setSearchText] = useState("");
+  const { filteredData: blogs, handleSearch, setSearchText, handleDelete } = useEntityData('blogs');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [form] = Form.useForm();
 
-  const { blogs, addBlog, updateBlog, deleteBlog, categories } = useData();
+  const { addBlog, updateBlog, categories } = useData();
 
   // Backend API base URL
   const API_BASE_URL = "http://localhost:5000";
@@ -211,10 +212,6 @@ const BlogsPage = () => {
     },
   ];
 
-  const handleSearch = (value) => {
-    setSearchText(value);
-  };
-
   const handleAdd = () => {
     try {
       setEditingBlog(null);
@@ -327,10 +324,6 @@ const BlogsPage = () => {
     }
   };
 
-  const handleDelete = (id) => {
-    deleteBlog(id);
-  };
-
   const handleImageUpload = (file) => {
     const isImage = file.type.startsWith('image/');
     if (!isImage) {
@@ -413,23 +406,7 @@ const BlogsPage = () => {
     }
   };
 
-
-
-  const filteredBlogs = blogs.filter(
-    (blog) => {
-      const authorName = typeof blog.author === 'object' && blog.author?.name 
-        ? blog.author.name 
-        : (typeof blog.author === 'string' ? blog.author : '');
-      
-      return (
-        blog.title.toLowerCase().includes(searchText.toLowerCase()) ||
-        authorName.toLowerCase().includes(searchText.toLowerCase()) ||
-        blog.category.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-  );
-
-  const tableBlogs = filteredBlogs.map(blog => ({
+  const tableBlogs = blogs.map(blog => ({
     ...blog,
     key: blog._id || blog.id
   }));

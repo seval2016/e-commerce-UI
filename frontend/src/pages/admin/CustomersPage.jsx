@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Table, 
   Card, 
@@ -33,41 +33,28 @@ import {
   DollarOutlined,
   StarOutlined
 } from '@ant-design/icons';
+import useEntityData from '../../hooks/useEntityData';
+import { useData } from '../../context/DataContext';
 
 const { Search } = Input;
 const { TabPane } = Tabs;
 
 const CustomersPage = () => {
-  const [searchText, setSearchText] = useState('');
+  const { 
+    filteredData: filteredCustomers, 
+    loading, 
+    handleSearch, 
+    setSearchText, 
+    handleDelete 
+  } = useEntityData('customers');
+  
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const [modalLoading, setModalLoading] = useState(false);
 
-  // Fetch customers from API
-  const fetchCustomers = async () => {
-    try {
-      setLoading(true);
-      const response = await api.request('/users');
-      if (response.success) {
-        // Sadece müşteri rolündeki kullanıcıları filtrele (admin'leri hariç tut)
-        const customers = response.users.filter(user => user.role === 'user' || !user.role);
-        setCustomers(customers);
-      }
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-      message.error('Müşteriler yüklenirken hata oluştu');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-
+  // Veri yenileme ve istatistikler için context'ten tam müşteri listesini al
+  const { customers: allCustomers, loadCustomers } = useData();
 
   const columns = [
     {
@@ -184,15 +171,6 @@ const CustomersPage = () => {
     },
   ];
 
-  const handleSearch = (value) => {
-    setSearchText(value);
-  };
-
-  // const handleView = (customer) => {
-  //   setSelectedCustomer(customer);
-  //   setIsModalVisible(true);
-  // };
-
   const handleEdit = (customer) => {
     setSelectedCustomer(customer);
     form.setFieldsValue({
@@ -216,88 +194,39 @@ const CustomersPage = () => {
     setIsModalVisible(true);
   };
 
-  const handleDelete = async (userId) => {
-    try {
-      setLoading(true);
-      const response = await api.request(`/users/${userId}`, {
-        method: 'DELETE'
-      });
-      
-      if (response.success) {
-        message.success('Müşteri başarıyla silindi');
-        await fetchCustomers(); // Refresh the list
-      }
-    } catch (error) {
-      console.error('Error deleting customer:', error);
-      message.error('Müşteri silinirken hata oluştu');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      setLoading(true);
+      setModalLoading(true);
       
+      let response;
       if (selectedCustomer) {
         // Update existing customer
-        const response = await api.request(`/users/${selectedCustomer._id}`, {
+        response = await api.request(`/users/${selectedCustomer._id}`, {
           method: 'PUT',
-          body: JSON.stringify({
-            name: values.name,
-            email: values.email,
-            phone: values.phone,
-            address: values.address,
-            notes: values.notes,
-            isActive: values.status === 'active'
-          })
+          body: JSON.stringify({ ...values, isActive: values.status === 'active' })
         });
-        
-
-        
-        if (response.success) {
-          message.success('Müşteri bilgileri güncellendi');
-          setIsModalVisible(false);
-          form.resetFields();
-          await fetchCustomers(); // Refresh the list
-        }
       } else {
         // Create new customer
-        const response = await api.request('/auth/register', {
+        response = await api.request('/auth/register', {
           method: 'POST',
-          body: JSON.stringify({
-            name: values.name,
-            email: values.email,
-            password: values.password || 'defaultpassword123', // Default password
-            phone: values.phone,
-            address: values.address,
-            notes: values.notes,
-            isActive: values.status === 'active'
-          })
+          body: JSON.stringify({ ...values, password: values.password || 'defaultpassword123', isActive: values.status === 'active' })
         });
-
-        
-        if (response.success) {
-          message.success('Yeni müşteri oluşturuldu');
-          setIsModalVisible(false);
-          form.resetFields();
-          await fetchCustomers(); // Refresh the list
-        }
+      }
+      
+      if (response.success) {
+        message.success(selectedCustomer ? 'Müşteri bilgileri güncellendi' : 'Yeni müşteri oluşturuldu');
+        setIsModalVisible(false);
+        form.resetFields();
+        await loadCustomers(); // Listeyi yenile
       }
     } catch (error) {
       console.error('Error saving customer:', error);
       message.error('İşlem sırasında hata oluştu');
     } finally {
-      setLoading(false);
+      setModalLoading(false);
     }
   };
-
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchText.toLowerCase()) ||
-    customer.phone.includes(searchText)
-  );
 
   const getCustomerLevel = (totalSpent) => {
     if (totalSpent >= 100000) return { level: 'VIP', color: 'gold' };
@@ -322,7 +251,7 @@ const CustomersPage = () => {
           <Card>
             <Statistic
               title="Toplam Müşteri"
-              value={customers.length}
+              value={allCustomers.length}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
@@ -332,7 +261,7 @@ const CustomersPage = () => {
           <Card>
             <Statistic
               title="Aktif Müşteri"
-              value={customers.filter(c => c.isActive).length}
+              value={allCustomers.filter(c => c.isActive).length}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -342,7 +271,7 @@ const CustomersPage = () => {
           <Card>
             <Statistic
               title="Toplam Sipariş"
-              value={customers.reduce((sum, c) => sum + (c.totalOrders || 0), 0)}
+              value={allCustomers.reduce((sum, c) => sum + (c.totalOrders || 0), 0)}
               prefix={<ShoppingCartOutlined />}
               valueStyle={{ color: '#722ed1' }}
             />
@@ -352,7 +281,7 @@ const CustomersPage = () => {
           <Card>
             <Statistic
               title="Toplam Gelir"
-              value={customers.reduce((sum, c) => sum + (c.totalSpent || 0), 0)}
+              value={allCustomers.reduce((sum, c) => sum + (c.totalSpent || 0), 0)}
               prefix={<DollarOutlined />}
               suffix="₺"
               valueStyle={{ color: '#fa8c16' }}
@@ -418,7 +347,7 @@ const CustomersPage = () => {
           <Button key="cancel" onClick={() => setIsModalVisible(false)}>
             İptal
           </Button>,
-          <Button key="submit" type="primary" onClick={handleModalOk} loading={loading}>
+          <Button key="submit" type="primary" onClick={handleModalOk} loading={modalLoading}>
             {selectedCustomer ? 'Güncelle' : 'Ekle'}
           </Button>
         ]}

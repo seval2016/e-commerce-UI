@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Button, Avatar, Dropdown, Space, Badge, message } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Menu, Button, Avatar, Dropdown, Space, Badge, message, Drawer, Grid } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -20,12 +20,22 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 
 const { Header, Sider, Content } = Layout;
+const { useBreakpoint } = Grid;
 
 const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAdminAuth();
+  const screens = useBreakpoint();
+
+  useEffect(() => {
+    // Ekran boyutu değiştiğinde, eğer masaüstü boyutuna geçildiyse çekmeceyi kapat
+    if (screens.md) {
+      setDrawerVisible(false);
+    }
+  }, [screens.md]);
 
   const menuItems = [
     {
@@ -103,6 +113,10 @@ const AdminLayout = () => {
 
   const handleMenuClick = ({ key }) => {
     navigate(key);
+    // Mobil'de menüden bir öğeye tıklanınca çekmeceyi kapat
+    if (!screens.md) {
+      setDrawerVisible(false);
+    }
   };
 
   const handleUserMenuClick = ({ key }) => {
@@ -113,39 +127,57 @@ const AdminLayout = () => {
     }
   };
 
+  const menuContent = (
+    <>
+      <div className="demo-logo-vertical" style={{ 
+        height: 64, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        color: 'white',
+        fontSize: collapsed && screens.md ? '16px' : '20px',
+        fontWeight: 'bold'
+      }}>
+        {collapsed && screens.md ? 'AD' : 'ADMIN'}
+      </div>
+      <Menu
+        theme="dark"
+        mode="inline"
+        selectedKeys={[location.pathname]}
+        items={menuItems}
+        onClick={handleMenuClick}
+      />
+    </>
+  );
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider 
-        trigger={null} 
-        collapsible 
-        collapsed={collapsed}
-        style={{
-          background: '#001529',
-        }}
-      >
-        <div className="demo-logo-vertical" style={{ 
-          height: 64, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          color: 'white',
-          fontSize: collapsed ? '16px' : '20px',
-          fontWeight: 'bold'
-        }}>
-          {collapsed ? 'AD' : 'ADMIN'}
-        </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={handleMenuClick}
-        />
-      </Sider>
+      {screens.md ? (
+        <Sider 
+          trigger={null} 
+          collapsible 
+          collapsed={collapsed}
+          style={{
+            background: '#001529',
+          }}
+        >
+          {menuContent}
+        </Sider>
+      ) : (
+        <Drawer
+          placement="left"
+          onClose={() => setDrawerVisible(false)}
+          open={drawerVisible}
+          bodyStyle={{ padding: 0, background: '#001529' }}
+          width={200}
+        >
+          {menuContent}
+        </Drawer>
+      )}
       <Layout>
         <Header
           style={{
-            padding: '0 24px',
+            padding: '0 16px', // Mobil için padding'i azalt
             background: '#fff',
             display: 'flex',
             alignItems: 'center',
@@ -156,7 +188,7 @@ const AdminLayout = () => {
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => screens.md ? setCollapsed(!collapsed) : setDrawerVisible(!drawerVisible)}
             style={{
               fontSize: '16px',
               width: 64,
@@ -164,7 +196,7 @@ const AdminLayout = () => {
             }}
           />
           
-          <Space size="large">
+          <Space size="middle">
             <Badge count={5} size="small">
               <Button 
                 type="text" 
@@ -186,15 +218,15 @@ const AdminLayout = () => {
                   icon={<UserOutlined />}
                   style={{ backgroundColor: '#1890ff' }}
                 />
-                <span style={{ color: '#333' }}>Admin</span>
+                {!screens.sm && <span style={{ color: '#333' }}>Admin</span>}
               </Space>
             </Dropdown>
           </Space>
         </Header>
         <Content
           style={{
-            margin: '24px 16px',
-            padding: 24,
+            margin: '16px', // Mobil için margin'i azalt
+            padding: 16, // Mobil için padding'i azalt
             minHeight: 280,
             background: '#f5f5f5',
             borderRadius: 8,

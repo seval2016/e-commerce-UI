@@ -57,6 +57,7 @@ const DataContext = createContext({
   
   // Müşteri işlemleri
   loadCustomers: () => Promise.resolve(),
+  deleteCustomer: () => Promise.resolve(),
   
   // Destek işlemleri
   loadSupport: () => Promise.resolve(),
@@ -536,18 +537,27 @@ export const DataProvider = ({ children }) => {
   // Customer operations
   const loadCustomers = useCallback(
     withLoading('customers', async () => {
-
       const response = await api.getUsers();
-      
       if (response.success) {
-        setCustomers(response.users || []);
-
+        // Sadece 'user' rolündeki müşterileri al
+        const customers = (response.users || []).filter(user => user.role === 'user' || !user.role);
+        setCustomers(customers);
         return { success: true };
       } else {
         throw new Error(response.message || 'Müşteriler yüklenemedi');
       }
     }),
     [withLoading]
+  );
+
+  const deleteCustomer = useCallback(
+    withLoading('customers', async (id) => {
+      const response = await api.deleteUser(id);
+      return handleApiResponse(response, 'Müşteri başarıyla silindi', () => {
+        setCustomers(prev => prev.filter(customer => customer._id !== id));
+      });
+    }),
+    [withLoading, handleApiResponse]
   );
 
   // Support operations
@@ -762,6 +772,7 @@ export const DataProvider = ({ children }) => {
     
     // Customer operations
     loadCustomers,
+    deleteCustomer,
     
     // Support operations
     supportTickets,
@@ -782,7 +793,7 @@ export const DataProvider = ({ children }) => {
     loadProducts, addProduct, updateProduct, deleteProduct, toggleProductStatus,
     loadBlogs, addBlog, updateBlog, deleteBlog,
     loadOrders, updateOrderStatus,
-    loadCustomers,
+    loadCustomers, deleteCustomer,
     loadSupport, addSupportTicket, updateSupportTicket, deleteSupportTicket, addSupportResponse,
     refreshData, clearErrors, getAnalytics
   ]);

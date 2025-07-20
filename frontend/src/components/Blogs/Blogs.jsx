@@ -66,7 +66,7 @@ const Blogs = () => {
           subtitle="Summer Collection New Modern Design"
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {publishedBlogs.map((blog) => (
             <BlogItem key={blog._id || blog.id} blog={blog} />
           ))}

@@ -49,6 +49,7 @@ import {
 } from '@ant-design/icons';
 import { useData } from '../../context/DataContext.jsx';
 import { Link } from 'react-router-dom';
+import useEntityData from '../../hooks/useEntityData.js';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -58,20 +59,31 @@ const { Title, Text } = Typography;
 const ProductsPage = () => {
   // Context and state
   const { 
-    products, 
     categories, 
-    loading, 
-    errors,
     stats,
     addProduct, 
     updateProduct, 
-    deleteProduct,
     toggleProductStatus,
     refreshData
   } = useData();
+  
+  const {
+    filteredData: filteredProducts,
+    loading,
+    error: productsError,
+    filters,
+    handleSearch,
+    setSearchText,
+    handleFilterChange,
+    handleClearFilters,
+    handleDelete,
+  } = useEntityData('products', {
+    category: undefined,
+    status: undefined,
+    inStock: undefined,
+  });
 
-  // Local state
-  const [searchText, setSearchText] = useState('');
+  // Local state for UI (modals, drawers, etc.)
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDetailDrawerVisible, setIsDetailDrawerVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -81,14 +93,6 @@ const ProductsPage = () => {
   const [imagePreviews, setImagePreviews] = useState([]);
   const [removedImages, setRemovedImages] = useState([]);
   const [localLoading, setLocalLoading] = useState(false);
-  
-  // Filter states
-  const [filters, setFilters] = useState({
-    category: undefined,
-    status: undefined,
-    inStock: undefined,
-    priceRange: undefined
-  });
 
   // Backend API base URL
   const API_BASE_URL = "http://localhost:5000";
@@ -100,46 +104,6 @@ const ProductsPage = () => {
     if (imagePath.startsWith("/uploads/")) return API_BASE_URL + imagePath;
     return API_BASE_URL + "/uploads/products/" + imagePath;
   }, []);
-
-  // Filtered and searched products
-  const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      // Search filter
-      if (searchText) {
-        const searchLower = searchText.toLowerCase();
-        const searchMatch = 
-          product.name?.toLowerCase().includes(searchLower) ||
-          product.description?.toLowerCase().includes(searchLower) ||
-          product.brand?.toLowerCase().includes(searchLower) ||
-          product.sku?.toLowerCase().includes(searchLower);
-        
-        if (!searchMatch) return false;
-      }
-      
-      // Category filter
-      if (filters.category && filters.category !== 'all') {
-        const productCategoryId = typeof product.category === 'object' 
-          ? product.category._id 
-          : product.category;
-        if (productCategoryId !== filters.category) return false;
-      }
-      
-      // Status filter
-      if (filters.status && filters.status !== 'all') {
-        if (filters.status === 'active' && !product.isActive) return false;
-        if (filters.status === 'inactive' && product.isActive) return false;
-      }
-      
-      // Stock filter
-      if (filters.inStock && filters.inStock !== 'all') {
-        if (filters.inStock === 'in_stock' && product.stock <= 0) return false;
-        if (filters.inStock === 'out_of_stock' && product.stock > 0) return false;
-        if (filters.inStock === 'low_stock' && (product.stock > (product.lowStockThreshold || 5) || product.stock <= 0)) return false;
-      }
-      
-      return true;
-    });
-  }, [products, searchText, filters]);
 
   // Table columns configuration
   const columns = [
@@ -192,6 +156,7 @@ const ProductsPage = () => {
       title: 'Kategori',
       dataIndex: 'category',
       key: 'category',
+      responsive: ['md'], // Sadece orta boy ekranlarda ve üzerinde göster
       width: 120,
       render: (category) => {
         const categoryName = category && typeof category === 'object' ? category.name : 'Bilinmiyor';
@@ -229,6 +194,7 @@ const ProductsPage = () => {
       title: 'Stok',
       dataIndex: 'stock',
       key: 'stock',
+      responsive: ['sm'], // Sadece küçük ekranlarda ve üzerinde göster
       width: 100,
       render: (stock, record) => {
         const lowStockThreshold = record.lowStockThreshold || 5;
@@ -257,6 +223,7 @@ const ProductsPage = () => {
       title: 'Renkler',
       dataIndex: 'colors',
       key: 'colors',
+      responsive: ['lg'], // Sadece büyük ekranlarda göster
       width: 120,
       render: (colors) => {
         if (!colors || !Array.isArray(colors) || colors.length === 0) {
@@ -280,6 +247,7 @@ const ProductsPage = () => {
       title: 'Bedenler',
       dataIndex: 'sizes',
       key: 'sizes',
+      responsive: ['lg'], // Sadece büyük ekranlarda göster
       width: 120,
       render: (sizes) => {
         if (!sizes || !Array.isArray(sizes) || sizes.length === 0) {
@@ -303,6 +271,7 @@ const ProductsPage = () => {
       title: 'Durum',
       dataIndex: 'isActive',
       key: 'status',
+      responsive: ['md'], // Sadece orta boy ekranlarda ve üzerinde göster
       width: 120,
       render: (isActive, record) => (
         <Space direction="vertical" size="small">
@@ -312,7 +281,7 @@ const ProductsPage = () => {
             checkedChildren="Aktif"
             unCheckedChildren="Pasif"
             size="small"
-            loading={loading.products}
+            loading={loading}
           />
           <Tag color={isActive ? 'green' : 'red'} size="small">
             {record.status || (isActive ? 'active' : 'inactive')}
@@ -365,25 +334,7 @@ const ProductsPage = () => {
     },
   ];
 
-  // Event handlers
-  const handleSearch = useCallback((value) => {
-    setSearchText(value);
-  }, []);
-
-  const handleFilterChange = useCallback((key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleClearFilters = useCallback(() => {
-    setFilters({
-      category: undefined,
-      status: undefined,
-      inStock: undefined,
-      priceRange: undefined
-    });
-    setSearchText('');
-  }, []);
-
+  // Event handlers for UI state (modals, drawers) remain here
   const handleAdd = useCallback(() => {
     setEditingProduct(null);
     setImageFiles([]);
@@ -445,17 +396,6 @@ const ProductsPage = () => {
     setSelectedProduct(product);
     setIsDetailDrawerVisible(true);
   }, []);
-
-  const handleDelete = useCallback(async (id) => {
-    try {
-      setLocalLoading(true);
-      await deleteProduct(id);
-    } catch {
-      // Error is handled by the deleteProduct function
-    } finally {
-      setLocalLoading(false);
-    }
-  }, [deleteProduct]);
 
   const handleToggleStatus = useCallback(async (id) => {
     try {
@@ -559,15 +499,15 @@ const ProductsPage = () => {
     }
   ], [stats]);
 
-  // Effect to handle errors
+  // Effect to handle errors from the hook
   useEffect(() => {
-    if (errors.products) {
-      message.error(errors.products);
+    if (productsError) {
+      message.error(productsError);
     }
-  }, [errors.products]);
+  }, [productsError]);
 
   // Loading and error states
-  if (loading.products && products.length === 0) {
+  if (loading && filteredProducts.length === 0) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
         <Spin size="large" tip="Ürünler yükleniyor..." />
@@ -586,10 +526,10 @@ const ProductsPage = () => {
       </div>
 
       {/* Error Alert */}
-      {errors.products && (
+      {productsError && (
         <Alert
           message="Hata"
-          description={errors.products}
+          description={productsError}
           type="error"
           showIcon
           closable
@@ -614,24 +554,24 @@ const ProductsPage = () => {
       </Row>
 
       {/* Filters and Actions */}
-      <Card style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} sm={12} md={8}>
+      <Card title="Filtrele & Yönet" style={{ marginBottom: 16 }}>
+        <Flex justify="space-between" align="center" wrap="wrap" gap={16}>
+          {/* Filter Group */}
+          <Flex align="center" gap="middle" wrap="wrap">
             <Search
-              placeholder="Ürün adı, SKU, marka ile ara..."
+              placeholder="Ürün adı, SKU, marka..."
               allowClear
               enterButton={<SearchOutlined />}
               size="large"
+              style={{ width: 250 }}
               onSearch={handleSearch}
               onChange={(e) => !e.target.value && setSearchText('')}
             />
-          </Col>
-          <Col xs={24} sm={12} md={4}>
             <Select
               placeholder="Kategori"
               allowClear
               size="large"
-              style={{ width: '100%' }}
+              style={{ width: 160 }}
               value={filters.category}
               onChange={(value) => handleFilterChange('category', value)}
             >
@@ -642,13 +582,11 @@ const ProductsPage = () => {
                 </Option>
               ))}
             </Select>
-          </Col>
-          <Col xs={24} sm={12} md={3}>
             <Select
               placeholder="Durum"
               allowClear
               size="large"
-              style={{ width: '100%' }}
+              style={{ width: 120 }}
               value={filters.status}
               onChange={(value) => handleFilterChange('status', value)}
             >
@@ -656,13 +594,11 @@ const ProductsPage = () => {
               <Option value="active">Aktif</Option>
               <Option value="inactive">Pasif</Option>
             </Select>
-          </Col>
-          <Col xs={24} sm={12} md={3}>
             <Select
               placeholder="Stok"
               allowClear
               size="large"
-              style={{ width: '100%' }}
+              style={{ width: 120 }}
               value={filters.inStock}
               onChange={(value) => handleFilterChange('inStock', value)}
             >
@@ -671,36 +607,36 @@ const ProductsPage = () => {
               <Option value="low_stock">Az Stoklu</Option>
               <Option value="out_of_stock">Stok Yok</Option>
             </Select>
-          </Col>
-          <Col xs={24} md={6}>
-            <Flex gap="small" wrap="wrap">
-              <Button
+          </Flex>
+          
+          {/* Action Group */}
+          <Flex align="center" gap="small" wrap="wrap">
+            <Button 
+                icon={<FilterOutlined />} 
+                onClick={handleClearFilters}
+                size="large"
+            >
+                Temizle
+            </Button>
+            <Button 
+                icon={<ReloadOutlined />} 
+                onClick={refreshData}
+                loading={loading}
+                size="large"
+            >
+                Yenile
+            </Button>
+            <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                size="large"
                 onClick={handleAdd}
                 loading={localLoading}
-              >
+                size="large"
+            >
                 Yeni Ürün
-              </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                size="large"
-                onClick={refreshData}
-                loading={loading.products}
-              >
-                Yenile
-              </Button>
-              <Button
-                icon={<FilterOutlined />}
-                size="large"
-                onClick={handleClearFilters}
-              >
-                Filtreleri Temizle
-              </Button>
-            </Flex>
-          </Col>
-        </Row>
+            </Button>
+          </Flex>
+        </Flex>
       </Card>
 
       {/* Products Table */}
@@ -709,12 +645,12 @@ const ProductsPage = () => {
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={
-              searchText || Object.values(filters).some(f => f && f !== 'all')
+              filters.category || filters.status || filters.inStock !== 'all' || setSearchText
                 ? "Filtrelere uygun ürün bulunamadı"
                 : "Henüz ürün eklenmemiş"
             }
           >
-            {!searchText && !Object.values(filters).some(f => f && f !== 'all') && (
+            {!filters.category && !filters.status && filters.inStock === 'all' && !setSearchText && (
               <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 İlk Ürünü Ekle
               </Button>
@@ -725,7 +661,7 @@ const ProductsPage = () => {
             columns={columns}
             dataSource={filteredProducts}
             rowKey="_id"
-            loading={loading.products || localLoading}
+            loading={loading || localLoading}
             scroll={{ x: 1400 }}
             pagination={{
               current: 1,
