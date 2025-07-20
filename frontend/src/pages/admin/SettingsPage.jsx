@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   Form, 
@@ -18,9 +18,10 @@ import {
   Tag,
   Modal,
   Popconfirm,
-  Alert
+  Alert,
+  Spin
 } from 'antd';
-import { useData } from '../../context/DataContext.jsx';
+import api from '../../services/api';
 import {
   SaveOutlined,
   UserOutlined,
@@ -41,47 +42,48 @@ import {
 
 const { Option } = Select;
 const { TextArea } = Input;
-const { TabPane } = Tabs;
 
 const SettingsPage = () => {
   const [form] = Form.useForm();
+  const [userForm] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const { orders, products, customers } = useData();
+  const [loading, setLoading] = useState(false);
+  const [adminUsers, setAdminUsers] = useState([]);
 
-  // Mock data
-  const users = [
-    {
-      key: '1',
-      id: 1,
-      name: 'Admin User',
-      email: 'admin@example.com',
-      role: 'admin',
-      status: 'active',
-      lastLogin: '2024-01-15 14:30',
-      avatar: '/img/avatars/avatar1.jpg'
-    },
-    {
-      key: '2',
-      id: 2,
-      name: 'Moderator User',
-      email: 'moderator@example.com',
-      role: 'moderator',
-      status: 'active',
-      lastLogin: '2024-01-14 16:45',
-      avatar: null
-    },
-    {
-      key: '3',
-      id: 3,
-      name: 'Editor User',
-      email: 'editor@example.com',
-      role: 'editor',
-      status: 'inactive',
-      lastLogin: '2024-01-10 09:20',
-      avatar: null
+  // Admin kullanıcılarını getir
+  const fetchAdminUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.request('/users');
+      if (response.success) {
+        // Sadece admin rolündeki kullanıcıları filtrele
+        const admins = response.users.filter(user => user.role === 'admin');
+        setAdminUsers(admins);
+      }
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+      message.error('Admin kullanıcıları yüklenirken hata oluştu');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchAdminUsers();
+  }, []);
+
+  // Admin kullanıcıları tablosu için veri hazırla
+  const tableAdminUsers = adminUsers.map(user => ({
+    key: user._id,
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: 'admin',
+    status: user.isActive ? 'active' : 'inactive',
+    lastLogin: user.lastLogin ? new Date(user.lastLogin).toLocaleString('tr-TR') : 'Henüz giriş yok',
+    avatar: user.avatar || null
+  }));
 
   const userColumns = [
     {
@@ -107,15 +109,9 @@ const SettingsPage = () => {
       title: 'Rol',
       dataIndex: 'role',
       key: 'role',
-      render: (role) => {
-        const roleConfig = {
-          admin: { color: 'red', text: 'Yönetici' },
-          moderator: { color: 'orange', text: 'Moderatör' },
-          editor: { color: 'blue', text: 'Editör' }
-        };
-        const config = roleConfig[role];
-        return <Tag color={config.color}>{config.text}</Tag>;
-      },
+      render: () => (
+        <Tag color="red">Yönetici</Tag>
+      ),
     },
     {
       title: 'Durum',
@@ -133,9 +129,7 @@ const SettingsPage = () => {
       key: 'lastLogin',
       render: (date) => (
         <div style={{ fontSize: 12 }}>
-          {new Date(date).toLocaleDateString('tr-TR')}
-          <br />
-          {new Date(date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+          {date}
         </div>
       ),
     },
@@ -151,7 +145,7 @@ const SettingsPage = () => {
             onClick={() => handleEditUser(record)}
           />
           <Popconfirm
-            title="Bu kullanıcıyı silmek istediğinizden emin misiniz?"
+            title="Bu admin kullanıcısını silmek istediğinizden emin misiniz?"
             onConfirm={() => handleDeleteUser(record.id)}
             okText="Evet"
             cancelText="Hayır"
@@ -170,21 +164,359 @@ const SettingsPage = () => {
 
   const handleEditUser = (user) => {
     setEditingUser(user);
+    userForm.setFieldsValue({
+      name: user.name,
+      email: user.email,
+      status: user.status === 'active'
+    });
     setIsModalVisible(true);
   };
 
-  const handleDeleteUser = () => {
-    message.success('Kullanıcı başarıyla silindi');
+  const handleDeleteUser = async (userId) => {
+    try {
+      const response = await api.request(`/users/${userId}`, {
+        method: 'DELETE'
+      });
+      if (response.success) {
+        message.success('Admin kullanıcısı başarıyla silindi');
+        await fetchAdminUsers();
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      message.error('Kullanıcı silinirken hata oluştu');
+    }
   };
 
   const handleSaveSettings = () => {
     message.success('Ayarlar başarıyla kaydedildi');
   };
 
-  const handleModalOk = () => {
-    message.success('Kullanıcı bilgileri güncellendi');
-    setIsModalVisible(false);
+  const handleModalOk = async () => {
+    try {
+      const values = await userForm.validateFields();
+      setLoading(true);
+      
+      if (editingUser) {
+        // Mevcut kullanıcıyı güncelle
+        const response = await api.request(`/users/${editingUser.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: values.name,
+            email: values.email,
+            isActive: values.status
+          })
+        });
+        
+        if (response.success) {
+          message.success('Admin kullanıcısı güncellendi');
+          setIsModalVisible(false);
+          userForm.resetFields();
+          await fetchAdminUsers();
+        }
+      } else {
+        // Yeni admin kullanıcısı oluştur
+        const response = await api.request('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: values.name,
+            email: values.email,
+            password: values.password || 'admin123',
+            isActive: values.status
+          })
+        });
+        
+        if (response.success) {
+          // Kullanıcıyı admin yap
+          await api.request(`/users/${response.user.id}/role`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              role: 'admin'
+            })
+          });
+          
+          message.success('Yeni admin kullanıcısı oluşturuldu');
+          setIsModalVisible(false);
+          userForm.resetFields();
+          await fetchAdminUsers();
+        }
+      }
+    } catch (error) {
+      console.error('Error saving user:', error);
+      message.error('İşlem sırasında hata oluştu');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Tabs items yapısı
+  const tabItems = [
+    {
+      key: 'general',
+      label: (
+        <span>
+          <SettingOutlined />
+          Genel Ayarlar
+        </span>
+      ),
+      children: (
+        <Card>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSaveSettings}
+            initialValues={{
+              siteName: 'E-Ticaret Mağazası',
+              siteDescription: 'Modern ve güvenilir e-ticaret platformu',
+              contactEmail: 'info@example.com',
+              contactPhone: '+90 212 123 4567',
+              address: 'İstanbul, Türkiye',
+              currency: 'TRY',
+              language: 'tr',
+              timezone: 'Europe/Istanbul',
+              maintenanceMode: false,
+              allowRegistration: true,
+              requireEmailVerification: true
+            }}
+          >
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Form.Item
+                  name="siteName"
+                  label="Site Adı"
+                  rules={[{ required: true, message: 'Lütfen site adını girin!' }]}
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="contactEmail"
+                  label="İletişim Email"
+                  rules={[{ required: true, type: 'email', message: 'Geçerli bir email girin!' }]}
+                >
+                  <Input prefix={<MailOutlined />} />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Form.Item
+              name="siteDescription"
+              label="Site Açıklaması"
+            >
+              <TextArea rows={3} />
+            </Form.Item>
+
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Form.Item
+                  name="contactPhone"
+                  label="İletişim Telefonu"
+                >
+                  <Input prefix={<PhoneOutlined />} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="address"
+                  label="Adres"
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={[16, 16]}>
+              <Col span={8}>
+                <Form.Item
+                  name="currency"
+                  label="Para Birimi"
+                >
+                  <Select>
+                    <Option value="TRY">Türk Lirası (₺)</Option>
+                    <Option value="USD">Amerikan Doları ($)</Option>
+                    <Option value="EUR">Euro (€)</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  name="language"
+                  label="Dil"
+                >
+                  <Select>
+                    <Option value="tr">Türkçe</Option>
+                    <Option value="en">English</Option>
+                    <Option value="de">Deutsch</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  name="timezone"
+                  label="Saat Dilimi"
+                >
+                  <Select>
+                    <Option value="Europe/Istanbul">İstanbul (UTC+3)</Option>
+                    <Option value="Europe/London">Londra (UTC+0)</Option>
+                    <Option value="America/New_York">New York (UTC-5)</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Divider>Site Ayarları</Divider>
+
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Form.Item
+                  name="maintenanceMode"
+                  label="Bakım Modu"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="allowRegistration"
+                  label="Kayıt Olmaya İzin Ver"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Form.Item
+              name="requireEmailVerification"
+              label="Email Doğrulaması Gerekli"
+              valuePropName="checked"
+            >
+              <Switch />
+            </Form.Item>
+
+            <Form.Item>
+              <Button type="primary" icon={<SaveOutlined />} htmlType="submit">
+                Ayarları Kaydet
+              </Button>
+            </Form.Item>
+          </Form>
+        </Card>
+      ),
+    },
+    {
+      key: 'users',
+      label: (
+        <span>
+          <UserOutlined />
+          Admin Yönetimi
+        </span>
+      ),
+      children: (
+        <Card>
+          <div style={{ marginBottom: 16, textAlign: 'right' }}>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditingUser(null);
+                userForm.resetFields();
+                setIsModalVisible(true);
+              }}
+            >
+              Yeni Admin Ekle
+            </Button>
+          </div>
+          <Table
+            columns={userColumns}
+            dataSource={tableAdminUsers}
+            rowKey="id"
+            pagination={false}
+            loading={loading}
+          />
+        </Card>
+      ),
+    },
+    {
+      key: 'security',
+      label: (
+        <span>
+          <SecurityScanOutlined />
+          Güvenlik
+        </span>
+      ),
+      children: (
+        <Card>
+          <Alert
+            message="Güvenlik Ayarları"
+            description="Bu bölüm geliştirilme aşamasındadır."
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+          <Form layout="vertical">
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Form.Item
+                  name="twoFactorAuth"
+                  label="İki Faktörlü Kimlik Doğrulama"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="sessionTimeout"
+                  label="Oturum Zaman Aşımı (dakika)"
+                >
+                  <Input type="number" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        </Card>
+      ),
+    },
+    {
+      key: 'notifications',
+      label: (
+        <span>
+          <BellOutlined />
+          Bildirimler
+        </span>
+      ),
+      children: (
+        <Card>
+          <Alert
+            message="Bildirim Ayarları"
+            description="Bu bölüm geliştirilme aşamasındadır."
+            type="info"
+            showIcon
+          />
+        </Card>
+      ),
+    },
+    {
+      key: 'backup',
+      label: (
+        <span>
+          <DatabaseOutlined />
+          Yedekleme
+        </span>
+      ),
+      children: (
+        <Card>
+          <Alert
+            message="Yedekleme Ayarları"
+            description="Bu bölüm geliştirilme aşamasındadır."
+            type="info"
+            showIcon
+          />
+        </Card>
+      ),
+    },
+  ];
 
   return (
     <div>
@@ -196,476 +528,24 @@ const SettingsPage = () => {
         </p>
       </div>
 
-      <Tabs defaultActiveKey="general">
-        {/* General Settings */}
-        <TabPane 
-          tab={
-            <span>
-              <SettingOutlined />
-              Genel Ayarlar
-            </span>
-          } 
-          key="general"
-        >
-          <Card>
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleSaveSettings}
-              initialValues={{
-                siteName: 'E-Ticaret Mağazası',
-                siteDescription: 'Modern ve güvenilir e-ticaret platformu',
-                contactEmail: 'info@example.com',
-                contactPhone: '+90 212 123 4567',
-                address: 'İstanbul, Türkiye',
-                currency: 'TRY',
-                language: 'tr',
-                timezone: 'Europe/Istanbul',
-                maintenanceMode: false,
-                allowRegistration: true,
-                requireEmailVerification: true
-              }}
-            >
-              <Row gutter={[16, 16]}>
-                <Col span={12}>
-                  <Form.Item
-                    name="siteName"
-                    label="Site Adı"
-                    rules={[{ required: true, message: 'Lütfen site adını girin!' }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="contactEmail"
-                    label="İletişim Email"
-                    rules={[{ required: true, type: 'email', message: 'Geçerli bir email girin!' }]}
-                  >
-                    <Input prefix={<MailOutlined />} />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Form.Item
-                name="siteDescription"
-                label="Site Açıklaması"
-              >
-                <TextArea rows={3} />
-              </Form.Item>
-
-              <Row gutter={[16, 16]}>
-                <Col span={12}>
-                  <Form.Item
-                    name="contactPhone"
-                    label="İletişim Telefonu"
-                  >
-                    <Input prefix={<PhoneOutlined />} />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="address"
-                    label="Adres"
-                  >
-                    <Input />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Row gutter={[16, 16]}>
-                <Col span={8}>
-                  <Form.Item
-                    name="currency"
-                    label="Para Birimi"
-                  >
-                    <Select>
-                      <Option value="TRY">Türk Lirası (₺)</Option>
-                      <Option value="USD">Amerikan Doları ($)</Option>
-                      <Option value="EUR">Euro (€)</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col span={8}>
-                  <Form.Item
-                    name="language"
-                    label="Dil"
-                  >
-                    <Select>
-                      <Option value="tr">Türkçe</Option>
-                      <Option value="en">English</Option>
-                      <Option value="de">Deutsch</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col span={8}>
-                  <Form.Item
-                    name="timezone"
-                    label="Saat Dilimi"
-                  >
-                    <Select>
-                      <Option value="Europe/Istanbul">İstanbul (UTC+3)</Option>
-                      <Option value="Europe/London">Londra (UTC+0)</Option>
-                      <Option value="America/New_York">New York (UTC-5)</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Divider>Site Ayarları</Divider>
-
-              <Row gutter={[16, 16]}>
-                <Col span={12}>
-                  <Form.Item
-                    name="maintenanceMode"
-                    label="Bakım Modu"
-                    valuePropName="checked"
-                  >
-                    <Switch />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="allowRegistration"
-                    label="Kayıt Olmaya İzin Ver"
-                    valuePropName="checked"
-                  >
-                    <Switch />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Form.Item
-                name="requireEmailVerification"
-                label="Email Doğrulaması Gerekli"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-
-              <Form.Item>
-                <Button type="primary" icon={<SaveOutlined />} htmlType="submit">
-                  Ayarları Kaydet
-                </Button>
-              </Form.Item>
-            </Form>
-          </Card>
-        </TabPane>
-
-        {/* User Management */}
-        <TabPane 
-          tab={
-            <span>
-              <UserOutlined />
-              Kullanıcı Yönetimi
-            </span>
-          } 
-          key="users"
-        >
-          <Card>
-            <div style={{ marginBottom: 16, textAlign: 'right' }}>
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />}
-                onClick={() => setIsModalVisible(true)}
-              >
-                Yeni Kullanıcı Ekle
-              </Button>
-            </div>
-            <Table
-              columns={userColumns}
-              dataSource={users}
-              rowKey="id"
-              pagination={false}
-            />
-          </Card>
-        </TabPane>
-
-        {/* Security Settings */}
-        <TabPane 
-          tab={
-            <span>
-              <SecurityScanOutlined />
-              Güvenlik
-            </span>
-          } 
-          key="security"
-        >
-          <Card>
-            <Form layout="vertical">
-              <Row gutter={[16, 16]}>
-                <Col span={12}>
-                  <Form.Item
-                    name="sessionTimeout"
-                    label="Oturum Zaman Aşımı (dakika)"
-                  >
-                    <Select defaultValue="30">
-                      <Option value="15">15 dakika</Option>
-                      <Option value="30">30 dakika</Option>
-                      <Option value="60">1 saat</Option>
-                      <Option value="120">2 saat</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="maxLoginAttempts"
-                    label="Maksimum Giriş Denemesi"
-                  >
-                    <Select defaultValue="5">
-                      <Option value="3">3 deneme</Option>
-                      <Option value="5">5 deneme</Option>
-                      <Option value="10">10 deneme</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Row gutter={[16, 16]}>
-                <Col span={12}>
-                  <Form.Item
-                    name="requireTwoFactor"
-                    label="İki Faktörlü Doğrulama"
-                    valuePropName="checked"
-                  >
-                    <Switch />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="passwordExpiry"
-                    label="Şifre Geçerlilik Süresi (gün)"
-                  >
-                    <Select defaultValue="90">
-                      <Option value="30">30 gün</Option>
-                      <Option value="60">60 gün</Option>
-                      <Option value="90">90 gün</Option>
-                      <Option value="180">180 gün</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Form.Item
-                name="allowedFileTypes"
-                label="İzin Verilen Dosya Türleri"
-              >
-                <Select mode="tags" defaultValue={['jpg', 'png', 'pdf']}>
-                  <Option value="jpg">JPG</Option>
-                  <Option value="png">PNG</Option>
-                  <Option value="pdf">PDF</Option>
-                  <Option value="doc">DOC</Option>
-                  <Option value="xls">XLS</Option>
-                </Select>
-              </Form.Item>
-
-              <Form.Item>
-                <Button type="primary" icon={<LockOutlined />}>
-                  Güvenlik Ayarlarını Kaydet
-                </Button>
-              </Form.Item>
-            </Form>
-          </Card>
-        </TabPane>
-
-        {/* Notification Settings */}
-        <TabPane 
-          tab={
-            <span>
-              <BellOutlined />
-              Bildirimler
-            </span>
-          } 
-          key="notifications"
-        >
-          <Card>
-            <Form layout="vertical">
-              <h4>Email Bildirimleri</h4>
-              <Row gutter={[16, 16]}>
-                <Col span={12}>
-                  <Form.Item
-                    name="newOrderNotification"
-                    label="Yeni Sipariş Bildirimi"
-                    valuePropName="checked"
-                  >
-                    <Switch defaultChecked />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="lowStockNotification"
-                    label="Düşük Stok Bildirimi"
-                    valuePropName="checked"
-                  >
-                    <Switch defaultChecked />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Row gutter={[16, 16]}>
-                <Col span={12}>
-                  <Form.Item
-                    name="customerSupportNotification"
-                    label="Müşteri Destek Bildirimi"
-                    valuePropName="checked"
-                  >
-                    <Switch defaultChecked />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="systemAlertNotification"
-                    label="Sistem Uyarı Bildirimi"
-                    valuePropName="checked"
-                  >
-                    <Switch defaultChecked />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Divider />
-
-              <h4>Bildirim Ayarları</h4>
-              <Form.Item
-                name="notificationEmail"
-                label="Bildirim Email Adresi"
-              >
-                <Input prefix={<MailOutlined />} />
-              </Form.Item>
-
-              <Form.Item
-                name="notificationFrequency"
-                label="Bildirim Sıklığı"
-              >
-                <Select defaultValue="immediate">
-                  <Option value="immediate">Anında</Option>
-                  <Option value="hourly">Saatlik</Option>
-                  <Option value="daily">Günlük</Option>
-                  <Option value="weekly">Haftalık</Option>
-                </Select>
-              </Form.Item>
-
-              <Form.Item>
-                <Button type="primary" icon={<BellOutlined />}>
-                  Bildirim Ayarlarını Kaydet
-                </Button>
-              </Form.Item>
-            </Form>
-          </Card>
-        </TabPane>
-
-        {/* Database Management */}
-        <TabPane 
-          tab={
-            <span>
-              <DatabaseOutlined />
-              Veritabanı Yönetimi
-            </span>
-          } 
-          key="database"
-        >
-          <Card>
-            <Alert
-              message="Veritabanı Bilgileri"
-              description="MongoDB Atlas veritabanı kullanılmaktadır. Veriler güvenli bir şekilde bulutta saklanmaktadır."
-              type="info"
-              showIcon
-              style={{ marginBottom: 16 }}
-            />
-            
-            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-              <Col span={8}>
-                <Card size="small">
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1890ff' }}>
-                      {orders.length}
-                    </div>
-                    <div style={{ color: '#666' }}>Toplam Sipariş</div>
-                  </div>
-                </Card>
-              </Col>
-              <Col span={8}>
-                <Card size="small">
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 24, fontWeight: 'bold', color: '#52c41a' }}>
-                      {products.length}
-                    </div>
-                    <div style={{ color: '#666' }}>Toplam Ürün</div>
-                  </div>
-                </Card>
-              </Col>
-              <Col span={8}>
-                <Card size="small">
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 24, fontWeight: 'bold', color: '#faad14' }}>
-                      {customers.length}
-                    </div>
-                    <div style={{ color: '#666' }}>Toplam Müşteri</div>
-                  </div>
-                </Card>
-              </Col>
-            </Row>
-
-            <div style={{ marginBottom: 16 }}>
-              <h4>Veritabanı Durumu</h4>
-              <p style={{ color: '#666', marginBottom: 16 }}>
-                MongoDB Atlas veritabanı bağlantısı aktif ve çalışır durumda.
-              </p>
-              
-              <Space>
-                <Button type="primary" icon={<SyncOutlined />}>
-                  Veritabanını Yenile
-                </Button>
-                <Button icon={<DownloadOutlined />}>
-                  Yedek İndir
-                </Button>
-              </Space>
-            </div>
-
-            <Divider />
-
-            <div>
-              <h4>API Durumu</h4>
-              <p style={{ color: '#666', marginBottom: 16 }}>
-                Backend API endpoint'leri ve durumları.
-              </p>
-              
-              <Row gutter={[16, 16]}>
-                <Col span={12}>
-                  <Card size="small">
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 16, fontWeight: 'bold', color: '#52c41a' }}>
-                        Aktif
-                      </div>
-                      <div style={{ color: '#666' }}>Backend API</div>
-                    </div>
-                  </Card>
-                </Col>
-                <Col span={12}>
-                  <Card size="small">
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 16, fontWeight: 'bold', color: '#52c41a' }}>
-                        Aktif
-                      </div>
-                      <div style={{ color: '#666' }}>MongoDB Bağlantısı</div>
-                    </div>
-                  </Card>
-                </Col>
-              </Row>
-            </div>
-          </Card>
-        </TabPane>
-      </Tabs>
+      <Tabs defaultActiveKey="general" items={tabItems} />
 
       {/* User Edit Modal */}
       <Modal
-        title={editingUser ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı Ekle'}
+        title={editingUser ? 'Admin Kullanıcı Düzenle' : 'Yeni Admin Kullanıcı Ekle'}
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={() => setIsModalVisible(false)}
         width={500}
+        confirmLoading={loading}
       >
-        <Form layout="vertical">
+        <Form 
+          form={userForm} 
+          layout="vertical"
+          initialValues={{
+            status: true
+          }}
+        >
           <Form.Item
             name="name"
             label="Ad Soyad"
@@ -682,24 +562,22 @@ const SettingsPage = () => {
             <Input />
           </Form.Item>
 
-          <Form.Item
-            name="role"
-            label="Rol"
-            rules={[{ required: true, message: 'Lütfen rol seçin!' }]}
-          >
-            <Select>
-              <Option value="admin">Yönetici</Option>
-              <Option value="moderator">Moderatör</Option>
-              <Option value="editor">Editör</Option>
-            </Select>
-          </Form.Item>
+          {!editingUser && (
+            <Form.Item
+              name="password"
+              label="Şifre"
+              rules={[{ required: true, min: 6, message: 'Şifre en az 6 karakter olmalı!' }]}
+            >
+              <Input.Password placeholder="Admin şifresi" />
+            </Form.Item>
+          )}
 
           <Form.Item
             name="status"
             label="Durum"
             valuePropName="checked"
           >
-            <Switch checkedChildren="Aktif" unCheckedChildren="Pasif" />
+            <Switch checkedChildren="Aktif" unCheckedChildren="Pasif" defaultChecked />
           </Form.Item>
         </Form>
       </Modal>

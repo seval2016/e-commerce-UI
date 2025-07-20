@@ -51,7 +51,9 @@ const CustomersPage = () => {
       setLoading(true);
       const response = await api.request('/users');
       if (response.success) {
-        setCustomers(response.users);
+        // Sadece müşteri rolündeki kullanıcıları filtrele (admin'leri hariç tut)
+        const customers = response.users.filter(user => user.role === 'user' || !user.role);
+        setCustomers(customers);
       }
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -101,14 +103,17 @@ const CustomersPage = () => {
       ),
     },
     {
-      title: 'Rol',
-      dataIndex: 'role',
-      key: 'role',
-      render: (role) => (
-        <Tag color={role === 'admin' ? 'gold' : 'blue'}>
-          {role === 'admin' ? 'Admin' : 'Müşteri'}
-        </Tag>
-      ),
+      title: 'Üye Seviyesi',
+      dataIndex: 'totalSpent',
+      key: 'level',
+      render: (totalSpent) => {
+        const level = getCustomerLevel(totalSpent || 0);
+        return (
+          <Tag color={level.color}>
+            {level.level}
+          </Tag>
+        );
+      },
     },
     {
       title: 'Durum',
@@ -197,8 +202,7 @@ const CustomersPage = () => {
       address: typeof customer.address === 'string' ? customer.address : 
                customer.address ? `${customer.address.street || ''} ${customer.address.city || ''}` : '',
       notes: customer.notes || '',
-      status: customer.isActive ? 'active' : 'inactive',
-      role: customer.role || 'user'
+      status: customer.isActive ? 'active' : 'inactive'
     });
     setIsModalVisible(true);
   };
@@ -206,10 +210,9 @@ const CustomersPage = () => {
   const handleAddCustomer = () => {
     setSelectedCustomer(null);
     form.resetFields();
-    form.setFieldsValue({
-      status: 'active',
-      role: 'user'
-    });
+          form.setFieldsValue({
+        status: 'active'
+      });
     setIsModalVisible(true);
   };
 
@@ -251,15 +254,7 @@ const CustomersPage = () => {
           })
         });
         
-        // Update role separately if changed
-        if (values.role !== selectedCustomer.role) {
-          await api.request(`/users/${selectedCustomer._id}/role`, {
-            method: 'PUT',
-            body: JSON.stringify({
-              role: values.role
-            })
-          });
-        }
+
         
         if (response.success) {
           message.success('Müşteri bilgileri güncellendi');
@@ -281,16 +276,7 @@ const CustomersPage = () => {
             isActive: values.status === 'active'
           })
         });
-        
-        if (response.success && values.role === 'admin') {
-          // Make user admin if needed
-          await api.request(`/users/${response.user.id}/role`, {
-            method: 'PUT',
-            body: JSON.stringify({
-              role: 'admin'
-            })
-          });
-        }
+
         
         if (response.success) {
           message.success('Yeni müşteri oluşturuldu');
@@ -553,14 +539,7 @@ const CustomersPage = () => {
                     <Input />
                   </Form.Item>
                 </Col>
-                <Col span={8}>
-                  <Form.Item name="role" label="Rol" rules={[{ required: true }]}>
-                    <Select>
-                      <Select.Option value="user">Müşteri</Select.Option>
-                      <Select.Option value="admin">Admin</Select.Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
+
                 <Col span={8}>
                   <Form.Item name="status" label="Durum">
                     <Select>

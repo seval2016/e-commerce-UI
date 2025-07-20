@@ -65,11 +65,11 @@ const AnalyticsPage = () => {
   ];
 
   const recentActivity = [
-    { action: 'Yeni sipariş alındı', details: 'ORD-001 - Ahmet Yılmaz', time: '2 dakika önce', type: 'order' },
-    { action: 'Ürün eklendi', details: 'iPhone 15 Pro Max', time: '15 dakika önce', type: 'product' },
-    { action: 'Yeni müşteri kaydı', details: 'fatma@email.com', time: '1 saat önce', type: 'customer' },
-    { action: 'Blog yazısı yayınlandı', details: 'iPhone 15 İncelemesi', time: '2 saat önce', type: 'blog' },
-    { action: 'Stok güncellendi', details: 'Samsung Galaxy S24', time: '3 saat önce', type: 'stock' }
+    { id: 1, action: 'Yeni sipariş alındı', details: 'ORD-001 - Ahmet Yılmaz', time: '2 dakika önce', type: 'order' },
+    { id: 2, action: 'Ürün eklendi', details: 'iPhone 15 Pro Max', time: '15 dakika önce', type: 'product' },
+    { id: 3, action: 'Yeni müşteri kaydı', details: 'fatma@email.com', time: '1 saat önce', type: 'customer' },
+    { id: 4, action: 'Blog yazısı yayınlandı', details: 'iPhone 15 İncelemesi', time: '2 saat önce', type: 'blog' },
+    { id: 5, action: 'Stok güncellendi', details: 'Samsung Galaxy S24', time: '3 saat önce', type: 'stock' }
   ];
 
   const productColumns = [

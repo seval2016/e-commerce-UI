@@ -39,7 +39,6 @@ import { useData } from '../../context/DataContext.jsx';
 const { Search } = Input;
 const { Option } = Select;
 const { TextArea } = Input;
-const { TabPane } = Tabs;
 
 const SupportPage = () => {
   const [searchText, setSearchText] = useState('');
@@ -414,47 +413,66 @@ const SupportPage = () => {
 
       {/* Support Tickets */}
       <Card>
-        <Tabs defaultActiveKey="all">
-          <TabPane tab="Tüm Talepler" key="all">
-            <Table
-              columns={columns}
-              dataSource={tableTickets}
-              rowKey="_id"
-              pagination={{
-                total: tableTickets.length,
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) => 
-                  `${range[0]}-${range[1]} / ${total} destek talebi`,
-              }}
-            />
-          </TabPane>
-          <TabPane tab="Açık Talepler" key="open">
-            <Table
-              columns={columns}
-              dataSource={tableTickets.filter(t => t.status === 'open')}
-              rowKey="_id"
-              pagination={false}
-            />
-          </TabPane>
-          <TabPane tab="İşlenen Talepler" key="in_progress">
-            <Table
-              columns={columns}
-              dataSource={tableTickets.filter(t => t.status === 'in_progress')}
-              rowKey="_id"
-              pagination={false}
-            />
-          </TabPane>
-          <TabPane tab="Çözülen Talepler" key="resolved">
-            <Table
-              columns={columns}
-              dataSource={tableTickets.filter(t => t.status === 'resolved')}
-              rowKey="_id"
-              pagination={false}
-            />
-          </TabPane>
-        </Tabs>
+        <Tabs 
+          defaultActiveKey="all"
+          items={[
+            {
+              key: 'all',
+              label: 'Tüm Talepler',
+              children: (
+                <Table
+                  columns={columns}
+                  dataSource={tableTickets}
+                  rowKey="_id"
+                  pagination={{
+                    total: tableTickets.length,
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total, range) => 
+                      `${range[0]}-${range[1]} / ${total} destek talebi`,
+                  }}
+                />
+              )
+            },
+            {
+              key: 'open',
+              label: 'Açık Talepler',
+              children: (
+                <Table
+                  columns={columns}
+                  dataSource={tableTickets.filter(t => t.status === 'open')}
+                  rowKey="_id"
+                  pagination={false}
+                />
+              )
+            },
+            {
+              key: 'in_progress',
+              label: 'İşlenen Talepler',
+              children: (
+                <Table
+                  columns={columns}
+                  dataSource={tableTickets.filter(t => t.status === 'in_progress')}
+                  rowKey="_id"
+                  pagination={false}
+                />
+              )
+            },
+            {
+              key: 'resolved',
+              label: 'Çözülen Talepler',
+              children: (
+                <Table
+                  columns={columns}
+                  dataSource={tableTickets.filter(t => t.status === 'resolved')}
+                  rowKey="_id"
+                  pagination={false}
+                />
+              )
+            }
+          ]}
+        />
       </Card>
 
       {/* Ticket Details Modal */}
