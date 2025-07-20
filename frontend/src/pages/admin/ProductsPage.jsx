@@ -364,7 +364,10 @@ const ProductsPage = () => {
     setImagePreviews([...new Set(existingImages)].filter(Boolean));
     
     // Set form values
-    const categoryId = typeof product.category === 'object' ? product.category._id : product.category;
+    // Hatanın olduğu kısım: product.category'nin null olup olmadığı kontrol ediliyor.
+    const categoryId = (product.category && typeof product.category === 'object') 
+      ? product.category._id 
+      : product.category;
     
     form.setFieldsValue({
       name: product.name,

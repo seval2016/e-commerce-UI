@@ -79,18 +79,19 @@ const CategoriesPage = () => {
       dataIndex: 'name',
       key: 'name',
       render: (text, record) => (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="flex items-center">
           <Image
             width={50}
             height={50}
             src={getCategoryImageUrl(record.image)}
             fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-            style={{ borderRadius: 5, marginRight:100, objectFit: 'contain', background: '#f7f7f7' }}
+            className="rounded-md mr-4"
+            style={{ objectFit: 'contain', background: '#f7f7f7' }}
             preview={false}
           />
           <div>
-            <div style={{ fontWeight: 500 }}>{text}</div>
-            <div style={{ fontSize: 12, color: '#666' }}>{record.description}</div>
+            <div className="font-medium">{text}</div>
+            <div className="text-xs text-gray-500">{record.description}</div>
           </div>
         </div>
       ),
@@ -99,14 +100,16 @@ const CategoriesPage = () => {
       title: 'Slug',
       dataIndex: 'slug',
       key: 'slug',
-      render: (slug) => <code>{slug}</code>,
+      responsive: ['md'],
+      render: (slug) => <Tag color="cyan">{slug}</Tag>,
     },
     {
       title: 'Ürün Sayısı',
       dataIndex: 'productCount',
       key: 'productCount',
+      responsive: ['lg'],
       render: (count) => (
-        <Tag color="blue">{count} ürün</Tag>
+        <Tag color="blue">{count || 0} ürün</Tag>
       ),
       sorter: (a, b) => a.productCount - b.productCount,
     },

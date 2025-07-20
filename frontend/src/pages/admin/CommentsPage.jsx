@@ -4,10 +4,30 @@ import { MessageOutlined, StarOutlined } from "@ant-design/icons";
 import PendingReviewsTab from "../../components/admin/PendingReviewsTab";
 
 const { Title, Paragraph } = Typography;
-const { TabPane } = Tabs;
 
 const CommentsPage = () => {
   const [activeTab, setActiveTab] = useState("blogs");
+
+  const items = [
+    {
+      key: "blogs",
+      label: (
+        <span>
+          <MessageOutlined /> Blog Yorumları
+        </span>
+      ),
+      children: <PendingReviewsTab type="blogs" />,
+    },
+    {
+      key: "products",
+      label: (
+        <span>
+          <StarOutlined /> Ürün Değerlendirmeleri
+        </span>
+      ),
+      children: <PendingReviewsTab type="products" />,
+    },
+  ];
 
   return (
     <div>
@@ -15,28 +35,7 @@ const CommentsPage = () => {
       <Paragraph>
         Onay bekleyen blog ve ürün yorumlarını buradan yönetebilirsiniz.
       </Paragraph>
-      <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        <TabPane
-          tab={
-            <span>
-              <MessageOutlined /> Blog Yorumları
-            </span>
-          }
-          key="blogs"
-        >
-          <PendingReviewsTab type="blogs" />
-        </TabPane>
-        <TabPane
-          tab={
-            <span>
-              <StarOutlined /> Ürün Değerlendirmeleri
-            </span>
-          }
-          key="products"
-        >
-          <PendingReviewsTab type="products" />
-        </TabPane>
-      </Tabs>
+      <Tabs activeKey={activeTab} onChange={setActiveTab} items={items} />
     </div>
   );
 };

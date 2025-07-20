@@ -16,18 +16,6 @@ const Info = () => {
   const [activeColor, setActiveColor] = useState("blue");
   const [quantity, setQuantity] = useState(1);
 
-  // Backend API base URL
-  const API_BASE_URL = "http://localhost:5000";
-
-  // Ürün görsel yolunu backend ile birleştir
-  const getProductImageUrl = (imagePath) => {
-    if (!imagePath || typeof imagePath !== 'string') return null;
-    if (imagePath.startsWith("/uploads/")) {
-      return API_BASE_URL + imagePath;
-    }
-    return imagePath;
-  };
-
   useEffect(() => {
     const foundProduct = products.find(p => p._id === id || p.id === id);
     if (foundProduct) {

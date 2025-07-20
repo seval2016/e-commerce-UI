@@ -62,16 +62,16 @@ const CustomersPage = () => {
       dataIndex: 'name',
       key: 'name',
       render: (text, record) => (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="flex items-center">
           <Avatar 
             size={40} 
             src={record.avatar}
             icon={<UserOutlined />}
-            style={{ marginRight: 12 }}
+            className="mr-3"
           />
           <div>
-            <div style={{ fontWeight: 500 }}>{text}</div>
-            <div style={{ fontSize: 12, color: '#666' }}>{record.email}</div>
+            <div className="font-medium">{text}</div>
+            <div className="text-xs text-gray-500">{record.email}</div>
           </div>
         </div>
       ),
@@ -80,12 +80,11 @@ const CustomersPage = () => {
       title: 'İletişim',
       dataIndex: 'phone',
       key: 'phone',
+      responsive: ['md'],
       render: (phone) => (
-        <div>
-          <div style={{ fontSize: 12 }}>
-            <PhoneOutlined style={{ marginRight: 4 }} />
-            {phone}
-          </div>
+        <div className="text-xs">
+          <PhoneOutlined className="mr-1" />
+          {phone || 'Belirtilmemiş'}
         </div>
       ),
     },
@@ -93,6 +92,7 @@ const CustomersPage = () => {
       title: 'Üye Seviyesi',
       dataIndex: 'totalSpent',
       key: 'level',
+      responsive: ['lg'],
       render: (totalSpent) => {
         const level = getCustomerLevel(totalSpent || 0);
         return (
@@ -106,6 +106,7 @@ const CustomersPage = () => {
       title: 'Durum',
       dataIndex: 'isActive',
       key: 'isActive',
+      responsive: ['md'],
       render: (isActive) => (
         <Tag color={isActive ? 'green' : 'red'}>
           {isActive ? 'Aktif' : 'Pasif'}
@@ -116,6 +117,7 @@ const CustomersPage = () => {
       title: 'Sipariş Sayısı',
       dataIndex: 'totalOrders',
       key: 'totalOrders',
+      responsive: ['lg'],
       render: (orders) => (
         <Tag color="blue">{orders || 0} sipariş</Tag>
       ),
@@ -125,9 +127,10 @@ const CustomersPage = () => {
       title: 'Toplam Harcama',
       dataIndex: 'totalSpent',
       key: 'totalSpent',
+      responsive: ['lg'],
       render: (spent) => (
-        <div style={{ fontWeight: 500, color: '#52c41a' }}>
-          {(spent || 0).toLocaleString()} ₺
+        <div className="font-medium text-green-600">
+          {(spent || 0).toLocaleString('tr-TR')} ₺
         </div>
       ),
       sorter: (a, b) => (a.totalSpent || 0) - (b.totalSpent || 0),
@@ -136,8 +139,9 @@ const CustomersPage = () => {
       title: 'Son Sipariş',
       dataIndex: 'lastOrder',
       key: 'lastOrder',
+      responsive: ['lg'],
       render: (date) => (
-        <div style={{ fontSize: 12 }}>
+        <div className="text-xs">
           {date ? new Date(date).toLocaleDateString('tr-TR') : 'Henüz sipariş yok'}
         </div>
       ),

@@ -110,7 +110,7 @@ const BlogDetails = () => {
                 <img 
                   src={blogImageUrl}
                   alt={blog.title} 
-                  className="w-full h-64 md:h-96 object-cover"
+                  className="w-full h-56 sm:h-64 md:h-80 lg:h-96 object-cover"
                   onError={(e) => {
                     e.target.src = '/img/blogs/blog1.jpg';
                   }}
@@ -124,7 +124,7 @@ const BlogDetails = () => {
                 </div>
               );
             })()}
-            <div className="absolute top-6 left-6">
+            <div className="absolute top-4 sm:top-6 left-4 sm:left-6">
               <Badge variant="primary" size="lg">
                 {blog.category?.name || blog.category || 'Kategori'}
               </Badge>
@@ -132,12 +132,12 @@ const BlogDetails = () => {
           </figure>
 
           {/* Blog Content */}
-          <div className="p-8">
+          <div className="p-6 sm:p-8">
             {/* Meta Information */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600 mb-6">
               <div className="flex items-center gap-2">
                 <i className="bi bi-calendar3 text-gray-400"></i>
-                <span>{blog.date}</span>
+                <span>{new Date(blog.createdAt).toLocaleDateString('tr-TR')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <i className="bi bi-chat-dots text-gray-400"></i>
@@ -172,21 +172,18 @@ const BlogDetails = () => {
             </div>
 
             {/* Blog Title */}
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight">
               {blog.title}
             </h1>
 
             {/* Blog Content */}
-            <div className="prose prose-lg max-w-none">
-              <p className="text-gray-700 leading-relaxed mb-6">
-                {blog.content}
-              </p>
+            <div className="prose prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: blog.content }}>
             </div>
 
             {/* Author Info */}
-            <div className="mt-12 pt-8 border-t border-gray-200">
+            <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-200 rounded-full flex items-center justify-center">
                   <i className="bi bi-person text-2xl text-gray-500"></i>
                 </div>
                 <div>
@@ -199,7 +196,7 @@ const BlogDetails = () => {
         </article>
 
         {/* Comments Section */}
-        <div className="mt-12">
+        <div className="mt-10 sm:mt-12">
           <Reviews blog={blog}/>
         </div>
       </div>

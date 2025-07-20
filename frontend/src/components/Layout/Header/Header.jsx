@@ -3,12 +3,14 @@ import Proptypes from "prop-types";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useAdminAuth } from "../../../context/AdminAuthContext.jsx";
+import { useFavorites } from "../../../context/FavoritesContext.jsx";
 import MobileMenu from "./MobileMenu";
 import Dropdown from "../../common/Dropdown";
 import { images } from "../../../utils/imageImports";
 
 const Header = ({ setIsSearchShow }) => {
   const { getCartCount, clearCart } = useCart();
+  const { favorites } = useFavorites();
   const { isAdmin, logout } = useAdminAuth();
   const user = localStorage.getItem("user");
   const { pathname } = useLocation();
@@ -305,6 +307,16 @@ const Header = ({ setIsSearchShow }) => {
               >
                 <i className="bi bi-search"></i>
               </button>
+              <div className="relative">
+                <Link to={"/favorites"} className="text-lg text-gray-700 hover:text-blue-600 transition-colors">
+                  <i className="bi bi-heart"></i>
+                  {favorites.length > 0 && (
+                    <span className="min-w-[16px] h-4 bg-blue-600 text-white text-xs rounded-full absolute -top-2 -right-2 flex items-center justify-center font-medium px-1">
+                      {favorites.length > 99 ? '99+' : favorites.length}
+                    </span>
+                  )}
+                </Link>
+              </div>
               <div className="relative">
                 <Link to={"/cart"} className="text-lg text-gray-700 hover:text-blue-600 transition-colors">
                   <i className="bi bi-bag"></i>

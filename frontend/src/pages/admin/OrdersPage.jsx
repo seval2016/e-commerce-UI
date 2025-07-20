@@ -115,15 +115,16 @@ const OrdersPage = () => {
       key: "customer",
       render: (customer) => (
         <div>
-          <div style={{ fontWeight: 500 }}>{customer.name}</div>
-          <div style={{ fontSize: 12, color: "#666" }}>{customer.email}</div>
+          <div className="font-medium">{customer.name}</div>
+          <div className="text-xs text-gray-500">{customer.email}</div>
         </div>
       ),
     },
     {
-      title: "Ürünler",
-      dataIndex: "products",
-      key: "products",
+      title: 'Ürünler',
+      dataIndex: 'products',
+      key: 'products',
+      responsive: ['lg'],
       render: (products) => (
         <div>
           {products && products.length > 0 ? (
@@ -147,8 +148,8 @@ const OrdersPage = () => {
       dataIndex: "total",
       key: "total",
       render: (total) => (
-        <div style={{ fontWeight: 500, color: "#1890ff" }}>
-          {total.toLocaleString()} ₺
+        <div className="font-medium text-blue-600">
+          {total.toLocaleString('tr-TR')} ₺
         </div>
       ),
       sorter: (a, b) => a.total - b.total,
@@ -174,6 +175,7 @@ const OrdersPage = () => {
       title: "Ödeme",
       dataIndex: "paymentMethod",
       key: "paymentMethod",
+      responsive: ['lg'],
       render: (paymentMethod) => {
         const methodNames = {
           credit_card: "Kredi Kartı",
@@ -188,8 +190,9 @@ const OrdersPage = () => {
       title: "Tarih",
       dataIndex: "orderDate",
       key: "orderDate",
+      responsive: ['md'],
       render: (orderDate) => (
-        <div style={{ fontSize: 12 }}>
+        <div className="text-xs">
           {orderDate ? new Date(orderDate).toLocaleDateString("tr-TR") : "-"}
         </div>
       ),

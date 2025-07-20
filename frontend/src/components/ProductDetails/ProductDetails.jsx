@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import Breadcrumb from "./Breadcrumb/Breadcrumb";
+import Breadcrumb from "../common/Breadcrumb";
 import Gallery from "./Gallery/Gallery";
 import Info from "./Info/Info";
 import Tabs from "./Tabs/Tabs";

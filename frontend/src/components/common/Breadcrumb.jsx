@@ -1,94 +1,97 @@
+import { Link, useLocation, useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { useData } from '../../context/DataContext';
 
-const Breadcrumb = ({ 
-  items = [], 
-  separator = 'chevron-right',
-  size = 'md',
-  className = '',
-  ...props 
-}) => {
-  // Size configurations
-  const sizeConfig = {
-    sm: {
-      textClass: 'text-xs',
-      iconClass: 'text-xs',
-      spacing: 'space-x-1'
-    },
-    md: {
-      textClass: 'text-sm',
-      iconClass: 'text-sm',
-      spacing: 'space-x-1 md:space-x-3'
-    },
-    lg: {
-      textClass: 'text-base',
-      iconClass: 'text-base',
-      spacing: 'space-x-2 md:space-x-4'
-    }
-  };
+const Breadcrumb = () => {
+    const location = useLocation();
+    const params = useParams();
+    const { products, blogs } = useData();
 
-  // Separator configurations
-  const separatorConfig = {
-    'chevron-right': 'bi bi-chevron-right',
-    'chevron-left': 'bi bi-chevron-left',
-    'arrow-right': 'bi bi-arrow-right',
-    'arrow-left': 'bi bi-arrow-left',
-    'slash': 'bi bi-slash',
-    'dot': 'bi bi-dot'
-  };
+    const pathnames = location.pathname.split('/').filter((x) => x);
 
-  const config = sizeConfig[size];
-  const separatorIcon = separatorConfig[separator] || separatorConfig['chevron-right'];
+    const breadcrumbItems = [
+        { label: 'Home', href: '/', icon: <i className="bi bi-house-door"></i> }
+    ];
 
-  if (items.length === 0) return null;
+    let currentLink = '';
+    pathnames.forEach((name, index) => {
+        currentLink += `/${name}`;
+        const isLast = index === pathnames.length - 1;
+
+        let label = name.charAt(0).toUpperCase() + name.slice(1);
+
+        // Dinamik yolları işle (örn: /product/:id)
+        if (params.id && name === params.id) {
+            const product = products.find(p => p._id === params.id);
+            if (product) label = product.name;
+        }
+        if (params.slug && name === params.slug) {
+            const blog = blogs.find(b => b.slug === params.slug);
+            if (blog) label = blog.title;
+        }
+        
+        // "Ürünler" gibi ara yolları ekleyebiliriz
+        if (location.pathname.startsWith('/product/') && index === 0) {
+            breadcrumbItems.push({ label: 'Products', href: '/shop' });
+        }
+
+
+        breadcrumbItems.push({
+            label: label,
+            href: isLast ? null : currentLink,
+        });
+    });
+    
+    // Tekrarlı yolları temizle (örn: Shop > Products > Ürün Adı yerine Shop > Ürün Adı)
+    const uniqueBreadcrumbItems = breadcrumbItems.reduce((acc, current) => {
+        if (!acc.find(item => item.label === current.label)) {
+            acc.push(current);
+        }
+        return acc;
+    }, []);
+
+
+  if (uniqueBreadcrumbItems.length <= 1) return null;
 
   return (
-    <nav className={`flex ${className}`} aria-label="Breadcrumb" {...props}>
-      <ol className={`inline-flex items-center ${config.spacing}`}>
-        {items.map((item, index) => {
-          const isLast = index === items.length - 1;
-          const isFirst = index === 0;
+    <nav className="flex py-3" aria-label="Breadcrumb">
+        <ol className="inline-flex items-center">
+            {uniqueBreadcrumbItems.map((item, index) => {
+            const isLast = index === uniqueBreadcrumbItems.length - 1;
 
-          return (
-            <li key={index} className="inline-flex items-center">
-              {!isFirst && (
-                <i className={`${separatorIcon} text-gray-400 mx-2 ${config.iconClass}`}></i>
-              )}
-              
-              {isLast ? (
-                <span 
-                  className={`${config.textClass} font-medium text-gray-500 truncate max-w-xs`}
-                  aria-current="page"
-                >
-                  {item.icon && <span className="mr-2">{item.icon}</span>}
-                  {item.label}
-                </span>
-              ) : (
-                <Link 
-                  to={item.href || '#'} 
-                  className={`inline-flex items-center ${config.textClass} font-medium text-gray-700 hover:text-primary-600 transition-colors duration-200`}
-                >
-                  {item.icon && <span className="mr-2">{item.icon}</span>}
-                  {item.label}
-                </Link>
-              )}
-            </li>
-          );
-        })}
-      </ol>
+            return (
+                <li key={index} className="inline-flex items-center">
+                    {index > 0 && (
+                        <i className="bi bi-chevron-right text-gray-400 mx-2 text-xs"></i>
+                    )}
+                    
+                    {isLast ? (
+                        <span 
+                            className="text-sm font-medium text-gray-500 truncate max-w-[150px] sm:max-w-xs"
+                            aria-current="page"
+                        >
+                            {item.icon && <span className="mr-2 text-gray-500">{item.icon}</span>}
+                            {item.label}
+                        </span>
+                    ) : (
+                        <Link 
+                            to={item.href || '#'} 
+                            className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                        >
+                            {item.icon && <span className="mr-2 text-gray-500">{item.icon}</span>}
+                            {item.label}
+                        </Link>
+                    )}
+                </li>
+            );
+            })}
+        </ol>
     </nav>
   );
 };
 
 Breadcrumb.propTypes = {
-  items: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    href: PropTypes.string,
-    icon: PropTypes.node
-  })).isRequired,
-  separator: PropTypes.oneOf(['chevron-right', 'chevron-left', 'arrow-right', 'arrow-left', 'slash', 'dot']),
-  size: PropTypes.oneOf(['sm', 'md', 'lg']),
-  className: PropTypes.string,
+  // Items prop'u artık kullanılmıyor, bu yüzden kaldırıyoruz.
 };
 
 export default Breadcrumb; 

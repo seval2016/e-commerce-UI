@@ -84,20 +84,22 @@ const Tabs = ({
     <div className={`bg-white ${className}`} {...props}>
       {/* Tab Navigation */}
       <div className={config.containerClass}>
-        <nav className={`flex ${variant === 'pills' ? 'space-x-2' : 'space-x-8'} px-6 lg:px-8`} aria-label="Tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab.id)}
-              className={`${config.tabClass(tab.id === activeTab)} ${sizeClasses.tabClass}`}
-              aria-selected={tab.id === activeTab}
-              role="tab"
-            >
-              {tab.icon && <span className="mr-2">{tab.icon}</span>}
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        <div className="overflow-x-auto whitespace-nowrap">
+            <nav className={`flex ${variant === 'pills' ? 'space-x-2' : 'space-x-6 md:space-x-8'} px-4 sm:px-6 lg:px-8`} aria-label="Tabs">
+            {tabs.map((tab) => (
+                <button
+                key={tab.id}
+                onClick={() => handleTabClick(tab.id)}
+                className={`flex-shrink-0 ${config.tabClass(tab.id === activeTab)} ${sizeClasses.tabClass}`}
+                aria-selected={tab.id === activeTab}
+                role="tab"
+                >
+                {tab.icon && <span className="mr-2">{tab.icon}</span>}
+                {tab.label}
+                </button>
+            ))}
+            </nav>
+        </div>
       </div>
       
       {/* Tab Content */}
