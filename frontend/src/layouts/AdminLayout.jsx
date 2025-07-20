@@ -13,7 +13,8 @@ import {
   ShoppingCartOutlined,
   TagsOutlined,
   BarChartOutlined,
-  CustomerServiceOutlined
+  CustomerServiceOutlined,
+  CommentOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
@@ -56,6 +57,11 @@ const AdminLayout = () => {
       key: '/admin/blogs',
       icon: <FileTextOutlined />,
       label: 'Blog',
+    },
+    {
+      key: '/admin/comments',
+      icon: <CommentOutlined />,
+      label: 'Yorumlar',
     },
     {
       key: '/admin/analytics',

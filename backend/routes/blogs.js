@@ -251,12 +251,200 @@ router.delete('/:id', auth, async (req, res) => {
       message: 'Blog başarıyla silindi'
     });
   } catch (error) {
-    console.error('Blog delete error:', error);
+    console.error('Blog deletion error:', error);
     res.status(500).json({ 
       success: false,
       message: 'Server error' 
     });
   }
 });
+
+
+// @route   PUT /api/blogs/:id/like
+// @desc    Like a blog post
+// @access  Public
+router.put('/:id/like', async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
+
+    if (!blog) {
+      return res.status(404).json({ success: false, message: 'Blog not found' });
+    }
+
+    // Beğeni sayısını bir artır
+    blog.likes = (blog.likes || 0) + 1;
+
+    await blog.save();
+
+    res.json({
+      success: true,
+      likes: blog.likes,
+    });
+
+  } catch (error) {
+    console.error('Like blog error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+// @route   POST /api/blogs/:id/reviews
+// @desc    Add a review to a blog
+// @access  Public
+router.post('/:id/reviews', [
+  body('rating', 'Rating is required and must be a number between 1 and 5').isFloat({ min: 1, max: 5 }),
+  body('text', 'Review text is required').not().isEmpty(),
+  body('name', 'Name is required').not().isEmpty(),
+  body('email', 'Please include a valid email').isEmail(),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ success: false, errors: errors.array() });
+  }
+
+  const { rating, text, name, email } = req.body;
+
+  try {
+    const blog = await Blog.findById(req.params.id);
+
+    if (!blog) {
+      return res.status(404).json({ success: false, message: 'Blog not found' });
+    }
+
+    const newReview = {
+      rating: Number(rating),
+      text,
+      name,
+      email,
+      user: req.user ? req.user.id : undefined, // Eğer kullanıcı giriş yapmışsa ID'sini ekle
+    };
+
+    blog.reviews.push(newReview);
+
+    await blog.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Review added successfully',
+      review: blog.reviews[blog.reviews.length - 1], // Eklenen son yorumu döndür
+    });
+
+  } catch (error) {
+    console.error('Add review error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+// Helper function to check for Admin role
+const ensureAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (user && user.role === 'admin') {
+      next();
+    } else {
+      res.status(403).json({ success: false, message: 'Access denied. Admin role required.' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error while verifying admin role.' });
+  }
+};
+
+
+// @route   GET /api/blogs/reviews/pending
+// @desc    Get all pending reviews
+// @access  Private (Admin)
+router.get('/reviews/pending', auth, async (req, res) => {
+  try {
+    // Tüm blogları bul ve sadece onaylanmamış yorumları olanları filtrele
+    const blogsWithPendingReviews = await Blog.find({ 'reviews.isApproved': false })
+      .select('title slug reviews')
+      .populate('reviews.user', 'name email');
+
+    if (!blogsWithPendingReviews) {
+      return res.json({ success: true, pendingReviews: [] });
+    }
+
+    const pendingReviews = blogsWithPendingReviews.flatMap(blog => 
+      blog.reviews
+        .filter(review => !review.isApproved)
+        .map(review => ({
+          blogId: blog._id,
+          blogTitle: blog.title,
+          blogSlug: blog.slug,
+          reviewId: review._id,
+          ...review.toObject() // Yorumun tüm alanlarını ekle
+        }))
+    );
+    
+    res.json({ success: true, pendingReviews });
+
+  } catch (error) {
+    console.error('Fetch pending reviews error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+// @route   PUT /api/blogs/:blogId/reviews/:reviewId/approve
+// @desc    Approve a review
+// @access  Private (Admin)
+router.put('/:blogId/reviews/:reviewId/approve', auth, async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.blogId);
+    if (!blog) {
+      return res.status(404).json({ success: false, message: 'Blog not found' });
+    }
+
+    const review = blog.reviews.id(req.params.reviewId);
+    if (!review) {
+      return res.status(404).json({ success: false, message: 'Review not found' });
+    }
+
+    review.isApproved = true;
+    await blog.save();
+
+    res.json({ success: true, message: 'Review approved successfully' });
+
+  } catch (error) {
+    console.error('Approve review error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+// @route   DELETE /api/blogs/:blogId/reviews/:reviewId
+// @desc    Delete a review
+// @access  Private (Admin)
+router.delete('/:blogId/reviews/:reviewId', auth, async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.blogId);
+    if (!blog) {
+      return res.status(404).json({ success: false, message: 'Blog not found' });
+    }
+
+    const review = blog.reviews.id(req.params.reviewId);
+    if (!review) {
+      return res.status(404).json({ success: false, message: 'Review not found' });
+    }
+    
+    // Mongoose 8.x ve sonrası için .remove() yerine .deleteOne() kullanılıyor
+    if (typeof review.deleteOne === 'function') {
+      review.deleteOne();
+    } else {
+      // Eski versiyonlar için fallback
+      review.remove();
+    }
+    
+    await blog.save();
+
+    res.json({ success: true, message: 'Review deleted successfully' });
+
+  } catch (error) {
+    console.error('Delete review error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 
 module.exports = router; 

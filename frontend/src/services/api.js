@@ -416,6 +416,11 @@ class ApiService {
     return this.request(`/blogs/${id}`, { method: 'DELETE' });
   }
 
+  async likeBlog(id) {
+    if (!id) throw new Error('Blog ID is required');
+    return this.request(`/blogs/${id}/like`, { method: 'PUT' });
+  }
+
   // Order endpoints
   async getOrders() {
     return this.request('/orders');

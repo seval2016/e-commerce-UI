@@ -1,8 +1,9 @@
 import { useParams } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Reviews from "../Reviews/Reviews";
 import Badge from "../common/Badge";
 import { useData } from "../../context/DataContext.jsx";
+import api from "../../services/api.js"; // Import api service
 
 // Backend API taban URL'si
 const API_BASE_URL = "http://localhost:5000";
@@ -20,22 +21,21 @@ const BlogDetails = () => {
   const { slug } = useParams();
   const { blogs } = useData();
 
-  // Bileşen yüklendiğinde veya slug değiştiğinde sayfanın üstüne kaydır
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [slug]);
-  
-  // Slug'a göre blog bul - bulamazsa id ile de dene
-  let blog = blogs.find(b => b.slug === slug);
-  
-  // Slug ile bulamazsa id ile dene
-  if (!blog) {
-    blog = blogs.find(b => b._id === slug || b.id === slug);
-  }
-  
-  // Hala bulamazsa title'dan slug oluşturup dene
-  if (!blog) {
-    blog = blogs.find(b => {
+  // Tüm hook'ları bileşenin en üstüne taşı
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Blog bulma mantığını useMemo ile optimize et
+  const blog = useMemo(() => {
+    if (!blogs || !slug) return null;
+    
+    let foundBlog = blogs.find(b => b.slug === slug);
+    if (foundBlog) return foundBlog;
+
+    foundBlog = blogs.find(b => b._id === slug || b.id === slug);
+    if (foundBlog) return foundBlog;
+    
+    return blogs.find(b => {
       const generatedSlug = b.title?.toLowerCase()
         .replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ\s-]/g, "")
         .replace(/\s+/g, "-")
@@ -43,9 +43,45 @@ const BlogDetails = () => {
         .replace(/^-+|-+$/g, "");
       return generatedSlug === slug;
     });
-  }
+  }, [blogs, slug]);
 
+  // Sayfayı üste kaydırma efekti
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [slug]);
+
+  // Blog verisi bulunduğunda state'leri ayarla
+  useEffect(() => {
+    if (blog) {
+      setLikeCount(blog.likes || 0);
+      const likedBlogs = JSON.parse(localStorage.getItem('likedBlogs') || '[]');
+      if (likedBlogs.includes(blog._id)) {
+        setIsLiked(true);
+      } else {
+        setIsLiked(false); // Başka bir bloga geçildiğinde durumu sıfırla
+      }
+    }
+  }, [blog]);
+
+  const handleLike = async () => {
+    if (isLiked || !blog) {
+      return;
+    }
+
+    try {
+      const response = await api.likeBlog(blog._id);
+      if (response.success) {
+        setLikeCount(response.likes);
+        setIsLiked(true);
+        const likedBlogs = JSON.parse(localStorage.getItem('likedBlogs') || '[]');
+        localStorage.setItem('likedBlogs', JSON.stringify([...likedBlogs, blog._id]));
+      }
+    } catch (error) {
+      console.error("Failed to like the blog:", error);
+    }
+  };
   
+  // Koşullu render (return) hook'lardan sonra gelir
   if (!blog) {
     return (
       <section className="py-12 bg-white min-h-screen">
@@ -58,6 +94,7 @@ const BlogDetails = () => {
       </section>
     );
   }
+
   return (
     <section className="py-12 bg-white min-h-screen">
       <div className="container mx-auto px-4 max-w-4xl">
@@ -104,15 +141,18 @@ const BlogDetails = () => {
               </div>
               <div className="flex items-center gap-2">
                 <i className="bi bi-chat-dots text-gray-400"></i>
-                <span>{blog.comments} Comments</span>
+                <span>{blog.reviews?.filter(r => r.isApproved).length || 0} Comments</span>
               </div>
               <div className="flex items-center gap-2">
                 <i className="bi bi-eye text-gray-400"></i>
                 <span>{blog.views || 0} Views</span>
               </div>
-              <div className="flex items-center gap-2">
-                <i className="bi bi-heart text-gray-400"></i>
-                <span>{blog.likes || 0} Likes</span>
+              <div
+                className={`flex items-center gap-2 cursor-pointer ${isLiked ? 'text-red-500' : 'text-gray-400'}`}
+                onClick={handleLike}
+              >
+                <i className={`bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}`}></i>
+                <span>{likeCount} Likes</span>
               </div>
               {blog.tags && blog.tags.length > 0 && (
                 <div className="flex items-center gap-2">
@@ -160,7 +200,7 @@ const BlogDetails = () => {
 
         {/* Comments Section */}
         <div className="mt-12">
-          <Reviews />
+          <Reviews blog={blog}/>
         </div>
       </div>
     </section>

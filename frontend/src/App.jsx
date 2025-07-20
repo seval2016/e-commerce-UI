@@ -30,6 +30,7 @@ import ScrollToTop from "./components/common/ScrollToTop";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { DataProvider } from "./context/DataContext";
 import { CartProvider } from "./context/CartContext";
+import CommentsPage from "./pages/admin/CommentsPage";
 
 
 function App() {
@@ -104,6 +105,7 @@ function App() {
                     <SettingsPage />
                   </ProtectedRoute>
                 } />
+                <Route path="comments" element={<CommentsPage />} />
               </Route>
               
               <Route path="*" element={<Layout><NotFoundPage /></Layout>} />

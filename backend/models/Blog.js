@@ -1,5 +1,38 @@
 const mongoose = require('mongoose');
 
+const reviewSchema = new mongoose.Schema({
+  text: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  rating: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5,
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false, // Yorumu misafirler de yapabilir
+  },
+  name: { // Misafir kullanıcılar için isim
+    type: String,
+    required: true,
+  },
+  email: { // Misafir kullanıcılar için email
+    type: String,
+    required: true,
+  },
+  isApproved: {
+    type: Boolean,
+    default: false,
+  },
+}, {
+  timestamps: true,
+});
+
 const blogSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -55,6 +88,7 @@ const blogSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  reviews: [reviewSchema],
   metaTitle: String,
   metaDescription: String,
   seoKeywords: [String]
