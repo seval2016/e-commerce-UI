@@ -64,8 +64,6 @@ class ApiService {
     const url = `${this.baseURL}/api${endpoint}`;
     const isUpload = options.body instanceof FormData;
     
-    console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
-    
     const config = {
       headers: this.buildHeaders(isUpload),
       timeout: this.timeout,
@@ -116,9 +114,6 @@ class ApiService {
       if (error.name === 'AbortError') {
         throw new Error('Request timeout');
       }
-      
-
-      
       throw error;
     }
   }

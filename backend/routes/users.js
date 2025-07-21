@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Order = require('../models/Order');
 const auth = require('../middleware/auth');
+const { uploadAvatar, handleUploadError, deleteFile } = require('../middleware/upload');
 const router = express.Router();
 
 // @route   GET /api/users
@@ -144,6 +145,37 @@ router.put('/:id/status', auth, async (req, res) => {
     res.json({
       success: true,
       message: `User status updated to ${isActive ? 'active' : 'inactive'}`,
+      user
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   PUT /api/users/:id/avatar
+// @desc    Update user avatar
+// @access  Private (Kendi profili veya admin)
+router.put('/:id/avatar', auth, uploadAvatar.single('avatar'), handleUploadError, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Eski avatarı sil (varsa ve uploads/avatars içindeyse)
+    if (user.avatar && user.avatar.startsWith('uploads/avatars/')) {
+      deleteFile(user.avatar);
+    }
+
+    // Yeni avatarı kaydet
+    user.avatar = req.file.path.replace(/\\/g, '/');
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Avatar updated successfully',
+      avatar: user.avatar,
       user
     });
   } catch (error) {

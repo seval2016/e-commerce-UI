@@ -12,8 +12,19 @@ export const useAdminAuth = () => {
 };
 
 export const AdminAuthProvider = ({ children }) => {
-  const [adminUser, setAdminUser] = useState(null);
+  const [adminUser, setAdminUserState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // setAdminUser fonksiyonu: hem state'i hem sessionStorage'ı günceller
+  const setAdminUser = (updater) => {
+    setAdminUserState(prev => {
+      const updated = typeof updater === 'function' ? updater(prev) : updater;
+      if (updated) {
+        sessionStorage.setItem('adminUser', JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
 
   useEffect(() => {
     // Sayfa yüklendiğinde sessionStorage'dan admin bilgilerini kontrol et
@@ -165,6 +176,7 @@ export const AdminAuthProvider = ({ children }) => {
 
   const value = {
     adminUser,
+    setAdminUser,
     isLoading,
     login,
     logout,

@@ -57,7 +57,7 @@ const BlogItem = ({ blog }) => {
           </div>
           <div className="flex items-center gap-1">
             <i className="bi bi-chat-dots text-gray-400"></i>
-            <span>{blog.comments || 0} Comments</span>
+            <span>{Array.isArray(blog.reviews) ? blog.reviews.filter(r => r.isApproved).length : (blog.comments || 0)} Yorum</span>
           </div>
         </div>
 

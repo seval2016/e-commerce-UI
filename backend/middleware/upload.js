@@ -62,6 +62,22 @@ const blogStorage = multer.diskStorage({
   }
 });
 
+// Storage configuration for avatars
+const avatarStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = 'uploads/avatars/';
+    ensureDirectoryExists(uploadPath);
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const extension = path.extname(file.originalname).toLowerCase();
+    const filename = `avatar-${uniqueSuffix}${extension}`;
+    console.log(`📸 Uploading avatar image: ${filename}`);
+    cb(null, filename);
+  }
+});
+
 // File filter function
 const fileFilter = (req, file, cb) => {
   console.log(`🔍 Validating file: ${file.originalname}`, {
@@ -146,6 +162,20 @@ const uploadBlog = multer({
   }
 });
 
+const uploadAvatar = multer({
+  storage: avatarStorage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB
+    files: 1,
+    fields: 10
+  },
+  onError: function(err, next) {
+    console.error('❌ Avatar upload error:', err);
+    next(err);
+  }
+});
+
 // Error handling middleware
 const handleUploadError = (error, req, res, next) => {
   console.error('Upload error:', error);
@@ -223,6 +253,7 @@ module.exports = {
   uploadProduct,
   uploadCategory,
   uploadBlog,
+  uploadAvatar,
   handleUploadError,
   deleteFile,
   deleteFiles,

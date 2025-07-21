@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const ProfilePage = () => {
-  const [user] = useState(() => {
+  const [user, setUser] = useState(() => {
     const userData = localStorage.getItem("user");
     return userData ? JSON.parse(userData) : null;
   });
@@ -14,6 +14,8 @@ const ProfilePage = () => {
     birthDate: '',
     gender: ''
   });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "/img/avatar-default.png");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -23,11 +25,80 @@ const ProfilePage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setAvatarPreview(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: API ile profil güncelleme
-    console.log('Profil güncelleme:', formData);
-    alert('Profil başarıyla güncellendi!');
+    let updatedAvatar = avatarPreview;
+    let updatedUser = { ...user };
+
+    // Önce avatar dosyası seçildiyse yükle
+    if (avatarFile) {
+      const avatarData = new FormData();
+      avatarData.append("avatar", avatarFile);
+      try {
+        const res = await fetch(`/api/users/${user._id}/avatar`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token') || ''}`
+          },
+          body: avatarData
+        });
+        const result = await res.json();
+        if (result.success && result.avatar) {
+          updatedAvatar = `/${result.avatar.replace(/^uploads\//, '')}`;
+          updatedUser = result.user;
+          setAvatarPreview(updatedAvatar);
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        } else {
+          alert('Avatar güncellenemedi: ' + (result.message || ''));
+        }
+      } catch {
+        alert('Avatar yüklenirken hata oluştu.');
+      }
+    }
+
+    // Diğer profil bilgilerini güncelle
+    const data = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      birthDate: formData.birthDate,
+      gender: formData.gender,
+      avatar: updatedAvatar
+    };
+    try {
+      const res = await fetch(`/api/users/${user._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if (result.success && result.user) {
+        setUser(result.user);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        alert('Profil başarıyla güncellendi!');
+      } else {
+        alert('Profil güncellenemedi: ' + (result.message || ''));
+      }
+    } catch {
+      alert('Profil güncellenirken hata oluştu.');
+    }
   };
 
   if (!user) {
@@ -58,8 +129,21 @@ const ProfilePage = () => {
           <div className="px-6 py-4 bg-gray-50 border-b">
             <h2 className="text-lg font-semibold text-gray-900">Kişisel Bilgiler</h2>
           </div>
-          
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <div className="flex items-center gap-4 mb-6">
+              <img
+                src={avatarPreview}
+                alt={formData.name}
+                className="w-20 h-20 rounded-full object-cover border"
+                onError={e => { e.target.src = '/img/avatar-default.png'; }}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="block"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

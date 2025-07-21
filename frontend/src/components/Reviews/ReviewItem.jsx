@@ -12,8 +12,17 @@ const ReviewItem = ({ review }) => {
 
   return (
     <li className="comment-item flex items-start gap-4 p-4 rounded-lg bg-gray-50">
-      <div className="comment-avatar w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-500">
-        {review.name?.charAt(0).toUpperCase()}
+      <div className="comment-avatar w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-500 overflow-hidden">
+        {review.avatar ? (
+          <img
+            src={review.avatar}
+            alt={review.name}
+            className="w-12 h-12 rounded-full object-cover"
+            onError={e => { e.target.src = '/img/avatar-default.png'; }}
+          />
+        ) : (
+          review.name?.charAt(0).toUpperCase()
+        )}
       </div>
       <div className="comment-text flex-1">
         <div className="comment-meta flex items-center gap-3 mb-2">

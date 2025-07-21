@@ -183,9 +183,18 @@ const BlogDetails = () => {
             {/* Author Info */}
             <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                  <i className="bi bi-person text-2xl text-gray-500"></i>
-                </div>
+                {blog.author?.avatar || blog.authorImage ? (
+                  <img
+                    src={blog.author?.avatar || blog.authorImage}
+                    alt={blog.author?.name || blog.author || 'Yazar'}
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover bg-gray-200 border"
+                    onError={e => { e.target.src = '/img/avatar-default.png'; }}
+                  />
+                ) : (
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                    <i className="bi bi-person text-2xl text-gray-500"></i>
+                  </div>
+                )}
                 <div>
                   <h3 className="font-semibold text-gray-900">{blog.author?.name || blog.author || 'Anonim'}</h3>
                   <p className="text-sm text-gray-600">Blog Yazarı</p>

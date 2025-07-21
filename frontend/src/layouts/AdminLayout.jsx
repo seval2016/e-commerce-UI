@@ -18,6 +18,7 @@ import {
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { useData } from '../context/DataContext';
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -29,6 +30,135 @@ const AdminLayout = () => {
   const location = useLocation();
   const { logout } = useAdminAuth();
   const screens = useBreakpoint();
+  const { orders = [], supportTickets = [] } = useData();
+
+  // Bildirimler için veri hazırla
+  const pendingOrders = orders.filter(o => o.status === 'pending');
+  const openSupportTickets = supportTickets.filter(t => t.status === 'open' || t.status === 'pending');
+  const notificationCount = pendingOrders.length + openSupportTickets.length;
+
+  // Bildirim menü öğeleri
+  const notificationItems = [
+    {
+      key: 'orders',
+      label: (
+        <div className="font-semibold text-gray-800 mb-2">
+          Bekleyen Siparişler ({pendingOrders.length})
+        </div>
+      ),
+      type: 'group',
+      children: pendingOrders.slice(0, 5).map(order => ({
+        key: `order-${order._id}`,
+        label: (
+          <div
+            onClick={() => navigate('/admin/orders')}
+            className="flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors"
+            style={{ minWidth: 220 }}
+          >
+            <ShoppingCartOutlined style={{ color: '#1890ff', fontSize: 18 }} />
+            <div>
+              <div className="font-medium text-sm">{order.orderNumber}</div>
+              <div className="text-xs text-gray-500">
+                {order.customerInfo?.firstName} {order.customerInfo?.lastName} - ₺{order.total}
+              </div>
+            </div>
+          </div>
+        )
+      }))
+    },
+    {
+      key: 'support',
+      label: (
+        <div className="font-semibold text-gray-800 mb-2">
+          Destek Talepleri ({openSupportTickets.length})
+        </div>
+      ),
+      type: 'group',
+      children: openSupportTickets.slice(0, 5).map(ticket => ({
+        key: `ticket-${ticket._id}`,
+        label: (
+          <div
+            onClick={() => navigate('/admin/support')}
+            className="flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer hover:bg-green-50 transition-colors"
+            style={{ minWidth: 220 }}
+          >
+            <CustomerServiceOutlined style={{ color: '#52c41a', fontSize: 18 }} />
+            <div>
+              <div className="font-medium text-sm">{ticket.subject}</div>
+              <div className="text-xs text-gray-500">
+                {ticket.customer?.name} - {ticket.priority === 'high' ? '⚡ Yüksek Öncelik' : ticket.priority}
+              </div>
+            </div>
+          </div>
+        )
+      }))
+    },
+    {
+      key: 'divider',
+      type: 'divider'
+    },
+    {
+      key: 'view-all',
+      label: (
+        <Button
+          type="text"
+          block
+          onClick={() => navigate('/admin/support')}
+          style={{
+            borderRadius: 8,
+            fontWeight: 500,
+            color: '#1890ff',
+            background: '#f0f5ff',
+            margin: 4,
+            padding: '8px 0'
+          }}
+        >
+          Tümünü Görüntüle
+        </Button>
+      )
+    }
+  ];
+
+  // Bildirimler için menu items
+  const notificationMenuItems = [
+    ...notificationItems // notificationItems zaten uygun şekilde tanımlı
+  ];
+
+  // Profil için menu items
+  const profileMenuItems = [
+    {
+      key: 'profile',
+      icon: <UserOutlined style={{ color: '#1890ff' }} />,
+      label: <span style={{ fontWeight: 500 }}>Profil</span>,
+      onClick: () => navigate('/admin/profile'),
+    },
+    {
+      key: 'settings',
+      icon: <SettingOutlined style={{ color: '#faad14' }} />,
+      label: <span style={{ fontWeight: 500 }}>Ayarlar</span>,
+      onClick: () => navigate('/admin/settings'),
+    },
+    { type: 'divider' },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined style={{ color: '#ff4d4f' }} />,
+      label: <span style={{ fontWeight: 500, color: '#ff4d4f' }}>Çıkış Yap</span>,
+      onClick: () => { logout(); message.success('Başarıyla çıkış yapıldı'); navigate('/admin/login'); },
+    },
+  ];
+
+  // Profil menüsü tıklama handler
+  const handleProfileMenuClick = ({ key }) => {
+    const item = profileMenuItems.find(i => i.key === key);
+    if (item && typeof item.onClick === 'function') item.onClick();
+  };
+
+  // Bildirim menüsü tıklama handler
+  const handleNotificationMenuClick = ({ key }) => {
+    if (key.startsWith('order-')) navigate('/admin/orders');
+    if (key.startsWith('ticket-')) navigate('/admin/support');
+    if (key === 'view-all') navigate('/admin/support');
+  };
 
   useEffect(() => {
     // Ekran boyutu değiştiğinde, eğer masaüstü boyutuna geçildiyse çekmeceyi kapat
@@ -90,40 +220,11 @@ const AdminLayout = () => {
     },
   ];
 
-  const userMenuItems = [
-    {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: 'Profil',
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Ayarlar',
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: 'Çıkış Yap',
-    },
-  ];
-
   const handleMenuClick = ({ key }) => {
     navigate(key);
     // Mobil'de menüden bir öğeye tıklanınca çekmeceyi kapat
     if (!screens.md) {
       setDrawerVisible(false);
-    }
-  };
-
-  const handleUserMenuClick = ({ key }) => {
-    if (key === 'logout') {
-      logout();
-      message.success('Başarıyla çıkış yapıldı');
-      navigate('/admin/login');
     }
   };
 
@@ -197,20 +298,26 @@ const AdminLayout = () => {
           />
           
           <Space size="middle">
-            <Badge count={5} size="small">
-              <Button 
-                type="text" 
-                icon={<BellOutlined />} 
-                style={{ fontSize: '18px' }}
-              />
-            </Badge>
+            <Dropdown
+              menu={{ items: notificationMenuItems, onClick: handleNotificationMenuClick }}
+              trigger={['click']}
+              placement="bottomRight"
+              arrow={{ pointAtCenter: true }}
+            >
+              <Badge count={notificationCount} size="small">
+                <Button 
+                  type="text" 
+                  icon={<BellOutlined />} 
+                  style={{ fontSize: '18px' }}
+                />
+              </Badge>
+            </Dropdown>
             
             <Dropdown
-              menu={{
-                items: userMenuItems,
-                onClick: handleUserMenuClick,
-              }}
+              menu={{ items: profileMenuItems, onClick: handleProfileMenuClick }}
+              trigger={['click']}
               placement="bottomRight"
+              arrow={{ pointAtCenter: true }}
             >
               <Space style={{ cursor: 'pointer' }}>
                 <Avatar 

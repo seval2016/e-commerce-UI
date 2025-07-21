@@ -32,6 +32,7 @@ import { DataProvider } from "./context/DataContext";
 import { CartProvider } from "./context/CartContext";
 import { FavoritesProvider } from "./context/FavoritesContext";
 import CommentsPage from "./pages/admin/CommentsPage";
+import ProfilePageAdmin from "./pages/admin/ProfilePage";
 
 
 function App() {
@@ -108,6 +109,7 @@ function App() {
                     </ProtectedRoute>
                   } />
                   <Route path="comments" element={<CommentsPage />} />
+                  <Route path="profile" element={<ProfilePageAdmin />} />
                 </Route>
                 
                 <Route path="*" element={<Layout><NotFoundPage /></Layout>} />

@@ -718,7 +718,8 @@ export const DataProvider = ({ children }) => {
           loadProducts(),
           loadBlogs(),
           loadOrders(),
-          loadCustomers()
+          loadCustomers(),
+          loadSupport()
         ]);
         
 
@@ -729,6 +730,23 @@ export const DataProvider = ({ children }) => {
     
     initializeData();
   }, []); // Empty dependency array for initialization
+
+  // Periyodik güncelleme için useEffect
+  useEffect(() => {
+    // Her 30 saniyede bir siparişleri ve destek taleplerini güncelle
+    const interval = setInterval(async () => {
+      try {
+        await Promise.allSettled([
+          loadOrders(),
+          loadSupport()
+        ]);
+      } catch (error) {
+        console.error('Periyodik güncelleme hatası:', error);
+      }
+    }, 30000); // 30 saniye
+
+    return () => clearInterval(interval);
+  }, [loadOrders, loadSupport]);
 
   // Context value
   const contextValue = useMemo(() => ({

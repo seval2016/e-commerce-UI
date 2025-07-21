@@ -193,7 +193,7 @@ const OrdersPage = () => {
       responsive: ['md'],
       render: (orderDate) => (
         <div className="text-xs">
-          {orderDate ? new Date(orderDate).toLocaleDateString("tr-TR") : "-"}
+          {orderDate || "-"}
         </div>
       ),
       sorter: (a, b) => new Date(a.orderDate || 0) - new Date(b.orderDate || 0),
