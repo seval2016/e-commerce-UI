@@ -60,7 +60,6 @@ router.get('/', auth, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching support tickets:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -81,7 +80,6 @@ router.get('/:id', auth, async (req, res) => {
       ticket
     });
   } catch (error) {
-    console.error('Error fetching support ticket:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -131,7 +129,6 @@ router.post('/', [
       ticket
     });
   } catch (error) {
-    console.error('Error creating support ticket:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -180,7 +177,6 @@ router.put('/:id', auth, [
       ticket
     });
   } catch (error) {
-    console.error('Error updating support ticket:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -237,7 +233,6 @@ router.post('/:id/response', auth, [
       ticket
     });
   } catch (error) {
-    console.error('Error adding response:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -265,7 +260,6 @@ router.delete('/:id', auth, async (req, res) => {
       message: 'Destek talebi silindi'
     });
   } catch (error) {
-    console.error('Error deleting support ticket:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -312,7 +306,6 @@ router.get('/stats/overview', auth, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching support stats:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

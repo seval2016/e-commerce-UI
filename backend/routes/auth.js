@@ -50,7 +50,6 @@ router.post('/register', [
       }
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -105,7 +104,6 @@ router.post('/login', [
       }
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -155,7 +153,6 @@ router.post('/admin-login', [
       }
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -183,7 +180,6 @@ router.get('/me', async (req, res) => {
       user
     });
   } catch (error) {
-    console.error(error);
     res.status(401).json({ message: 'Token is not valid' });
   }
 });

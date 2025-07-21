@@ -52,9 +52,8 @@ export const AdminAuthProvider = ({ children }) => {
                     lastVerified: new Date().toISOString()
                   }));
                 }
-              } catch (error) {
-                // Background verification hata verse bile session'ı koru
-                console.log('Background token verification failed:', error);
+              } finally {
+                setIsLoading(false);
               }
             }, 100);
           } else {
@@ -64,8 +63,7 @@ export const AdminAuthProvider = ({ children }) => {
             sessionStorage.removeItem('adminToken');
           }
         }
-      } catch (error) {
-        console.error('Admin auth check error:', error);
+      } catch{
         // Hata durumunda sessionStorage'ı temizle
         sessionStorage.removeItem('adminUser');
         sessionStorage.removeItem('token');

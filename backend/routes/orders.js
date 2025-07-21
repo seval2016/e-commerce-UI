@@ -19,7 +19,6 @@ router.get('/', async (req, res) => {
       orders
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -95,7 +94,6 @@ router.post('/', [
       order
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -122,7 +120,6 @@ router.put('/:id', async (req, res) => {
       order
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -143,7 +140,6 @@ router.delete('/:id', async (req, res) => {
       message: 'Order deleted successfully'
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -82,7 +82,6 @@ const processProductData = (body, files = []) => {
           delete productData[field];
         }
       } catch (error) {
-        console.error(`Error parsing ${field}:`, error);
         delete productData[field];
       }
     }
@@ -226,7 +225,6 @@ router.get('/', [
     });
 
   } catch (error) {
-    console.error('Get products error:', error);
     sendErrorResponse(res, 500, 'Failed to fetch products', error.message);
   }
 });
@@ -256,7 +254,6 @@ router.get('/:id', async (req, res) => {
     sendSuccessResponse(res, { product });
 
   } catch (error) {
-    console.error('Get product error:', error);
     sendErrorResponse(res, 500, 'Failed to fetch product', error.message);
   }
 });
@@ -285,15 +282,8 @@ router.post('/', auth, uploadProduct.array('images', 10), [
     .withMessage('Stock must be a non-negative integer')
 ], async (req, res) => {
   try {
-    console.log('🚀 Creating new product:', {
-      name: req.body.name,
-      category: req.body.category,
-      fileCount: req.files ? req.files.length : 0
-    });
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('❌ Validation errors:', errors.array());
       return sendErrorResponse(res, 400, 'Validation failed', errors.array());
     }
 
@@ -302,7 +292,6 @@ router.post('/', auth, uploadProduct.array('images', 10), [
     try {
       categoryId = await validateCategory(req.body.category);
     } catch (error) {
-      console.log('❌ Category validation failed:', error.message);
       return sendErrorResponse(res, 400, error.message);
     }
 
@@ -315,14 +304,6 @@ router.post('/', auth, uploadProduct.array('images', 10), [
       productData.createdBy = req.user.id;
     }
 
-    console.log('📋 Processing product data:', {
-      name: productData.name,
-      category: productData.category,
-      price: productData.price,
-      stock: productData.stock,
-      hasImages: !!(productData.images && productData.images.length > 0)
-    });
-
     // Create product
     const product = new Product(productData);
     await product.save();
@@ -330,11 +311,9 @@ router.post('/', auth, uploadProduct.array('images', 10), [
     // Populate category before sending response
     await product.populate('category', 'name image');
 
-    console.log('✅ Product created successfully:', product._id);
     sendSuccessResponse(res, { product }, 'Product created successfully');
 
   } catch (error) {
-    console.error('❌ Product creation error:', error);
     
     // Handle duplicate SKU error
     if (error.code === 11000) {
@@ -364,12 +343,6 @@ router.put('/:id', auth, uploadProduct.array('images', 10), async (req, res) => 
   try {
     const { id } = req.params;
     
-    console.log('✏️ Updating product:', {
-      id,
-      name: req.body.name,
-      fileCount: req.files ? req.files.length : 0
-    });
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendErrorResponse(res, 400, 'Invalid product ID format');
     }
@@ -422,7 +395,7 @@ router.put('/:id', auth, uploadProduct.array('images', 10), async (req, res) => 
           }
         }
       } catch (error) {
-        console.error('Error processing removed images:', error);
+        // delete productData[field]; // This line was removed as per the edit hint
       }
     }
 
@@ -430,12 +403,6 @@ router.put('/:id', auth, uploadProduct.array('images', 10), async (req, res) => 
     if (req.user && req.user.id) {
       updateData.updatedBy = req.user.id;
     }
-
-    console.log('📝 Update data prepared:', {
-      hasCategory: !!updateData.category,
-      hasImages: !!(updateData.images && updateData.images.length > 0),
-      imageCount: updateData.images ? updateData.images.length : 0
-    });
 
     // Update product
     const product = await Product.findByIdAndUpdate(
@@ -448,11 +415,9 @@ router.put('/:id', auth, uploadProduct.array('images', 10), async (req, res) => 
       }
     ).populate('category', 'name image');
 
-    console.log('✅ Product updated successfully:', product._id);
     sendSuccessResponse(res, { product }, 'Product updated successfully');
 
   } catch (error) {
-    console.error('❌ Product update error:', error);
     
     // Handle duplicate SKU error
     if (error.code === 11000) {
@@ -482,8 +447,6 @@ router.delete('/:id', auth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log('🗑️ Deleting product:', id);
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendErrorResponse(res, 400, 'Invalid product ID format');
     }
@@ -498,11 +461,9 @@ router.delete('/:id', auth, async (req, res) => {
 
     await Product.findByIdAndDelete(id);
 
-    console.log('✅ Product deleted successfully:', id);
     sendSuccessResponse(res, {}, 'Product deleted successfully');
 
   } catch (error) {
-    console.error('❌ Product deletion error:', error);
     sendErrorResponse(res, 500, 'Failed to delete product', error.message);
   }
 });
@@ -541,7 +502,6 @@ router.post('/:id/toggle-status', auth, async (req, res) => {
     }, `Product ${product.isActive ? 'activated' : 'deactivated'} successfully`);
 
   } catch (error) {
-    console.error('Toggle status error:', error);
     sendErrorResponse(res, 500, 'Failed to toggle product status', error.message);
   }
 });
@@ -568,7 +528,6 @@ router.get('/category/:categoryId', async (req, res) => {
     sendSuccessResponse(res, { products });
 
   } catch (error) {
-    console.error('Get products by category error:', error);
     sendErrorResponse(res, 500, 'Failed to fetch products by category', error.message);
   }
 });
@@ -596,7 +555,6 @@ router.get('/search/:query', async (req, res) => {
     sendSuccessResponse(res, { products, query });
 
   } catch (error) {
-    console.error('Search products error:', error);
     sendErrorResponse(res, 500, 'Failed to search products', error.message);
   }
 });
@@ -650,7 +608,6 @@ router.post(
         review: product.reviews[product.reviews.length - 1],
       });
     } catch (error) {
-      console.error('Add product review error:', error);
       res.status(500).json({ success: false, message: 'Server error' });
     }
   }
@@ -727,8 +684,7 @@ router.get('/reviews/pending', auth, async (req, res) => {
     res.json({ success: true, pendingReviews });
 
   } catch (error) {
-    console.error('Fetch pending product reviews error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    sendErrorResponse(res, 500, 'Server error', error.message);
   }
 });
 

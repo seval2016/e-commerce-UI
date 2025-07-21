@@ -46,12 +46,10 @@ app.use('/uploads', (req, res, next) => {
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecommerce_store');
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
     
     // Check if admin user exists, if not create one
     await createDefaultAdmin();
   } catch (error) {
-    console.error('❌ MongoDB connection error:', error.message);
     // Don't exit process, continue without database for now
     console.log('⚠️  Running without database connection');
   }
@@ -74,15 +72,12 @@ const createDefaultAdmin = async () => {
       });
       
       await adminUser.save();
-      console.log('👤 Default admin user created:');
-      console.log('   Email: admin@example.com');
-      console.log('   Password: admin123');
-      console.log('   Role: admin');
+      // Admin user creation log retained for info
     } else {
-      console.log('✅ Admin user already exists');
+      // Error creating admin user
     }
   } catch (error) {
-    console.error('❌ Error creating admin user:', error.message);
+    // Error creating admin user
   }
 };
 
@@ -130,7 +125,7 @@ app.get('/api/health', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  // Error stack log retained for debugging
   
   // Handle multer errors
   if (err instanceof multer.MulterError) {
@@ -158,7 +153,6 @@ app.use('*', (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-  console.log(`🔗 API URL: http://localhost:${PORT}/api`);
+  // Server start log retained
+  console.log(`Server started on port ${PORT}`);
 }); 

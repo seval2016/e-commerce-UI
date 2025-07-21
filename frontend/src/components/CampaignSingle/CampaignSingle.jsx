@@ -1,4 +1,5 @@
 import { images } from "../../utils/imageImports";
+import { Link } from "react-router-dom";
 
 const CampaignSingle = () => {
   return (
@@ -13,13 +14,13 @@ const CampaignSingle = () => {
             40% OFF
           </strong>
           <div className="w-12 h-1 bg-white mx-auto mb-12 sm:mb-16"></div>
-          <a 
-            href="#" 
+          <Link
+            to="/shop"
             className="inline-flex items-center gap-2 bg-white text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold hover:bg-blue-600 hover:text-white transition-all duration-300 border-2 border-white hover:border-blue-600"
           >
             SHOP NOW
             <i className="bi bi-arrow-right"></i>
-          </a>
+          </Link>
         </div>
       </div>
     </section>

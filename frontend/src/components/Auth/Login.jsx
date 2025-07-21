@@ -40,7 +40,6 @@ const Login = () => {
         message.error(response.message || "Giriş başarısız.");
       }
     } catch (error) {
-      console.error('Login error:', error);
       message.error(error.message || "Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsLoading(false);

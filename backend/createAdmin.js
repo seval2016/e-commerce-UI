@@ -6,15 +6,12 @@ const createAdminUser = async () => {
   try {
     // MongoDB'ye bağlan
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('MongoDB bağlantısı başarılı');
+
 
     // Admin kullanıcısı var mı kontrol et
     const existingAdmin = await User.findOne({ email: 'admin@example.com' });
     
     if (existingAdmin) {
-      console.log('Admin kullanıcısı zaten mevcut');
-      console.log('Email:', existingAdmin.email);
-      console.log('Rol:', existingAdmin.role);
       return;
     }
 
@@ -29,16 +26,9 @@ const createAdminUser = async () => {
     });
 
     await adminUser.save();
-    console.log('Admin kullanıcısı başarıyla oluşturuldu');
-    console.log('Email: admin@example.com');
-    console.log('Şifre: admin123');
-    console.log('Rol: admin');
 
-  } catch (error) {
-    console.error('Hata:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('MongoDB bağlantısı kapatıldı');
   }
 };
 

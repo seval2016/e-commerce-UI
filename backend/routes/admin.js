@@ -53,7 +53,6 @@ router.get('/dashboard', async (req, res) => {
       stats
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -74,7 +73,6 @@ router.put('/profile/avatar', auth, uploadAvatar.single('avatar'), async (req, r
     await user.save();
     res.json({ success: true, avatar: user.avatar });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Avatar update error' });
   }
 });
@@ -93,7 +91,6 @@ router.put('/profile', auth, async (req, res) => {
     await user.save();
     res.json({ success: true, user });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Profile update error' });
   }
 });

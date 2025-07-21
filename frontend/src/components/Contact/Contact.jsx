@@ -60,8 +60,7 @@ const Contact = () => {
           priority: 'medium'
         });
       }
-    } catch (error) {
-      console.error('Destek talebi oluşturma hatası:', error);
+    } catch{
       setAlert({
         type: 'error',
         title: 'Hata Oluştu!',

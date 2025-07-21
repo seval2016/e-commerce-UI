@@ -17,7 +17,6 @@ router.get('/', async (req, res) => {
       categories
     });
   } catch (error) {
-    console.error('Error fetching categories:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -72,7 +71,6 @@ router.post('/', auth, uploadCategory.single('image'), async (req, res) => {
       category
     });
   } catch (error) {
-    console.error('Category creation error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -135,7 +133,6 @@ router.put('/:id', auth, uploadCategory.single('image'), async (req, res) => {
       category
     });
   } catch (error) {
-    console.error('Category update error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -156,7 +153,6 @@ router.delete('/:id', auth, async (req, res) => {
       message: 'Category deleted successfully'
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -289,8 +289,7 @@ const CheckoutForm = ({ onClose, shippingFee = 0, hasFastShipping = false }) => 
         throw new Error('Sipariş oluşturulamadı');
       }
       
-    } catch (error) {
-      console.error('Sipariş oluşturma hatası:', error);
+    } catch{
       message.error("Sipariş oluşturulurken bir hata oluştu!");
     } finally {
       setIsSubmitting(false);

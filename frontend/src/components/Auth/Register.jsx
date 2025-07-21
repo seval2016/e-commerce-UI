@@ -34,7 +34,6 @@ const Register = () => {
         message.error(response.message || "Kayıt başarısız.");
       }
     } catch (error) {
-      console.error('Register error:', error);
       message.error(error.message || "Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsLoading(false);

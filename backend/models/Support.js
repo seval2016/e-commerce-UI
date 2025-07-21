@@ -96,7 +96,6 @@ supportSchema.pre('save', async function(next) {
       const count = await this.constructor.countDocuments();
       this.ticketId = `TKT-${String(count + 1).padStart(3, '0')}`;
     } catch (error) {
-      console.error('Error generating ticketId:', error);
       return next(error);
     }
   }

@@ -100,8 +100,7 @@ export const DataProvider = ({ children }) => {
     try {
       const savedOrders = localStorage.getItem('orders');
       return savedOrders ? JSON.parse(savedOrders) : [];
-    } catch (error) {
-      console.error('Error loading orders from localStorage:', error);
+    } catch{
       return [];
     }
   });
@@ -315,11 +314,9 @@ export const DataProvider = ({ children }) => {
         } else {
           throw new Error(response.message || 'Bloglar yüklenemedi');
         }
-      } catch (error) {
-        console.error('Blog yükleme hatası:', error);
-        // Hata durumunda boş array set et
+      } catch { 
         setBlogs([]);
-        throw error;
+        throw new Error('Bloglar yüklenemedi');
       }
     }),
     [withLoading]
@@ -378,9 +375,7 @@ export const DataProvider = ({ children }) => {
         } else {
           throw new Error(response.message || 'Siparişler yüklenemedi');
         }
-      } catch (error) {
-        console.error('Orders loading error:', error);
-        
+      } catch { 
         // Backend'e erişilemezse localStorage'dan yükle (fallback)
         try {
           const savedOrders = localStorage.getItem('orders');
@@ -389,11 +384,8 @@ export const DataProvider = ({ children }) => {
             setOrders(localOrders);
             return { success: true, warning: 'Siparişler yerel depodan yüklendi' };
           }
-        } catch (localError) {
-          console.error('localStorage parse error:', localError);
-        }
-        
-        throw error;
+        } catch { return; }
+        throw new Error('Siparişler yüklenemedi');
       }
     }),
     [withLoading]
@@ -462,9 +454,7 @@ export const DataProvider = ({ children }) => {
         } else {
           throw new Error(response.message || 'Sipariş oluşturulamadı');
         }
-      } catch (error) {
-        console.error('Error adding order:', error);
-        
+      } catch { 
         // Backend hatası varsa fallback olarak local state'e kaydet
         const fallbackOrder = {
           _id: orderData.id,
@@ -474,7 +464,6 @@ export const DataProvider = ({ children }) => {
         };
 
         setOrders(prev => [fallbackOrder, ...prev]);
-        
         // Warning message ile kullanıcıya bilgi ver
         return { 
           success: true, 
@@ -505,10 +494,7 @@ export const DataProvider = ({ children }) => {
         } else {
           throw new Error(response.message || 'Sipariş güncellenemedi');
         }
-      } catch (error) {
-        console.error('Error updating order:', error);
-        throw new Error('Sipariş güncellenirken hata oluştu: ' + error.message);
-      }
+      } catch { return; }
     }),
     [withLoading]
   );
@@ -526,10 +512,7 @@ export const DataProvider = ({ children }) => {
         } else {
           throw new Error(response.message || 'Sipariş silinemedi');
         }
-      } catch (error) {
-        console.error('Error deleting order:', error);
-        throw new Error('Sipariş silinirken hata oluştu: ' + error.message);
-      }
+      } catch { return; }
     }),
     [withLoading]
   );
@@ -637,9 +620,7 @@ export const DataProvider = ({ children }) => {
         loadSupport()
       ]);
 
-    } catch{
-      message.error('Veriler yeniden yüklenirken hata oluştu');
-    }
+    } catch { return; }
   }, [loadCategories, loadProducts, loadBlogs, loadOrders, loadCustomers, loadSupport]);
 
   // Calculate statistics
@@ -699,9 +680,7 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     try {
       localStorage.setItem('orders', JSON.stringify(orders));
-    } catch (error) {
-      console.error('Error saving orders to localStorage:', error);
-    }
+    } catch { return; }
   }, [orders]);
 
   // Load initial data
@@ -723,9 +702,7 @@ export const DataProvider = ({ children }) => {
         ]);
         
 
-      } catch{
-        message.error('Uygulama verisi yüklenirken hata oluştu');
-      }
+      } catch { return; }
     };
     
     initializeData();
@@ -740,9 +717,7 @@ export const DataProvider = ({ children }) => {
           loadOrders(),
           loadSupport()
         ]);
-      } catch (error) {
-        console.error('Periyodik güncelleme hatası:', error);
-      }
+      } catch { return; }
     }, 30000); // 30 saniye
 
     return () => clearInterval(interval);

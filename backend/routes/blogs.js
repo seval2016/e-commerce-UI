@@ -19,7 +19,6 @@ router.get('/admin', auth, async (req, res) => {
       blogs
     });
   } catch (error) {
-    console.error('Admin blogs fetch error:', error);
     res.status(500).json({ 
       success: false,
       message: 'Server error' 
@@ -47,7 +46,6 @@ router.get('/:id', async (req, res) => {
       blog
     });
   } catch (error) {
-    console.error('Blog fetch error:', error);
     res.status(500).json({ 
       success: false,
       message: 'Server error' 
@@ -69,7 +67,6 @@ router.get('/', async (req, res) => {
       blogs
     });
   } catch (error) {
-    console.error('Blogs fetch error:', error);
     res.status(500).json({ 
       success: false,
       message: 'Server error' 
@@ -140,7 +137,6 @@ router.post('/', auth, uploadBlog.single('featuredImage'), [
       blog
     });
   } catch (error) {
-    console.error('Blog creation error:', error);
     res.status(500).json({ 
       success: false,
       message: 'Server error' 
@@ -215,7 +211,6 @@ router.put('/:id', auth, uploadBlog.single('featuredImage'), async (req, res) =>
       blog
     });
   } catch (error) {
-    console.error('Blog update error:', error);
     res.status(500).json({ 
       success: false,
       message: 'Server error' 
@@ -251,7 +246,6 @@ router.delete('/:id', auth, async (req, res) => {
       message: 'Blog başarıyla silindi'
     });
   } catch (error) {
-    console.error('Blog deletion error:', error);
     res.status(500).json({ 
       success: false,
       message: 'Server error' 
@@ -282,7 +276,6 @@ router.put('/:id/like', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Like blog error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
@@ -330,7 +323,6 @@ router.post('/:id/reviews', [
     });
 
   } catch (error) {
-    console.error('Add review error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
@@ -380,7 +372,6 @@ router.get('/reviews/pending', auth, async (req, res) => {
     res.json({ success: true, pendingReviews });
 
   } catch (error) {
-    console.error('Fetch pending reviews error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
@@ -407,7 +398,6 @@ router.put('/:blogId/reviews/:reviewId/approve', auth, async (req, res) => {
     res.json({ success: true, message: 'Review approved successfully' });
 
   } catch (error) {
-    console.error('Approve review error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
@@ -441,7 +431,6 @@ router.delete('/:blogId/reviews/:reviewId', auth, async (req, res) => {
     res.json({ success: true, message: 'Review deleted successfully' });
 
   } catch (error) {
-    console.error('Delete review error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });

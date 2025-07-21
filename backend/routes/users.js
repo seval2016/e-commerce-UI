@@ -41,7 +41,6 @@ router.get('/', auth, async (req, res) => {
       users: usersWithStats
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -87,7 +86,6 @@ router.put('/:id', auth, [
       user
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -121,7 +119,6 @@ router.put('/:id/role', auth, [
       user
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -148,7 +145,6 @@ router.put('/:id/status', auth, async (req, res) => {
       user
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -179,7 +175,6 @@ router.put('/:id/avatar', auth, uploadAvatar.single('avatar'), handleUploadError
       user
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -200,7 +195,6 @@ router.delete('/:id', auth, async (req, res) => {
       message: 'User deleted successfully'
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });

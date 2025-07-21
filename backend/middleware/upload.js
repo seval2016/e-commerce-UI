@@ -6,7 +6,7 @@ const fs = require('fs');
 const ensureDirectoryExists = (dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
-    console.log(`📁 Created directory: ${dir}`);
+   
   }
 };
 
@@ -23,7 +23,6 @@ const productStorage = multer.diskStorage({
     const extension = path.extname(file.originalname).toLowerCase();
     const filename = `product-${uniqueSuffix}${extension}`;
     
-    console.log(`📸 Uploading product image: ${filename}`);
     cb(null, filename);
   }
 });
@@ -40,7 +39,6 @@ const categoryStorage = multer.diskStorage({
     const extension = path.extname(file.originalname).toLowerCase();
     const filename = `category-${uniqueSuffix}${extension}`;
     
-    console.log(`📸 Uploading category image: ${filename}`);
     cb(null, filename);
   }
 });
@@ -57,7 +55,6 @@ const blogStorage = multer.diskStorage({
     const extension = path.extname(file.originalname).toLowerCase();
     const filename = `blog-${uniqueSuffix}${extension}`;
     
-    console.log(`📸 Uploading blog image: ${filename}`);
     cb(null, filename);
   }
 });
@@ -73,18 +70,13 @@ const avatarStorage = multer.diskStorage({
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const extension = path.extname(file.originalname).toLowerCase();
     const filename = `avatar-${uniqueSuffix}${extension}`;
-    console.log(`📸 Uploading avatar image: ${filename}`);
+
     cb(null, filename);
   }
 });
 
 // File filter function
 const fileFilter = (req, file, cb) => {
-  console.log(`🔍 Validating file: ${file.originalname}`, {
-    mimetype: file.mimetype,
-    size: file.size,
-    fieldname: file.fieldname
-  });
 
   // Check if file is an image
   if (file.mimetype.startsWith('image/')) {
@@ -100,14 +92,11 @@ const fileFilter = (req, file, cb) => {
     ];
     
     if (allowedTypes.includes(file.mimetype)) {
-      console.log(`✅ File accepted: ${file.originalname}`);
       cb(null, true);
     } else {
-      console.log(`❌ File rejected - unsupported type: ${file.mimetype}`);
       cb(new Error(`Desteklenmeyen dosya türü: ${file.mimetype}. Sadece JPEG, PNG, GIF, WebP, BMP ve SVG dosyaları kabul edilir.`), false);
     }
   } else {
-    console.log(`❌ File rejected - not an image: ${file.mimetype}`);
     cb(new Error('Sadece resim dosyaları yüklenebilir.'), false);
   }
 };
@@ -129,7 +118,6 @@ const uploadProduct = multer({
     fields: 20 // Maximum 20 fields
   },
   onError: function(err, next) {
-    console.error('❌ Product upload error:', err);
     next(err);
   }
 });
@@ -143,7 +131,6 @@ const uploadCategory = multer({
     fields: 10 // Maximum 10 fields
   },
   onError: function(err, next) {
-    console.error('❌ Category upload error:', err);
     next(err);
   }
 });
@@ -157,7 +144,6 @@ const uploadBlog = multer({
     fields: 10 // Maximum 10 fields
   },
   onError: function(err, next) {
-    console.error('❌ Blog upload error:', err);
     next(err);
   }
 });
@@ -171,14 +157,12 @@ const uploadAvatar = multer({
     fields: 10
   },
   onError: function(err, next) {
-    console.error('❌ Avatar upload error:', err);
     next(err);
   }
 });
 
 // Error handling middleware
 const handleUploadError = (error, req, res, next) => {
-  console.error('Upload error:', error);
   
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
@@ -229,12 +213,10 @@ const deleteFile = (filePath) => {
   try {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
-      console.log(`🗑️ Deleted file: ${filePath}`);
       return true;
     }
     return false;
   } catch (error) {
-    console.error(`❌ Error deleting file ${filePath}:`, error);
     return false;
   }
 };

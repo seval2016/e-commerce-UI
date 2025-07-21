@@ -76,9 +76,7 @@ const BlogDetails = () => {
         const likedBlogs = JSON.parse(localStorage.getItem('likedBlogs') || '[]');
         localStorage.setItem('likedBlogs', JSON.stringify([...likedBlogs, blog._id]));
       }
-    } catch (error) {
-      console.error("Failed to like the blog:", error);
-    }
+    } catch { return; }
   };
   
   // Koşullu render (return) hook'lardan sonra gelir
