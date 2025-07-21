@@ -24,17 +24,17 @@ const ShopFilters = ({ initialFilters, onFilterChange, onClearFilters }) => {
     const [priceRange, setPriceRange] = useState(initialFilters.price || [0, 1000]);
 
     // Popüler renkler ve bedenler (sabit + ürünlerden dinamik)
-    const popularColors = [
-      "black", "white", "gray", "red", "blue", "green", "yellow", "orange", "purple", "pink", "brown", "beige"
-    ];
     const availableColors = useMemo(() => {
+      const popularColors = [
+        "black", "white", "gray", "red", "blue", "green", "yellow", "orange", "purple", "pink", "brown", "beige"
+      ];
       const allColors = products.flatMap(p => p.colors || []);
       const uniqueColors = Array.from(new Set([...popularColors, ...allColors]));
       return uniqueColors;
     }, [products]);
 
-    const popularSizes = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
     const availableSizes = useMemo(() => {
+      const popularSizes = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
       const allSizes = products.flatMap(p => p.sizes || []);
       const uniqueSizes = Array.from(new Set([...popularSizes, ...allSizes]));
       return uniqueSizes;

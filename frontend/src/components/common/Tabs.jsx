@@ -20,7 +20,7 @@ const Tabs = ({
     if (defaultActiveTab && defaultActiveTab !== activeTab) {
       setInternalActiveTab(defaultActiveTab);
     }
-  }, [defaultActiveTab]);
+  }, [defaultActiveTab, activeTab]);
 
   const handleTabClick = (tabId) => {
     if (controlledActiveTab === undefined) {

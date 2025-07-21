@@ -18,7 +18,8 @@ import {
   Descriptions,
   Avatar,
   Rate,
-  Tabs
+  Tabs,
+  Spin
 } from 'antd';
 import {
   SearchOutlined,

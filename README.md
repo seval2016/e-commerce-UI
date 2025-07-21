@@ -1,282 +1,93 @@
-<<<<<<< HEAD
-# E-commerce MERN Stack Application
+# E-Commerce UI & API (MERN)
 
-Modern e-commerce web application built with React, Node.js, Express, and MongoDB.
+## Proje Özeti
+Modern, fullstack bir e-ticaret platformu. Frontend (React + Vite + Ant Design + Tailwind CSS), Backend (Node.js + Express + MongoDB). Admin ve kullanıcı paneli, ürün yönetimi, blog, yorum, sipariş, destek sistemi ve daha fazlası.
 
-## Features
+---
 
-- 🛍️ **Product Management**: Add, edit, delete products with multiple images
-- 📊 **Admin Dashboard**: Analytics, order management, customer tracking
-- 🛒 **Shopping Cart**: Add to cart, quantity management, checkout
-- 👥 **User Authentication**: Register, login, profile management
-- 📝 **Blog System**: Create and manage blog posts
-- 📱 **Responsive Design**: Mobile-friendly interface
-- 🖼️ **Image Management**: Local file storage for image uploads
-
-## Tech Stack
-
-### Frontend
-- **React 18** with Vite
-- **Ant Design** for UI components
-- **React Router** for navigation
-- **Context API** for state management
-
-### Backend
-- **Node.js** with Express
-- **MongoDB** with Mongoose
-- **JWT** for authentication
-- **Multer** for file uploads
-
-## Setup Instructions
-
-### Prerequisites
-- Node.js (v16 or higher)
-- MongoDB Atlas account
-
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd e-commerce-UI
+## Klasör Yapısı
+```
+/
+  backend/      # Node.js + Express API
+  frontend/     # React + Vite UI
 ```
 
-### 2. Backend Setup
+---
 
-```bash
-cd backend
-npm install
+## Hızlı Başlangıç (Local)
+1. **MongoDB Atlas'tan ücretsiz veritabanı oluşturun.**
+2. `.env` dosyalarını backend ve frontend için oluşturun:
+
+### backend/.env örneği
 ```
-
-Create a `.env` file in the backend directory:
-```env
-# Server Configuration
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/ecommerce
 PORT=5000
-NODE_ENV=development
-
-# MongoDB Configuration
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ecommerce_store?retryWrites=true&w=majority
-
-# JWT Configuration
-JWT_SECRET=your_jwt_secret_key_here
-JWT_EXPIRE=7d
-
-# Image Upload Configuration
-# Images will be stored locally in uploads folder
+FRONTEND_URL=https://your-frontend-url.onrender.com
 ```
 
-### 3. Image Upload Setup
-
-1. Create an `uploads` folder in the backend directory
-2. Ensure the folder has write permissions
-3. Images will be stored locally in this folder
-
-### 4. Frontend Setup
-
-```bash
-cd ../
-npm install
+### frontend/.env örneği
+```
+VITE_API_URL=https://your-backend-url.onrender.com/api
 ```
 
-Create a `.env` file in the root directory:
-```env
-VITE_API_URL=http://localhost:5000/api
+3. **Kurulum:**
+```sh
+cd backend && npm install
+cd ../frontend && npm install
 ```
 
-### 5. Start the Application
-
-**Backend:**
-```bash
-cd backend
-npm run dev
+4. **Çalıştır:**
+```sh
+# Backend
+cd backend && npm run dev
+# Frontend
+cd ../frontend && npm run dev
 ```
 
-**Frontend:**
-```bash
-npm run dev
-```
-
-## Admin Access
-
-The application automatically creates a default admin user on first startup:
-
-- **Email**: `admin@example.com`
-- **Password**: `admin123`
-
-You can change these credentials in `backend/server.js` or create a new admin user through the API.
-
-## Image Upload System
-
-The application uses local file storage for image uploads:
-
-- ✅ **Local storage**: Images stored on your server
-- ✅ **No external dependencies**: No third-party service required
-- ✅ **Full control**: Complete control over your image data
-- ✅ **Cost effective**: No monthly fees
-
-### Supported Image Formats
-- JPEG, JPG
-- PNG
-- GIF
-- WebP
-
-### Image Limits
-- Maximum file size: 5MB
-- Maximum images per product: 6
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/admin-login` - Admin login
-
-### Products
-- `GET /api/products` - Get all products
-- `POST /api/products` - Create product (with image upload)
-- `PUT /api/products/:id` - Update product
-- `DELETE /api/products/:id` - Delete product
-
-### Categories
-- `GET /api/categories` - Get all categories
-- `POST /api/categories` - Create category
-- `PUT /api/categories/:id` - Update category
-- `DELETE /api/categories/:id` - Delete category
-
-### Orders
-- `GET /api/orders` - Get all orders
-- `POST /api/orders` - Create order
-- `PUT /api/orders/:id` - Update order status
-
-### Users
-- `GET /api/users` - Get all users
-- `PUT /api/users/:id` - Update user
-- `DELETE /api/users/:id` - Delete user
-
-## Deployment
-
-### Frontend (Netlify)
-1. Connect your GitHub repository to Netlify
-2. Set build command: `npm run build`
-3. Set publish directory: `dist`
-4. Add environment variables in Netlify dashboard
-
-### Backend (Heroku/Railway)
-1. Deploy to your preferred platform
-2. Set environment variables
-3. Update frontend API URL
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## License
-
-MIT License
-=======
-🛒 E-Ticaret Web Uygulaması
-
-Modern ve kullanıcı dostu bir e-ticaret platformu
-
-React.js ve Ant Design kullanılarak geliştirilmiş tam özellikli bir online alışveriş deneyimi sunar.
-
-🚧 Durum
-
-🔨 Bu proje aktif olarak geliştirilmektedir.
-
-Yeni özellikler, performans iyileştirmeleri ve entegrasyonlar eklenmeye devam ediyor. İlerleyen güncellemeler için repository’yi takipte kalabilirsiniz.
-
-✨ Özellikler
-
-👥 Müşteri Tarafı
-
-Ürün Kataloğu: Kategorilere göre filtreleme ve arama
-
-Ürün Detayları: Çoklu resim galerisi, beden/renk seçimi
-
-Sepet Yönetimi: Farklı beden/renk kombinasyonlarıyla ürün ekleme
-
-Ödeme Sistemi: Kredi kartı, banka havalesi, kapıda ödeme seçenekleri
-
-Sipariş Takibi: Gerçek zamanlı sipariş durumu görüntüleme
-
-⚙️ Admin Paneli
-
-Ürün Yönetimi: CRUD işlemleri, resim yükleme, kategori atama
-
-Sipariş Yönetimi: Sipariş durumu güncelleme, müşteri bilgileri yönetimi
-
-Blog Sistemi: İçerik yönetimi, SEO optimizasyonu
-
-Fatura Sistemi: PDF fatura oluşturma ve indirme
-
-İstatistikler: Satış raporları, kategori analizleri
-
-🛠️ Kullanılan Teknolojiler
-
-Teknoloji	Kullanım
-
-Frontend	React.js, Vite, Tailwind CSS
-
-UI Framework	Ant Design
-
-State Management	React Context API
-
-Routing	React Router DOM
-
-PDF Generation	jsPDF
-
-Local Storage	Browser Storage API
-
-🎯 Teknik Kısım
-
-LocalStorage Optimizasyonu
-
-Context API: Merkezi state yönetimi
-
-Error Handling: Kapsamlı hata yakalama ve kullanıcı bildirimleri
-
-Responsive Design: %100 mobil uyumlu tasarım
-
-Loading States: Skeleton loading animasyonları
-
-Form Validasyonu: Gerçek zamanlı doğrulama
-
-Accessibility: ARIA etiketleri ve klavye navigasyonu
-
-Code Splitting: Lazy loading ile performans optimizasyonu
-
-Image Optimization: WebP desteği
-
-Bundle Optimization: Vite ile hızlı build süreleri
-
-📊 Proje Metrikleri
-
-✅ 15+ Sayfa/Bileşen
-
-✅ 10+ CRUD İşlemi
-
-✅ 5+ Entegrasyon (PDF, Storage, UI Framework)
-
-✅ %100 Responsive tasarım
-
-✅ 0 Production Bug (test edildi)
-
-🚀 Gelecek Planları
-
-Backend Entegrasyonu
-
-Ödeme Gateway: Stripe/PayPal entegrasyonu
-
-PWA Desteği: Offline çalışma özelliği
-
-Multi-language: Çoklu dil desteği
-
-Analytics: Google Analytics entegrasyonu
-
-➡️ Not
-
-Bu proje aktif geliştirme aşamasındadır. Yeni özellikler ve iyileştirmeler için Issues ve Projects sekmelerini inceleyebilirsiniz.
-
->>>>>>> afc8b25a57f4c69960353744cc851d16d469b96f
+---
+
+## Render.com'da Fullstack Deploy (Ücretsiz)
+
+### 1. Render.com'a Kayıt Ol
+- https://render.com/ adresinden ücretsiz hesap aç.
+
+### 2. MongoDB Atlas'tan Ücretsiz DB Oluştur
+- https://www.mongodb.com/atlas/database
+- Connection string'i backend/.env dosyana ekle.
+
+### 3. Backend Deploy
+- Render.com > New > Web Service > GitHub repo'nu seç
+- Root directory: `backend`
+- Build Command: `npm install`
+- Start Command: `npm start` veya `node server.js`
+- Environment: Node
+- .env dosyasındaki değişkenleri Render panelinden ekle
+
+### 4. Frontend Deploy
+- Render.com > New > Static Site > GitHub repo'nu seç
+- Root directory: `frontend`
+- Build Command: `npm run build`
+- Publish directory: `dist`
+- .env dosyasındaki VITE_API_URL değerini backend'in Render URL'si ile güncelle
+
+### 5. Domain ve Son Ayarlar
+- Render'ın verdiği URL'leri kullanabilir veya kendi domainini bağlayabilirsin.
+- Frontend'den API çağrıları için CORS ve .env ayarlarını kontrol et.
+
+---
+
+## Özellikler
+- Modern ve responsive UI
+- Admin paneli (ürün, kategori, blog, sipariş, müşteri, destek yönetimi)
+- Kullanıcı paneli (profil, siparişler, favoriler, yorumlar)
+- JWT ile kimlik doğrulama
+- Dosya yükleme (Multer)
+- Yorum ve inceleme sistemi
+- Bildirim ve istatistikler
+- PDF fatura oluşturma (jsPDF)
+
+---
+
+## Katkı ve Lisans
+- Pull request ve issue açabilirsiniz.
+- MIT Lisansı

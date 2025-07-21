@@ -20,11 +20,6 @@ const Reviews = ({ blog, product }) => {
     }
   }, [blog, product]);
 
-  const handleReviewSubmit = (newReview) => {
-    // Bu fonksiyon artık kullanılmıyor, form gönderimi sonrası bildirim
-    // ReviewForm içinde hallediliyor.
-  };
-
   if (!target) {
     return null;
   }
@@ -53,7 +48,7 @@ const Reviews = ({ blog, product }) => {
         <ReviewForm 
           targetId={target._id} 
           targetType={targetType}
-          onReviewSubmit={handleReviewSubmit} 
+          onReviewSubmit={() => {}} 
         />
       </div>
     </div>

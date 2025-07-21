@@ -3,7 +3,6 @@ import { Tag } from 'antd';
 
 const StatusBadge = ({ 
   status, 
-  type = 'default',
   customConfig = null 
 }) => {
   // Default status configurations

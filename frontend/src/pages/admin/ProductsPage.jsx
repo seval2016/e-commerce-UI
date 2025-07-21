@@ -512,9 +512,7 @@ const ProductsPage = () => {
   // Loading and error states
   if (loading && filteredProducts.length === 0) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <Spin size="large" tip="Ürünler yükleniyor..." />
-      </div>
+      <Spin spinning={true} fullscreen tip="Ürünler yükleniyor..." />
     );
   }
 
