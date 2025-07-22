@@ -45,13 +45,15 @@ app.use('/uploads', (req, res, next) => {
 // Database connection
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecommerce_store');
-    
-    // Check if admin user exists, if not create one
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not set!');
+    }
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
     await createDefaultAdmin();
   } catch (error) {
-    // Don't exit process, continue without database for now
-    console.log('⚠️  Running without database connection');
+    console.error('❌ MongoDB connection error:', error.message);
+    process.exit(1); // Bağlanamazsa uygulamayı kapat
   }
 };
 
